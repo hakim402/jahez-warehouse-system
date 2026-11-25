@@ -1,0 +1,29 @@
+{
+  "brand": "#7B57FC",
+  "brand_deep": "#5734C9",
+  "ink": "#17132B",
+  "muted": "#625B78",
+  "lavender": "#F4F1FF",
+  "white": "#FFFFFF",
+  "dark": "#161126",
+  "success": "#087F5B",
+  "border": "#E4DDF3",
+  "dark_border": "#443456",
+  "font_en": "Roboto",
+  "font_ar": "Cairo",
+  "radii": {
+    "control": 10,
+    "card": 16,
+    "pill": 999
+  },
+  "space": [
+    4,
+    8,
+    12,
+    16,
+    24,
+    32,
+    48,
+    64
+  ]
+}

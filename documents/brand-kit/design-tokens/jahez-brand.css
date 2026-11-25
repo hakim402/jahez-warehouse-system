@@ -1,0 +1,16 @@
+:root {
+  --jahez-brand: #7B57FC;
+  --jahez-brand-deep: #5734C9;
+  --jahez-ink: #17132B;
+  --jahez-muted: #625B78;
+  --jahez-lavender: #F4F1FF;
+  --jahez-white: #FFFFFF;
+  --jahez-dark: #161126;
+  --jahez-success: #087F5B;
+  --jahez-border: #E4DDF3;
+  --jahez-dark-border: #443456;
+  --jahez-font-en: Roboto;
+  --jahez-font-ar: Cairo;
+}
+[lang="ar"] {font-family:Cairo,Arial,sans-serif;direction:rtl;}
+[lang="en"] {font-family:Roboto,Arial,sans-serif;direction:ltr;}

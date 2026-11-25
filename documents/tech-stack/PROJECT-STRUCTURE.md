@@ -2,7 +2,7 @@
 
 Use one repository for the Flutter worker app, React office dashboard, NestJS server, and deployment configuration. Organize application code by warehouse feature. Keep the server as one modular application with two entry points so the REST API and background worker share business rules and can be deployed independently.
 
-[Agreed technology stack](README.md) · [System Design v2](../Requirments%20/Requirments.docx)
+[Agreed technology stack](README.md) · [System Design v2 requirements](../Requirments%20/REQUIREMENTS.md)
 
 ## Target repository layout
 
@@ -10,26 +10,8 @@ Use one repository for the Flutter worker app, React office dashboard, NestJS se
 jahez-warehouse-system/
 ├── apps/
 │   ├── server/                 NestJS API and background worker
-│   │   ├── src/
-│   │   │   ├── main.ts         REST API and Socket.IO gateway
-│   │   │   ├── worker.ts       pg-boss job runner
-│   │   │   ├── modules/        Warehouse features and their business rules
-│   │   │   └── platform/       Configuration, database connections and job infrastructure
-│   │   ├── db/migrations/      PostgreSQL schema and row-level security migrations
-│   │   └── test/               API and database integration tests
-│   ├── office-web/
-│   │   └── src/
-│   │       ├── app/            Routes, session and application layout
-│   │       ├── features/       Orders, receiving, stock, expenses and reports
-│   │       ├── shared/         Reusable UI and formatting
-│   │       └── api/            Generated TypeScript client and request setup
-│   └── worker-mobile/
-│       └── lib/
-│           ├── app/            Startup, navigation, regional sign-in and session
-│           ├── features/       Receiving, dispatch, photos and stock views
-│           ├── offline/        Drift schema, sync and upload queues
-│           ├── l10n/           Arabic, English and Chinese translations
-│           └── api/            Generated Dart client and request setup
+│   ├── office-web/             React and Vite dashboard
+│   └── worker-mobile/          Flutter worker app
 ├── contracts/
 │   └── openapi.json            Published schema for the versioned REST API
 ├── deploy/
@@ -45,6 +27,95 @@ jahez-warehouse-system/
 ```
 
 Use pnpm for the TypeScript applications and Flutter's package tooling for the mobile app. Generate the OpenAPI schema from NestJS and use it to generate the TypeScript and Dart clients. Keep `/api/v1` compatible with the previous mobile release while workers update their devices. [pnpm workspaces](https://pnpm.io/workspaces) · [NestJS OpenAPI](https://github.com/nestjs/docs.nestjs.com/blob/master/content/openapi/introduction.md) · [OpenAPI Dart generator](https://openapi-generator.tech/docs/generators/dart-dio/)
+
+## App structure
+
+Start with the feature that owns the work. These trees show the target layout and example filenames to use as each feature is implemented.
+
+### Office web
+
+```text
+apps/office-web/src/
+├── main.tsx
+├── app/                          Routing, session, and dashboard layout
+├── api/                          Generated TypeScript API client and request setup
+├── features/
+│   ├── orders/
+│   │   ├── pages/
+│   │   │   ├── order-list/
+│   │   │   │   ├── OrderListPage.tsx
+│   │   │   │   └── OrderFilters.tsx
+│   │   │   └── order-detail/
+│   │   │       ├── OrderDetailPage.tsx
+│   │   │       └── OrderLineItems.tsx
+│   │   └── components/           Components reused across order pages
+│   ├── receiving/
+│   ├── stock/
+│   ├── expenses/
+│   └── reports/
+└── shared/
+    └── ui/                       Buttons, dialogs, and generic tables
+```
+
+Use PascalCase for new page and component filenames and kebab-case for page folders. Keep feature-specific data access and state in the feature. Pages compose components and call the feature API through the shared client.
+
+### Worker mobile
+
+```text
+apps/worker-mobile/lib/
+├── main.dart
+├── app/                          Navigation, session, and regional sign-in
+├── api/                          Generated Dart API client and request setup
+├── features/
+│   ├── receiving/
+│   │   ├── screens/
+│   │   │   ├── receiving_queue_screen.dart
+│   │   │   └── receipt/
+│   │   │       ├── receipt_screen.dart
+│   │   │       ├── receipt_controller.dart
+│   │   │       └── widgets/      Quantity entry, measurements, and confirmation
+│   │   └── receiving_repository.dart
+│   ├── dispatch/
+│   ├── photos/
+│   └── stock/
+├── offline/                      Drift schema, receipt sync, and photo upload queues
+├── shared/
+│   └── widgets/                  Controls reused across features
+└── l10n/                         Arabic, English, and Chinese translations
+```
+
+Use snake_case for Dart filenames. Keep screen-specific state and widgets beside the screen. The receiving controller coordinates one draft across the three steps. The feature repository connects the screen flow to the offline store and API.
+
+### Server
+
+```text
+apps/server/
+├── src/
+│   ├── main.ts                   REST API and Socket.IO entry point
+│   ├── worker.ts                 Background job entry point
+│   ├── app.module.ts
+│   ├── modules/
+│   │   ├── receiving/
+│   │   │   ├── receiving.module.ts
+│   │   │   ├── receiving.controller.ts
+│   │   │   ├── receiving.service.ts
+│   │   │   ├── receiving.repository.ts
+│   │   │   └── dto/
+│   │   │       └── confirm-receipt.dto.ts
+│   │   └── ...                   See backend feature ownership below
+│   └── platform/                 Configuration, database connections, and job infrastructure
+├── db/migrations/                PostgreSQL schema and row-level security
+└── test/                         API and database integration tests
+```
+
+Controllers handle HTTP, DTOs define inputs and outputs, services own business operations, and repositories hold module-specific queries when needed. The API and worker reuse the same services.
+
+### Reuse and comments
+
+- Keep components beside their page or screen. Promote a component to the feature's `components/` or `widgets/` directory when it serves multiple pages or screens in that feature. Use `shared/ui` or `shared/widgets` for reusable controls across features.
+- Start a simple page or screen as one file. Add a folder when it has its own components or state. Give files names that describe their responsibility.
+- Extract shared business behavior through the owning service. For example, online receiving and offline sync use the same receipt confirmation operation.
+- Use comments to explain why a rule is needed, especially around offline retries, permissions, and stock transactions. For a retry-safe receipt, a useful comment is `// Enforce the operation ID and record the stock movement in one transaction so a replay cannot add stock twice.`
 
 ## Backend feature ownership
 
