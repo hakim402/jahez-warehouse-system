@@ -1,0 +1,71 @@
+# OS and editor files
+.DS_Store
+Thumbs.db
+.idea/
+*.swp
+*.swo
+
+# Local environment and signing credentials
+.env
+.env.*
+*.env
+*.env.local
+!.env.example
+!.env.*.example
+!*.env.example
+key.properties
+*.key
+*.pem
+*.p8
+*.p12
+*.pfx
+*.jks
+*.keystore
+*.mobileprovision
+
+# Node.js, pnpm, Vite, and build output
+node_modules/
+.pnpm-store/
+.vite/
+dist/
+build/
+coverage/
+*.tsbuildinfo
+*.log
+
+# Flutter, Android, and iOS local build files
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+.gradle/
+local.properties
+.cxx/
+Pods/
+.symlinks/
+DerivedData/
+xcuserdata/
+*.xcuserstate
+/apps/worker-mobile/ios/Flutter/Generated.xcconfig
+/apps/worker-mobile/ios/Flutter/flutter_export_environment.sh
+/apps/worker-mobile/ios/Flutter/ephemeral/
+/apps/worker-mobile/ios/.xcode.env.local
+
+# Local runtime data and database backups
+/storage/
+/uploads/
+/backups/
+/deploy/data/
+/deploy/uploads/
+/deploy/backups/
+*.sqlite
+*.sqlite3
+*.sqlite-shm
+*.sqlite-wal
+*.sqlite3-shm
+*.sqlite3-wal
+*.dump
+
+# Original supplier invoices kept in the local workspace
+/documents/invoices/
