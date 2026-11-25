@@ -25,6 +25,13 @@ export async function runMigrations(pool: Pool): Promise<string[]> {
       'SELECT version, checksum FROM schema_migrations',
     );
     const appliedChecksums = new Map(rows.map((row) => [row.version, row.checksum]));
+    const fileVersions = new Set(files.map((file) => file.replace(/\.sql$/, '')));
+
+    for (const row of rows) {
+      if (!fileVersions.has(row.version)) {
+        throw new Error(`Applied migration file missing or renamed: ${row.version}`);
+      }
+    }
 
     for (const file of files) {
       const version = file.replace(/\.sql$/, '');

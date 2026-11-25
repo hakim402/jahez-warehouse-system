@@ -9,6 +9,7 @@ export interface ServerConfig {
   port: number;
   deploymentProfile: DeploymentProfile;
   databaseUrl: string;
+  migrationDatabaseUrl?: string;
   databasePoolMax: number;
   databaseTimeoutMs: number;
 }
@@ -36,22 +37,13 @@ export function validateServerConfig(env: NodeJS.ProcessEnv): ServerConfig {
     errors.push('DEPLOYMENT_PROFILE must be international or cn-mainland');
   }
 
-  const databaseUrl = env.DATABASE_URL?.trim();
-  if (!databaseUrl) {
-    errors.push('DATABASE_URL is required');
-  } else {
-    try {
-      const parsed = new URL(databaseUrl);
-      if (parsed.protocol !== 'postgresql:' && parsed.protocol !== 'postgres:') {
-        errors.push('DATABASE_URL must use the postgresql:// or postgres:// protocol');
-      }
-      if (!parsed.hostname || !parsed.pathname.replace(/^\//, '')) {
-        errors.push('DATABASE_URL must include a host and database name');
-      }
-    } catch {
-      errors.push('DATABASE_URL must be a valid PostgreSQL URL');
-    }
-  }
+  const databaseUrl = validateDatabaseUrl(env.DATABASE_URL, 'DATABASE_URL', true, errors);
+  const migrationDatabaseUrl = validateDatabaseUrl(
+    env.MIGRATION_DATABASE_URL,
+    'MIGRATION_DATABASE_URL',
+    false,
+    errors,
+  );
 
   if (errors.length > 0) {
     throw new Error(`Invalid server configuration:\n- ${errors.join('\n- ')}`);
@@ -61,6 +53,7 @@ export function validateServerConfig(env: NodeJS.ProcessEnv): ServerConfig {
     port,
     deploymentProfile: deploymentProfile as DeploymentProfile,
     databaseUrl: databaseUrl!,
+    migrationDatabaseUrl,
     databasePoolMax,
     databaseTimeoutMs,
   };
@@ -69,6 +62,35 @@ export function validateServerConfig(env: NodeJS.ProcessEnv): ServerConfig {
 export function loadServerConfig(): ServerConfig {
   loadEnv({ path: resolve(__dirname, '../../.env') });
   return validateServerConfig(process.env);
+}
+
+function validateDatabaseUrl(
+  value: string | undefined,
+  name: string,
+  required: boolean,
+  errors: string[],
+): string | undefined {
+  const trimmed = value?.trim();
+  if (!trimmed) {
+    if (required) {
+      errors.push(`${name} is required`);
+    }
+    return undefined;
+  }
+
+  try {
+    const parsed = new URL(trimmed);
+    if (parsed.protocol !== 'postgresql:' && parsed.protocol !== 'postgres:') {
+      errors.push(`${name} must use the postgresql:// or postgres:// protocol`);
+    }
+    if (!parsed.hostname || !parsed.pathname.replace(/^\//, '')) {
+      errors.push(`${name} must include a host and database name`);
+    }
+  } catch {
+    errors.push(`${name} must be a valid PostgreSQL URL`);
+  }
+
+  return trimmed;
 }
 
 function parseInteger(

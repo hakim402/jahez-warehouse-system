@@ -1,5 +1,33 @@
 # Server Progress
 
+## 2026-11-25 — Step 1 follow-up: least-privilege database roles
+
+Completed:
+
+- Split database credentials: `DATABASE_URL` is the least-privilege API/worker runtime role; `MIGRATION_DATABASE_URL` is used only by the migration entry point.
+- Made the migration entry point reject a missing or invalid `MIGRATION_DATABASE_URL` while runtime configuration does not require it.
+- Hardened the migration runner to fail when a previously applied SQL file is missing or renamed, in addition to checksum drift.
+- Documented both roles and URLs in `apps/server/.env.example`.
+
+Checks:
+
+- `npx --yes pnpm@9 --dir apps/server typecheck`: passed.
+- `npx --yes pnpm@9 --dir apps/server build`: passed.
+- Disposable database verification: created `jahez_step1_verify` with separate runtime and migration roles, then dropped the database and roles afterward.
+- Migration entry point without `MIGRATION_DATABASE_URL`: exited with code `1` and required-URL error.
+- Migrations under the migration role: applied `0001_baseline`; rerun reported `No pending migrations`.
+- Runtime role schema-change denial: `CREATE TABLE`, `ALTER TABLE schema_migrations`, and `DROP TABLE schema_migrations` all failed.
+- Worker with runtime `DATABASE_URL`: started and remained running.
+- API with runtime `DATABASE_URL`: liveness and readiness returned `200`.
+- Missing/renamed applied file check: renaming `0001_baseline.sql` caused migration failure with `Applied migration file missing or renamed: 0001_baseline`; the file was restored.
+
+Blockers and notes:
+
+- No Step 1 follow-up blockers.
+- The local configured role was used only to create and clean up the disposable verification database and roles; application verification used the separate runtime and migration roles.
+
+Next: Stop after Step 1. Step 2 remains unstarted.
+
 ## 2026-11-25 — Step 1: Configuration and PostgreSQL readiness
 
 Completed:

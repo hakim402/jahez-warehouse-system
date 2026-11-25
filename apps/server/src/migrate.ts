@@ -4,8 +4,12 @@ import { loadServerConfig } from './platform/server-config';
 
 async function migrate(): Promise<void> {
   const config = loadServerConfig();
+  if (!config.migrationDatabaseUrl) {
+    throw new Error('MIGRATION_DATABASE_URL is required for migrations');
+  }
+
   const pool = new Pool({
-    connectionString: config.databaseUrl,
+    connectionString: config.migrationDatabaseUrl,
     max: 1,
     connectionTimeoutMillis: config.databaseTimeoutMs,
   });
