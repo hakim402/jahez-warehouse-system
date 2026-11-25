@@ -1,5 +1,35 @@
 # Server Progress
 
+## 2026-11-25 — Step 2: Companies, warehouses, users, memberships, and warehouse access
+
+Completed:
+
+- Added migration `0002_companies_warehouses_users_memberships` with UUID keys, tenant references, `created_at`, `updated_at`, `created_by`, and `version`.
+- Constrained memberships with composite foreign keys so the membership, user, and warehouse share one tenant; added `updated_at` triggers.
+- Added JWT bearer authentication and required `JWT_SECRET` with a minimum length of 32 characters.
+- Added a tenancy service that resolves warehouse access from memberships and a warehouse-access guard that denies cross-tenant, non-member, and mismatched-token-tenant access.
+- Added protected `GET /api/v1/warehouses/:id` guarded by authentication and warehouse membership.
+- Added a tenant-scoped query path through `DatabaseService` for module queries.
+
+Checks:
+
+- `npx --yes pnpm@9 --dir apps/server typecheck`: passed.
+- `npx --yes pnpm@9 --dir apps/server build`: passed.
+- Disposable database verification: created `jahez_step2_verify` with separate runtime and migration roles, then dropped the database and roles afterward.
+- Migration under the migration role: applied `0001_baseline` and `0002_companies_warehouses_users_memberships`; rerun reported `No pending migrations`.
+- Synthetic two-tenant seed: member access returned `200`; cross-tenant access returned `403`; non-member access returned `403`; a token whose tenant did not match the membership returned `403`.
+- Missing bearer token and invalid bearer token both returned `401`.
+- Worker with runtime `DATABASE_URL`: started and remained running.
+- Runtime role schema-change denial: `CREATE TABLE` failed.
+
+Blockers and notes:
+
+- No Step 2 blockers.
+- `JWT_SECRET` is now required; set a long random secret in the local `.env` before starting the API or worker.
+- Disposable runtime grants were `USAGE` on schema public and `SELECT/INSERT/UPDATE/DELETE` on the four application tables, with no DDL. Production grants remain environment-managed.
+
+Next: Stop after Step 2. Step 3 remains unstarted.
+
 ## 2026-11-25 — Step 1 follow-up: least-privilege database roles
 
 Completed:

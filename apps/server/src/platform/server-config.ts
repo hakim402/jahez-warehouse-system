@@ -8,6 +8,7 @@ export type DeploymentProfile = 'international' | 'cn-mainland';
 export interface ServerConfig {
   port: number;
   deploymentProfile: DeploymentProfile;
+  jwtSecret: string;
   databaseUrl: string;
   migrationDatabaseUrl?: string;
   databasePoolMax: number;
@@ -37,6 +38,11 @@ export function validateServerConfig(env: NodeJS.ProcessEnv): ServerConfig {
     errors.push('DEPLOYMENT_PROFILE must be international or cn-mainland');
   }
 
+  const jwtSecret = env.JWT_SECRET?.trim();
+  if (!jwtSecret || jwtSecret.length < 32) {
+    errors.push('JWT_SECRET must be at least 32 characters');
+  }
+
   const databaseUrl = validateDatabaseUrl(env.DATABASE_URL, 'DATABASE_URL', true, errors);
   const migrationDatabaseUrl = validateDatabaseUrl(
     env.MIGRATION_DATABASE_URL,
@@ -52,6 +58,7 @@ export function validateServerConfig(env: NodeJS.ProcessEnv): ServerConfig {
   return {
     port,
     deploymentProfile: deploymentProfile as DeploymentProfile,
+    jwtSecret: jwtSecret!,
     databaseUrl: databaseUrl!,
     migrationDatabaseUrl,
     databasePoolMax,

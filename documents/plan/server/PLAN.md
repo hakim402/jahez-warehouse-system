@@ -51,6 +51,31 @@ Verification criteria on a disposable database:
 - Run server typecheck and build.
 - Record results and blockers in [Server progress](../../progress/server/PROGRESS.md), commit and push the step, then stop after Step 1.
 
+## Step 2 — Companies, warehouses, users, memberships, and warehouse access
+
+Scope: tenant foundation and warehouse-membership authorization only. Add the initial companies/warehouses/users/memberships schema and enforce access from authenticated membership. Do not add orders, receipts, stock movements, dispatch, expenses, or invoice ingestion in this step.
+
+Steps:
+
+1. Add a versioned migration for `companies`, `warehouses`, `users`, and `memberships` with UUID keys, tenant references, `created_at`, `updated_at`, `created_by`, and `version`. Constrain memberships so the user, warehouse, and membership share one tenant.
+2. Add JWT bearer authentication that resolves the user, tenant, and role from a signed token, and require `JWT_SECRET` in shared server configuration.
+3. Add a tenancy service and warehouse-access guard that resolve access from `memberships` and deny cross-tenant or non-member warehouse access.
+4. Add a protected warehouse read endpoint guarded by authentication and warehouse membership so the authorization path is exercised by the API.
+5. Keep runtime database access least-privilege; schema changes remain migration-role only. Document runtime grants for the new tables.
+
+Dependencies: Step 1 configuration, PostgreSQL pool, migration runner, and separate runtime/migration URLs. No office-web or worker-mobile changes are required in this step.
+
+Verification criteria on a disposable database:
+
+- Run the Step 2 migration under `MIGRATION_DATABASE_URL`; confirm success and idempotent rerun.
+- Seed two synthetic tenants with users, warehouses, and memberships.
+- Confirm a member receives `200` for an authorized warehouse.
+- Confirm cross-tenant access, non-member access, and a token whose tenant does not match the membership receive `403`.
+- Confirm missing or invalid bearer tokens receive `401`.
+- Confirm the worker starts with the runtime role and the runtime role cannot change schema.
+- Run server typecheck and build.
+- Record results and blockers in [Server progress](../../progress/server/PROGRESS.md), commit and push the step, then stop after Step 2.
+
 ## Dependencies and verification
 
 Use the local PostgreSQL instance for development. With synthetic data, verify database readiness, cross-tenant denial, and a receipt replay that leaves stock counted once. Coordinate the order and receipt contracts with [office web](../office-web/PLAN.md) and [worker mobile](../worker-mobile/PLAN.md).

@@ -1,5 +1,5 @@
 import { Inject, Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
-import { Pool } from 'pg';
+import { Pool, QueryResult, QueryResultRow } from 'pg';
 import { SERVER_CONFIG, ServerConfig } from './server-config';
 
 export interface DatabaseReadiness {
@@ -23,6 +23,13 @@ export class DatabaseService implements OnModuleDestroy {
     this.pool.on('error', (error) => {
       this.logger.error(`Idle PostgreSQL client error: ${error.message}`);
     });
+  }
+
+  async query<T extends QueryResultRow = QueryResultRow>(
+    text: string,
+    params?: unknown[],
+  ): Promise<QueryResult<T>> {
+    return this.pool.query<T>(text, params);
   }
 
   async checkReadiness(): Promise<DatabaseReadiness> {
