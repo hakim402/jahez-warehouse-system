@@ -8,6 +8,8 @@ import { randomBytes } from 'node:crypto';
 import { PoolClient } from 'pg';
 import { DatabaseService } from '../../platform/database.service';
 import { recordAudit } from '../../platform/audit';
+import { RealtimeService } from '../realtime/realtime.service';
+import { recordWarehouseChange, WarehouseChange } from '../sync/warehouse-change';
 import { TenancyService } from '../tenancy/tenancy.service';
 import { AuthenticatedUser, WarehouseAccess, isOfficeRole, isUuid } from '../tenancy/types';
 
@@ -54,6 +56,7 @@ interface QueueOrderRow extends OrderRow {
 }
 
 interface QueueLineRow extends LineRow {
+  received_cartons: string;
   name_ar: string | null;
   name_en: string | null;
   name_cn: string | null;
@@ -78,6 +81,7 @@ export class OrdersService {
   constructor(
     private readonly database: DatabaseService,
     private readonly tenancy: TenancyService,
+    private readonly realtime: RealtimeService,
   ) {}
 
   async createDraft(user: AuthenticatedUser, input: Record<string, unknown>) {
@@ -194,11 +198,11 @@ export class OrdersService {
   }
 
   async confirm(user: AuthenticatedUser, id: string) {
-    return this.transition(user, id, ['draft'], 'ready', 'order.confirm');
+    return this.transition(user, id, ['draft'], 'ready', 'order.confirm', 'order.confirmed');
   }
 
   async cancel(user: AuthenticatedUser, id: string) {
-    return this.transition(user, id, ['draft', 'ready'], 'cancelled', 'order.cancel');
+    return this.transition(user, id, ['draft', 'ready'], 'cancelled', 'order.cancel', 'order.cancelled');
   }
 
   async awaitingQueue(membership: WarehouseAccess) {
@@ -209,14 +213,15 @@ export class OrdersService {
          FROM orders o
          JOIN parties s ON s.id = o.supplier_id
          JOIN parties c ON c.id = o.customer_id
-         WHERE o.warehouse_id = $1 AND o.status = 'ready'
+         WHERE o.warehouse_id = $1 AND o.status IN ('ready', 'partly_received')
          ORDER BY o.expected_date NULLS LAST, o.created_at`,
         [membership.warehouseId],
       );
       if (orders.rows.length === 0) return [];
       const ids = orders.rows.map((row) => row.id);
       const lines = await client.query<QueueLineRow>(
-        `SELECT l.*, p.name_ar, p.name_en, p.name_cn, p.model_no
+        `SELECT l.*, p.name_ar, p.name_en, p.name_cn, p.model_no,
+                receiving_received_cartons(l.order_id, l.id) AS received_cartons
          FROM order_lines l
          JOIN products p ON p.id = l.product_id
          WHERE l.order_id = ANY($1::uuid[])
@@ -233,9 +238,10 @@ export class OrdersService {
     allowed: string[],
     next: string,
     action: string,
+    event: 'order.confirmed' | 'order.cancelled',
   ) {
     const orderId = requireUuid(id, 'Order id');
-    return this.database.withTenant(user.tenantId, user.id, async (client) => {
+    const { order, change } = await this.database.withTenant(user.tenantId, user.id, async (client) => {
       const before = await findOrder(client, orderId, true);
       if (!allowed.includes(before.status)) {
         throw new BadRequestException(`Order cannot transition from ${before.status} to ${next}`);
@@ -255,8 +261,15 @@ export class OrdersService {
         after: { status: next },
       });
       const lines = await findLines(client, orderId);
-      return toFullOrder(updated.rows[0], lines);
+      const change: WarehouseChange = {
+        tenantId: user.tenantId, warehouseId: before.warehouse_id, entity: 'order', entityId: orderId, action: event,
+        payload: { id: orderId, warehouseId: before.warehouse_id, status: next },
+      };
+      await recordWarehouseChange(client, change);
+      return { order: toFullOrder(updated.rows[0], lines), change };
     });
+    this.realtime.publish(change);
+    return order;
   }
 }
 
@@ -485,6 +498,7 @@ function toWorkerOrder(row: QueueOrderRow, lines: QueueLineRow[]) {
     supplier: { id: row.supplier_id, name: row.supplier_name, nameCn: row.supplier_name_cn },
     customer: { id: row.customer_id, name: row.customer_name, shippingMark: row.customer_shipping_mark },
     expectedCartons: lines.reduce((sum, line) => sum + line.cartons, 0),
+    remainingCartons: lines.reduce((sum, line) => sum + remainingCartons(line), 0),
     lines: lines.map((line) => ({
       id: line.id,
       product: {
@@ -497,10 +511,16 @@ function toWorkerOrder(row: QueueOrderRow, lines: QueueLineRow[]) {
       brand: line.brand,
       size: line.size,
       cartons: line.cartons,
+      receivedCartons: Number(line.received_cartons),
+      remainingCartons: remainingCartons(line),
       qtyPerCarton: line.qty_per_carton,
       qty: line.qty,
       cbm: toNumber(line.cbm),
       weight: toNumber(line.weight),
     })),
   };
+}
+
+function remainingCartons(line: QueueLineRow): number {
+  return Math.max(0, line.cartons - Number(line.received_cartons));
 }

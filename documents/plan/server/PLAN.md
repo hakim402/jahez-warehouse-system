@@ -153,6 +153,66 @@ Verification criteria on a disposable database:
 - Run server typecheck and build.
 - Record results and blockers in [Server progress](../../progress/server/PROGRESS.md), then stop for review before receipt sync.
 
+## Step 4 — Receipt confirmation, stock ledger, and offline sync
+
+**Status** — Implementation and review fixes verified on disposable PostgreSQL 17. [Step 5](ROADMAP.md#5-stock-reads-and-live-updates) is next.
+
+Scope: one shared receipt-confirmation operation for online requests and offline sync, partial deliveries, server-assigned receipt numbers, CBM calculation, discrepancy findings, transactional stock posting, and cursor-based sync. Do not add dispatch, expenses, reports, invoice extraction, or live WebSocket updates in this step.
+
+Steps:
+
+1. Add migration `0006` for `receipts`, `receipt_lines`, `findings`, `stock_movements`, `client_operations`, `document_counters`, and `sync_changes`. Add tenant/warehouse RLS, worker-safe receipt writes for warehouse members, and a restricted security-definer helper for receipt-driven order status updates so workers do not gain general order-write access.
+2. Add a receiving service used by both the online API and sync push. In one transaction: claim the client operation ID, assign the server receipt number, save the receipt and lines, calculate CBM from measurements, create discrepancy findings, post stock movements through the inventory service, update order status for partial/full delivery, record audit, and append a worker-safe sync change. Replays of the same operation ID return the original receipt without new stock.
+3. Support partial deliveries: compare received cartons with ordered cartons, flag missing/extra/wrong/damaged/CBM/weight findings, keep the order `partly_received` until all lines are covered, and set `received` when cumulative receipts cover the order. A discrepancy must not block receipt confirmation.
+4. Add online receiving endpoints and sync endpoints: `POST /api/v1/receipts/confirm`, `GET /api/v1/receipts/:id`, `POST /api/v1/sync/push`, and `GET /api/v1/sync/pull?warehouseId=...&cursor=...`. Sync push invokes the same receiving service; pull returns worker-safe changes after the cursor for the assigned warehouse.
+5. Keep prices and costs out of worker receipt, finding, stock, and sync responses. Document runtime grants for the new tables.
+6. Close the review findings. Lock the order for receipt confirmation, restrict the privileged database helpers to the assigned warehouse, and make stock movements append-only. Preserve actual products and compare deliveries against outstanding quantities and tenant tolerances. Show partial orders in the queue, bind replays to the original request, return individual sync outcomes, and let traders resolve findings separately.
+
+Dependencies: Step 3 orders/order lines, Step 2 warehouse membership and RLS helpers, append-only audit, and local PostgreSQL for disposable verification. No office-web or worker-mobile changes are required in this step.
+
+Verification criteria on a disposable database:
+
+- Run migrations under `MIGRATION_DATABASE_URL`; confirm `0006` applies and rerun is idempotent.
+- Verify two partial deliveries can complete one order: first delivery leaves `partly_received`, second sets `received`, and stock movements sum to the ordered cartons.
+- Verify a short delivery creates a discrepancy finding but still confirms the receipt and posts stock.
+- Verify concurrent retries of the same client operation ID create exactly one receipt and one stock movement, and return the same receipt number.
+- Verify tenant and warehouse isolation: another tenant cannot confirm or pull the receipt, and a non-member warehouse cannot confirm or pull changes.
+- Verify worker responses and sync payloads contain no price/cost fields.
+- Exercise both order cancellation race outcomes, a substituted product, an omitted line, proportional measurements, changed replay payloads, a mixed-result sync batch, and scoped finding resolution. Verify stock edits and deletes are denied under the runtime role.
+- Run server typecheck and build.
+- Record results and blockers in [Server progress](../../progress/server/PROGRESS.md), then stop before Step 5 for review.
+
+## Step 5 — Stock visibility and commit-scoped live updates
+
+**Status** — Implementation and review fixes verified on disposable PostgreSQL 17. [Step 6](ROADMAP.md#6-files-and-evidence) is next.
+
+Scope: stock balances, movement history, stock age by receipt lot, and Socket.IO updates published only after committed changes. Do not add dispatch, expenses, reports, invoice extraction, or photo uploads in this step.
+
+Steps:
+
+1. Extend the inventory module with worker-safe read APIs: `GET /api/v1/stock`, `GET /api/v1/stock/movements`, and `GET /api/v1/stock/age`. Require warehouse membership. Support filters for customer mark, supplier, brand, and product. Derive balances from `stock_movements`; age lots from confirmed receipts.
+2. Add a realtime module using Socket.IO attached to the API HTTP server. Authenticate sockets with the same JWT/session rules, authorize warehouse subscriptions from memberships, and scope rooms by tenant and warehouse.
+3. Publish receipt/stock events only after the receipt transaction commits. Replays and rolled-back transactions must emit no event. Keep event payloads worker-safe.
+4. Support reconnect recovery by letting clients re-subscribe and refresh missed changes through REST or cursor-based sync pull.
+5. Close the review findings. Reuse REST session validation for sockets, check active sessions and warehouse membership before delivery, use canonical room IDs, and contain subscription errors. Add worker-safe order confirmation, cancellation, and finding-resolution events with transactional sync records.
+6. Validate stock filters and movement paging input. Keep stock totals beyond the 32-bit range and page movement history with an opaque cursor that preserves the full timestamp and row ID.
+
+Movement history accepts `limit` from 1 to 200 and a `cursor` from the previous response's `nextCursor`. Stock counts are JSON numbers within JavaScript's safe integer range and decimal strings above it. Socket.IO and sync pull carry `order.confirmed`, `order.cancelled`, `receipt.confirmed`, and `finding.resolved`. Use live messages to refresh the affected view and sync pull to catch up in commit order after reconnect.
+
+Dependencies: Step 4 receipt confirmation, stock movements, sync changes, and warehouse membership. No office-web or worker-mobile changes are required in this step.
+
+Verification criteria on a disposable database:
+
+- Run server typecheck and build.
+- Verify a synced receipt updates stock balances, movement history, and receipt-lot age; filters for customer mark, supplier, brand, and product work.
+- Verify a replay of the same client operation adds no duplicate movement and emits no duplicate live event.
+- Verify a rolled-back receipt confirmation emits no event.
+- Verify unauthorized tenants/warehouses cannot subscribe and receive no events.
+- Verify reconnect recovery: after disconnect and a new receipt, re-subscribe and pull missed changes from the sync cursor.
+- Verify already-connected sockets lose access after revocation, token expiry, or membership removal. Check canonical subscriptions, malformed acknowledgments, and order and finding events, including recovery from the sync cursor.
+- Verify malformed and repeated stock filters return `400`, movement pages have neither gaps nor repeats, and stock totals above the 32-bit range remain accurate.
+- Record results and blockers in [Server progress](../../progress/server/PROGRESS.md), then stop before Step 6 for review.
+
 ## Dependencies and verification
 
 Use the local PostgreSQL instance for development. With synthetic data, verify database readiness, cross-tenant denial, and a receipt replay that leaves stock counted once. Coordinate the order and receipt contracts with [office web](../office-web/PLAN.md) and [worker mobile](../worker-mobile/PLAN.md).

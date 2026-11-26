@@ -1,5 +1,79 @@
 # Server Progress
 
+## 2026-11-26 — Step 5: Stock visibility and commit-scoped live updates
+
+Completed:
+
+- Extended `InventoryService` with tenant- and warehouse-scoped read operations: `listBalances`, `listMovements`, and `listAge`. Balances aggregate confirmed stock movements by supplier, customer mark, brand, and product; movement history joins receipt numbers and received dates; stock age groups by receipt lot and reports whole days in storage.
+- Added `GET /api/v1/stock`, `GET /api/v1/stock/movements`, and `GET /api/v1/stock/age`, each guarded by authentication plus warehouse membership and supporting `customerMark`, `supplierId`, `brand`, and `productId` filters. Responses stay worker-safe (no prices, amounts, deposits, totals, or currency).
+- Added `RealtimeModule`/`RealtimeService`: Socket.IO attaches to the HTTP server in `main.ts`, authenticates the handshake JWT and active session, and only joins a `tenant:<id>:warehouse:<id>` room after a membership check. Subscribe acknowledges success or denial.
+- Refactored `ReceivingService.confirmReceipt` to publish `receipt.confirmed` only after the database transaction commits. Replays return the stored acknowledgment without publishing; a rolled-back transaction publishes nothing. Sync push logs a stack trace for unexpected server-side failures.
+- Reconnect recovery stays on the existing REST/sync path: clients re-subscribe after reconnect and pull missed changes from their last `sync/pull` cursor.
+- Closed the review findings. REST and Socket.IO share token and active-session validation, and Socket.IO rechecks authorization for every delivery. Subscriptions use canonical warehouse IDs and return controlled errors. Standalone order and finding changes persist with the transaction and publish after commit. Stock filters reject malformed values, movement history is pageable, and balance and age aggregates preserve wide totals.
+
+Checks:
+
+- `npx --yes pnpm@9 --dir apps/server typecheck`: passed.
+- `npx --yes pnpm@9 --dir apps/server build`: passed.
+- Disposable database verification: created `jahez_step5_verify` with separate runtime and migration roles, applied all six migrations, then dropped the database and roles afterward.
+- Synced receipt updated stock: balances summed to 11 cartons across two products, movement history returned two receipt movements, and stock age reported the receipt lot with integer days in storage.
+- Filters: customer mark, brand, product, and supplier filters each narrowed balances correctly; an unmatched customer mark returned no age rows.
+- Commit-scoped events: an authorized subscriber received exactly one `receipt.confirmed` matching the committed receipt; a replay added no movement and no duplicate event.
+- Rollback: a forced mid-transaction failure on the stock insert rejected the operation with a retryable 500, persisted no receipt or movement, and emitted no event; a fresh retry afterward succeeded and emitted one event.
+- Unauthorized subscribers: a cross-tenant worker and a non-member worker both received subscribe denials and zero events while an authorized subscriber received the new receipt. Cross-tenant and non-member REST stock reads were denied.
+- Reconnect recovery: after disconnecting, a new receipt was pushed; reconnecting and pulling from the prior cursor returned exactly the missed change, and a subsequent receipt produced a live event on the new socket.
+- Worker-safe scans found no commercial fields in balances, movements, age, live events, or sync pull payloads.
+- Review checks on disposable PostgreSQL 17 confirmed that connected clients lost delivery after session revocation, token expiry, or warehouse membership removal. Uppercase warehouse IDs subscribed to the canonical room. Malformed acknowledgments and a simulated authorization lookup failure left the server responsive.
+- Order confirmation, cancellation, and finding resolution published worker-safe events and were available through sync pull. Receipt rollback and replay checks passed again. A reconnected client pulled a missed order confirmation from its last cursor.
+- Invalid and repeated stock filters and cursor inputs returned `400`. One-row movement pages covered the full history, including rows sharing a millisecond. Balance and receipt-lot totals preserved 2.4 billion units. Typecheck and build passed again.
+
+Blockers and notes:
+
+- No Step 5 blockers.
+- Stock age is derived from receipt lots. Netting out dispatches and publishing dispatch and adjustment events belong to Step 7.
+- Production grants remain environment-managed: the runtime role needs `SELECT` on catalog/receipt tables for the stock joins and `USAGE` on the sync sequence.
+
+**Next** — [Step 6, files and evidence](../../plan/server/ROADMAP.md#6-files-and-evidence).
+
+## 2026-11-26 — Step 4: Receipt confirmation, stock ledger, and offline sync
+
+Completed:
+
+- Added migration `0006_receiving_stock_sync` for `receipts`, `receipt_lines`, `findings`, `stock_movements`, `client_operations`, `document_counters`, and `sync_changes`, with tenant/warehouse RLS and audit columns.
+- Added restricted, warehouse-scoped database helpers that lock the order and derive its status from confirmed receipt coverage.
+- Added one shared `ReceivingService.confirmReceipt` operation used by both `POST /api/v1/receipts/confirm` and `POST /api/v1/sync/push`.
+- In one transaction: claim the client operation ID, assign a server receipt number, save receipt and lines, calculate CBM from measurements, create discrepancy findings, post stock movements through `InventoryService`, update order status, record audit, and append a worker-safe sync change.
+- Kept partial orders in the worker queue with outstanding cartons. Compare each delivery with the remaining correct cartons and compare measurements proportionally using tenant tolerances. Record the actual received product and raise a wrong-item finding for substitutions.
+- Bound replay records to the original actor, warehouse, order, and normalized payload. Replays return the original acknowledgment, and a changed request returns `409`. Sync push reports each item's outcome in input order.
+- Made stock movements append-only under the runtime role. Added `GET /api/v1/findings` and `PATCH /api/v1/findings/:id` for scoped, audited office resolution.
+- Added `GET /api/v1/receipts/:id` and cursor-based `GET /api/v1/sync/pull?warehouseId=...&cursor=...` for the assigned warehouse.
+- Kept prices, amounts, deposits, totals, and currency out of receipt, finding, stock, and sync responses.
+
+Checks:
+
+- `npx --yes pnpm@9 --dir apps/server typecheck`: passed.
+- `npx --yes pnpm@9 --dir apps/server build`: passed.
+- Disposable database verification: created `jahez_step4_verify` with separate runtime and migration roles, then dropped the database and roles afterward.
+- Migration under the migration role: applied `0006_receiving_stock_sync`; rerun reported `No pending migrations`.
+- Partial deliveries: first delivery of 6/10 cartons left `partly_received` and created a missing finding; second delivery of 4 cartons set `received`; stock movements summed to 10 cartons.
+- CBM calculation: 60×45×9 cm × 6 cartons produced `0.1458`; server receipt numbers were `RCPT-000001` and `RCPT-000002`.
+- Sync: push confirmed a receipt through the same service; cursor pull returned worker-safe changes, advanced the cursor, and returned no already-seen changes after the cursor.
+- Concurrent retries: six simultaneous confirmations with the same client operation ID returned one receipt ID/number and created exactly one receipt, one stock movement, and one client operation.
+- Isolation: another tenant could not confirm or read the receipt or pull the warehouse sync; a non-member warehouse could not confirm or pull changes.
+- Worker-safe scans found no commercial fields in receipt responses or sync payloads; receipt audit records were present.
+- Follow-up checks on a fresh disposable PostgreSQL 17 instance covered both controlled receipt/cancellation race outcomes, a substituted product, an entirely omitted line, proportional measurements with a tenant tolerance override, a partial order remaining in the queue, and a final delivery with no new shortages.
+- Six concurrent retries returned identical acknowledgments. The first receipt read had the same quantities and stock product IDs. Changing the actor, assigned warehouse, or payload returned `409`. A batch with valid, invalid, and valid operations returned three individual results, and sync pull advanced after accepted operations.
+- The runtime role was denied stock edits and deletes. Verified the warehouse scope and hardened search paths of privileged receipt helpers. A trader resolved a finding and the change was audited. Workers and other tenants were denied resolution. Typecheck, build, migration application, and an idempotent rerun passed.
+
+Blockers and notes:
+
+- No Step 4 blockers.
+- Stock balance queries, dispatch, expenses, reports, photo uploads, invoice extraction, and live WebSocket updates remain unimplemented.
+- Receipt confirmation currently requires an existing order; delivery-note creation without an order is not implemented.
+- Grant the runtime role `SELECT/INSERT` on `audit_events` and `stock_movements`, scoped DML on other application tables, and `USAGE` on the sync sequence. Production grants remain environment-managed. Runtime role rotation also requires transferring execution grants for the two privileged receiving helpers.
+
+**Next** — [Step 5, stock reads and live updates](../../plan/server/ROADMAP.md#5-stock-reads-and-live-updates).
+
 ## 2026-11-26 — Step 3: Catalog and manual purchase orders
 
 Completed:
