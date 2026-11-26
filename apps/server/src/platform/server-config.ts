@@ -4,6 +4,32 @@ import { resolve } from 'node:path';
 export const SERVER_CONFIG = Symbol('SERVER_CONFIG');
 
 export type DeploymentProfile = 'international' | 'cn-mainland';
+export type StorageDriver = 'local' | 's3' | 'oss';
+
+export interface S3StorageConfig {
+  bucket: string;
+  region: string;
+  accessKeyId: string;
+  secretAccessKey: string;
+  endpoint?: string;
+  forcePathStyle: boolean;
+}
+
+export interface OssStorageConfig {
+  bucket: string;
+  region: string;
+  accessKeyId: string;
+  accessKeySecret: string;
+  endpoint?: string;
+}
+
+export interface StorageConfig {
+  driver: StorageDriver;
+  localDir: string;
+  maxUploadBytes: number;
+  s3?: S3StorageConfig;
+  oss?: OssStorageConfig;
+}
 
 export interface ServerConfig {
   port: number;
@@ -13,6 +39,7 @@ export interface ServerConfig {
   migrationDatabaseUrl?: string;
   databasePoolMax: number;
   databaseTimeoutMs: number;
+  storage: StorageConfig;
 }
 
 export function validateServerConfig(env: NodeJS.ProcessEnv): ServerConfig {
@@ -55,6 +82,8 @@ export function validateServerConfig(env: NodeJS.ProcessEnv): ServerConfig {
     errors,
   );
 
+  const storage = validateStorageConfig(env, errors);
+
   if (errors.length > 0) {
     throw new Error(`Invalid server configuration:\n- ${errors.join('\n- ')}`);
   }
@@ -67,6 +96,7 @@ export function validateServerConfig(env: NodeJS.ProcessEnv): ServerConfig {
     migrationDatabaseUrl,
     databasePoolMax,
     databaseTimeoutMs,
+    storage,
   };
 }
 
@@ -117,4 +147,78 @@ function parseInteger(
     return min;
   }
   return parsed;
+}
+
+function validateStorageConfig(env: NodeJS.ProcessEnv, errors: string[]): StorageConfig {
+  const driver = env.STORAGE_DRIVER ?? 'local';
+  if (driver !== 'local' && driver !== 's3' && driver !== 'oss') {
+    errors.push('STORAGE_DRIVER must be local, s3, or oss');
+  }
+
+  const localDir = resolve(__dirname, '../..', env.STORAGE_LOCAL_DIR?.trim() || '../../storage');
+  const maxUploadMb = parseInteger(env.STORAGE_MAX_UPLOAD_MB ?? '15', 'STORAGE_MAX_UPLOAD_MB', 1, 100, errors);
+
+  const s3 = validateS3Config(env, driver === 's3', errors);
+  const oss = validateOssConfig(env, driver === 'oss', errors);
+
+  return {
+    driver: (driver === 's3' || driver === 'oss' ? driver : 'local') as StorageDriver,
+    localDir,
+    maxUploadBytes: maxUploadMb * 1024 * 1024,
+    s3,
+    oss,
+  };
+}
+
+function validateS3Config(env: NodeJS.ProcessEnv, required: boolean, errors: string[]): S3StorageConfig | undefined {
+  const bucket = env.S3_BUCKET?.trim();
+  const region = env.S3_REGION?.trim();
+  const accessKeyId = env.S3_ACCESS_KEY_ID?.trim();
+  const secretAccessKey = env.S3_SECRET_ACCESS_KEY?.trim();
+  const endpoint = env.S3_ENDPOINT?.trim() || undefined;
+  const anySet = Boolean(bucket || region || accessKeyId || secretAccessKey || endpoint);
+  if (!anySet) {
+    if (required) errors.push('S3_BUCKET, S3_REGION, S3_ACCESS_KEY_ID, and S3_SECRET_ACCESS_KEY are required when STORAGE_DRIVER=s3');
+    return undefined;
+  }
+  if (!bucket || !region || !accessKeyId || !secretAccessKey) {
+    errors.push('S3 storage needs S3_BUCKET, S3_REGION, S3_ACCESS_KEY_ID, and S3_SECRET_ACCESS_KEY together');
+    return undefined;
+  }
+  if (endpoint) {
+    try {
+      const parsed = new URL(endpoint);
+      if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') errors.push('S3_ENDPOINT must be an http(s) URL');
+    } catch {
+      errors.push('S3_ENDPOINT must be a valid URL');
+    }
+  }
+  const forcePathStyle = env.S3_FORCE_PATH_STYLE === 'true';
+  return { bucket, region, accessKeyId, secretAccessKey, endpoint, forcePathStyle };
+}
+
+function validateOssConfig(env: NodeJS.ProcessEnv, required: boolean, errors: string[]): OssStorageConfig | undefined {
+  const bucket = env.OSS_BUCKET?.trim();
+  const region = env.OSS_REGION?.trim();
+  const accessKeyId = env.OSS_ACCESS_KEY_ID?.trim();
+  const accessKeySecret = env.OSS_ACCESS_KEY_SECRET?.trim();
+  const endpoint = env.OSS_ENDPOINT?.trim() || undefined;
+  const anySet = Boolean(bucket || region || accessKeyId || accessKeySecret || endpoint);
+  if (!anySet) {
+    if (required) errors.push('OSS_BUCKET, OSS_REGION, OSS_ACCESS_KEY_ID, and OSS_ACCESS_KEY_SECRET are required when STORAGE_DRIVER=oss');
+    return undefined;
+  }
+  if (!bucket || !region || !accessKeyId || !accessKeySecret) {
+    errors.push('OSS storage needs OSS_BUCKET, OSS_REGION, OSS_ACCESS_KEY_ID, and OSS_ACCESS_KEY_SECRET together');
+    return undefined;
+  }
+  if (endpoint) {
+    try {
+      const parsed = new URL(endpoint);
+      if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') errors.push('OSS_ENDPOINT must be an http(s) URL');
+    } catch {
+      errors.push('OSS_ENDPOINT must be a valid URL');
+    }
+  }
+  return { bucket, region, accessKeyId, accessKeySecret, endpoint };
 }

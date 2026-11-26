@@ -1,6 +1,6 @@
 # Server Progress
 
-Steps 1–5 are verified on the recorded local and disposable PostgreSQL checks. Step 6 is next. Plan scope and acceptance criteria are in the [Server Plan](../../plan/server/PLAN.md).
+Steps 1–6 are verified on the recorded local and disposable PostgreSQL checks. Step 7 is next. Plan scope and acceptance criteria are in the [Server Plan](../../plan/server/PLAN.md).
 
 ## Step 1 — Configuration and PostgreSQL Readiness
 
@@ -55,4 +55,14 @@ Steps 1–5 are verified on the recorded local and disposable PostgreSQL checks.
 
 ## Step 6 — Files and Evidence
 
-**Pending** — Prepare the detailed implementation plan before editing server code. Record the provider, access, durability, and retry checks here as the step progresses. [Step 6 plan](../../plan/server/PLAN.md#step-6--files-and-evidence)
+**Verified** — 2026-11-26. S3/OSS round-trip checks remain staging-dependent.
+
+- Shipped validated storage configuration (`STORAGE_DRIVER` local/s3/oss, local directory, upload limit, per-provider credentials), a platform `StorageService` with local-disk, S3-compatible, and Alibaba OSS providers, and migration 0007 for warehouse-scoped append-only `files` storing provider, object key, checksum, and a per-tenant unique client upload id.
+- Shipped `POST /api/v1/files` (multipart, idempotent by upload id), warehouse-scoped listing with entity/purpose filters, metadata reads, and private streaming downloads. Known entity links are validated against the matching receipt, receipt line, or order in the same warehouse; downloads re-check membership and never expose storage paths.
+- Verified startup rejection of `STORAGE_DRIVER=s3` without credentials. A receipt synced without photos and a photo linked afterwards, keeping confirmation and upload retries independent.
+- On disposable PostgreSQL with a temporary storage directory: downloaded bytes matched the upload SHA-256 before and after an API restart; cross-tenant and non-member reads/uploads and an unknown receipt link were denied; identical retries returned the original file with no duplicate row and changed bytes returned 409.
+- After switching the write driver to S3 with a dummy unreachable endpoint, the earlier local file stayed readable through its stored provider, the failed S3 write left no metadata, and switching back to local restored uploads. The runtime role could not update or delete file rows; uploads were audited. Typecheck and build passed.
+
+**Staging-dependent checks** — With real credentials: S3-compatible and OSS put/get round-trips, reading earlier cloud objects after a provider switch, and endpoint/TLS behavior from Yiwu. The disposable run used a dummy endpoint only to prove the stored-provider read path and clean failure handling.
+
+**Deployment notes** — Expense, adjustment, and import links are accepted but validated by those modules in later steps. Grant the runtime role SELECT/INSERT on `files` and keep the local storage directory outside the web root. `.env.example` lists the storage variables.

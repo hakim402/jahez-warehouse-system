@@ -1,6 +1,6 @@
 # Server Plan
 
-Steps 1–5 are verified. Step 6 is next. Use the [Server Roadmap](ROADMAP.md) for scope, the [agent workflow](../../../AGENTS.md#workflow-for-every-step) for the order of work, and [Server Progress](../../progress/server/PROGRESS.md) for results. Update the matching step here before editing server code.
+Steps 1–6 are verified. Step 7 is next. Use the [Server Roadmap](ROADMAP.md) for scope, the [agent workflow](../../../AGENTS.md#workflow-for-every-step) for the order of work, and [Server Progress](../../progress/server/PROGRESS.md) for results. Update the matching step here before editing server code.
 
 ## Step 1 — Configuration and PostgreSQL Readiness
 
@@ -57,13 +57,15 @@ Steps 1–5 are verified. Step 6 is next. Use the [Server Roadmap](ROADMAP.md) f
 
 ## Step 6 — Files and Evidence
 
-**Status** — Pending. Complete the file and API plan for this step before implementation.
+**Status** — Verified on disposable PostgreSQL. S3/OSS round-trip checks remain staging-dependent.
 
-1. Default to private, persistent VPS storage. Select and validate local disk, S3-compatible storage, or Alibaba OSS through server environment settings.
-2. Store each file's provider and object key so previously uploaded files stay readable after changing the write provider. Enforce tenant and warehouse authorization for upload, linking, and download.
-3. Keep receipt confirmation and evidence upload independent so the worker can retry a photo after the receipt syncs.
+1. Extend `server-config.ts` and `.env.example` with validated storage settings: `STORAGE_DRIVER` (`local` default, `s3`, `oss`), `STORAGE_LOCAL_DIR` (relative to `apps/server`, outside the web root), `STORAGE_MAX_UPLOAD_MB`, and per-provider credentials (`S3_BUCKET`, `S3_REGION`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, optional `S3_ENDPOINT`/`S3_FORCE_PATH_STYLE`; `OSS_BUCKET`, `OSS_REGION`, `OSS_ACCESS_KEY_ID`, `OSS_ACCESS_KEY_SECRET`, optional `OSS_ENDPOINT`). Reject an unknown driver or missing credentials for the selected driver at startup.
+2. Add a platform `StorageService` with one interface and three providers: private local disk (default), S3-compatible (`@aws-sdk/client-s3`), and Alibaba OSS (`ali-oss`). Providers are constructed from configuration per driver, so a file is always read through the provider stored on its row, not the current write default.
+3. Add migration `0007_files_evidence`: `files` with tenant and warehouse scope, a client `upload_id` unique per tenant for independent retries, purpose, optional entity link (`receipt`, `receipt_line`, `order`, `expense`, `adjustment`, `import`), stored `provider` and `object_key`, original name, content type, size, SHA-256, uploader, and audit columns. RLS: warehouse members may select and insert; evidence metadata is append-only (no update/delete policies). Object keys are tenant-prefixed (`tenant/year/month/fileId`).
+4. Add `FilesModule`: `POST /api/v1/files` (multipart, warehouse membership required, idempotent by `upload_id`, bytes written through the selected provider inside the same transaction that records metadata and audit), `GET /api/v1/files` (warehouse-scoped list with entity/purpose filters), `GET /api/v1/files/:id` and `GET /api/v1/files/:id/content` (membership re-checked against the file's warehouse; content streamed privately, never a public path). Validate known entity links against the matching receipt/line/order in the same warehouse.
+5. Keep receipt confirmation and photo uploads independent: no photo is required to confirm or sync a receipt, and a photo may be uploaded or retried after the receipt commits. A retry with the same `upload_id` and bytes returns the original record; changed bytes return `409`. A failed storage write rolls back the metadata claim so the retry can proceed.
 
-**Acceptance checks** — Verify persistence across restart, tenant access denial, independent upload retry, and reading an existing file after switching write providers. Record separate staging results for S3 and OSS when credentials are available. Follow the [Step 6 roadmap](ROADMAP.md#6-files-and-evidence).
+**Acceptance checks** — Typecheck and build. On disposable PostgreSQL: local upload persists across an API restart; cross-tenant and non-member reads/uploads are denied; identical upload retries create exactly one file and changed bytes conflict; a receipt syncs without photos and a photo links afterwards; after switching `STORAGE_DRIVER` to S3, earlier local files remain readable through their stored provider. Record S3/OSS round-trip checks as staging-dependent until credentials are available. Follow the [Step 6 roadmap](ROADMAP.md#6-files-and-evidence).
 
 ## Step 7 — Dispatch and Stock Adjustments
 
