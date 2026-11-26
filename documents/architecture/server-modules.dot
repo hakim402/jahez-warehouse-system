@@ -1,0 +1,81 @@
+// Jahez server module dependency map — current state at commit e56d1e2 (2026-11-26).
+// Produced by architecture-visualization:system-modeler + graphviz.
+// Edges = NestJS module imports (apps/server/src/modules/*/*.module.ts) plus evidenced service calls.
+// Open with Qoder's Graphviz DOT viewer. Evidence: system-model.evidence.md.
+digraph jahez_server_modules {
+  rankdir=TB;
+  fontname="Helvetica";
+  node [fontname="Helvetica", shape=box, style="rounded,filled", fillcolor="#e8f0fe", color="#438dd5"];
+  edge [fontname="Helvetica", fontsize=10, color="#555555"];
+  labelloc="t";
+  label="Jahez Warehouse API — NestJS module dependencies (Steps 1–8 verified)";
+
+  subgraph cluster_features {
+    label="Feature modules";
+    style="rounded";
+    color="#bbbbbb";
+    auth       [label="auth\nlogin/refresh/logout/sessions"];
+    catalog    [label="catalog\nparties + products"];
+    orders     [label="orders\nmanual orders, confirm/cancel"];
+    receiving  [label="receiving\nreceipt confirm + findings"];
+    inventory  [label="inventory\nbalances, movements, age,\nadjustments (office-only)"];
+    dispatch   [label="dispatch\nFIFO lot allocation"];
+    expenses   [label="expenses\noffice-only, owner categories"];
+    files      [label="files\nevidence upload/download"];
+    sync       [label="sync\npush receipts / pull changes"];
+  }
+
+  subgraph cluster_core {
+    label="Cross-cutting modules";
+    style="rounded";
+    color="#bbbbbb";
+    tenancy  [label="tenancy\nAuthGuard, WarehouseAccessGuard,\nSessionAuthService, roles", fillcolor="#d5e8d4", color="#82b366"];
+    realtime [label="realtime\nSocket.IO warehouse rooms,\noffice-only expense events", fillcolor="#d5e8d4", color="#82b366"];
+    platform [label="platform\nSERVER_CONFIG, DatabaseService (RLS),\nStorageService (local/S3/OSS), audit, migrator", fillcolor="#d5e8d4", color="#82b366"];
+  }
+
+  subgraph cluster_planned {
+    label="Empty placeholder directories (planned, no code)";
+    style="rounded,dashed";
+    color="#999999";
+    node [style="rounded,filled,dashed", fillcolor="#f5f5f5", color="#999999", fontcolor="#777777"];
+    identity   [label="identity\n(empty)"];
+    ingestion  [label="invoice-ingestion\n(empty — Step 10 planned)"];
+    reports    [label="reports\n(empty — Step 9 exports planned)"];
+  }
+
+  // Module imports (high confidence: *.module.ts imports arrays)
+  auth      -> tenancy;
+  auth      -> platform;
+  catalog   -> tenancy;
+  catalog   -> platform;
+  orders    -> tenancy;
+  orders    -> platform;
+  orders    -> realtime;
+  receiving -> tenancy;
+  receiving -> platform;
+  receiving -> inventory;
+  receiving -> realtime;
+  inventory -> tenancy;
+  inventory -> platform;
+  inventory -> realtime;
+  dispatch  -> tenancy;
+  dispatch  -> platform;
+  dispatch  -> inventory;
+  dispatch  -> realtime;
+  expenses  -> tenancy;
+  expenses  -> platform;
+  expenses  -> realtime;
+  files     -> tenancy;
+  files     -> platform;
+  sync      -> tenancy;
+  sync      -> platform;
+  sync      -> receiving;
+  realtime  -> tenancy;
+  tenancy   -> platform;
+
+  // Service-level call detail (high confidence: service source)
+  sync      -> receiving [label="confirmReceipt replay", style=dashed, color="#1168bd"];
+  dispatch  -> inventory [label="postDispatchMovements (FIFO)", style=dashed, color="#1168bd"];
+  receiving -> inventory [label="receipt stock movements", style=dashed, color="#1168bd"];
+}
