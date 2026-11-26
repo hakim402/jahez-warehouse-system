@@ -1,0 +1,101 @@
+# Shared deployment definition for BOTH regions. Region-specific values (database, storage driver,
+# AI provider, domain, TLS paths) live in deploy/env/<region>.env and are supplied at deploy time:
+#   docker compose --env-file env/international.env up -d
+#   docker compose --env-file env/cn-mainland.env up -d
+# Both regions run this same file from the same code revision; only the env file differs.
+name: jahez
+
+x-app-env: &app-env
+  NODE_ENV: production
+  DEPLOYMENT_PROFILE: ${DEPLOYMENT_PROFILE}
+  DATABASE_URL: ${DATABASE_URL}
+  DATABASE_POOL_MAX: ${DATABASE_POOL_MAX:-10}
+  DATABASE_TIMEOUT_MS: ${DATABASE_TIMEOUT_MS:-5000}
+  JWT_SECRET: ${JWT_SECRET}
+  STORAGE_DRIVER: ${STORAGE_DRIVER}
+  STORAGE_LOCAL_DIR: /data/storage
+  STORAGE_MAX_UPLOAD_MB: ${STORAGE_MAX_UPLOAD_MB:-15}
+  S3_BUCKET: ${S3_BUCKET:-}
+  S3_REGION: ${S3_REGION:-}
+  S3_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID:-}
+  S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY:-}
+  S3_ENDPOINT: ${S3_ENDPOINT:-}
+  S3_FORCE_PATH_STYLE: ${S3_FORCE_PATH_STYLE:-false}
+  OSS_BUCKET: ${OSS_BUCKET:-}
+  OSS_REGION: ${OSS_REGION:-}
+  OSS_ACCESS_KEY_ID: ${OSS_ACCESS_KEY_ID:-}
+  OSS_ACCESS_KEY_SECRET: ${OSS_ACCESS_KEY_SECRET:-}
+  OSS_ENDPOINT: ${OSS_ENDPOINT:-}
+  INVOICE_AI_PROVIDER: ${INVOICE_AI_PROVIDER:-}
+  INVOICE_AI_BASE_URL: ${INVOICE_AI_BASE_URL:-}
+  INVOICE_AI_MODEL: ${INVOICE_AI_MODEL:-}
+  INVOICE_AI_API_KEY: ${INVOICE_AI_API_KEY:-}
+  INVOICE_AI_TIMEOUT_MS: ${INVOICE_AI_TIMEOUT_MS:-30000}
+  DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: ..
+      dockerfile: apps/server/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      <<: *app-env
+      PORT: "3000"
+      MIGRATION_DATABASE_URL: ${MIGRATION_DATABASE_URL}
+    volumes:
+      - storage:/data/storage
+    expose:
+      - "3000"
+
+  worker:
+    build:
+      context: ..
+      dockerfile: apps/server/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      api:
+        condition: service_started
+    command: ["node", "apps/server/dist/worker.js"]
+    environment:
+      <<: *app-env
+    volumes:
+      - storage:/data/storage
+
+  nginx:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      # Render nginx/jahez.conf.template with envsubst into nginx/jahez.conf before deploying.
+      - ${NGINX_CONF:-./nginx/jahez.conf}:/etc/nginx/conf.d/default.conf:ro
+      - ${WEB_ROOT:-./www}:/usr/share/nginx/html:ro
+      - ${TLS_CERT_DIR:-./tls}:/etc/nginx/tls:ro
+
+volumes:
+  pgdata:
+  storage:
