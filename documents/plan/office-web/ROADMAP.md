@@ -6,10 +6,9 @@ Follow the [agent guide](../../../AGENTS.md), [warehouse requirements](../../Req
 
 ## How the agent should work
 
-1. Read [Office Web Progress](../../progress/office-web/PROGRESS.md), inspect the current code, and choose the earliest unfinished step within scope.
-2. Before coding, update [Office Web Plan](PLAN.md) with the screens, affected roles, API dependencies, and acceptance checks for that step. Reuse this file for each step.
-3. Implement in the owning feature folder. Keep page components beside their pages and use the shared TypeScript API client. Check the OpenAPI contract before wiring a screen.
-4. Run `pnpm --dir apps/office-web build` and verify the affected screens with synthetic data. Record the completed work, results, blockers, and next step in [Office Web Progress](../../progress/office-web/PROGRESS.md). Advance after the required checks pass.
+Follow the [repository workflow](../../../AGENTS.md#workflow-for-every-step). Keep the requested step number in [Office Web Plan](PLAN.md) and [Office Web Progress](../../progress/office-web/PROGRESS.md). Record affected screens, roles, and API dependencies in the plan before editing application code.
+
+Keep page components beside their pages and use the shared TypeScript API client. Check the OpenAPI contract before wiring a screen and verify the affected screens with synthetic data.
 
 ## First workflow
 

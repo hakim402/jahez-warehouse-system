@@ -5,4 +5,4 @@ description: Implement or review Jahez warehouse features in Qoder, including or
 
 # Jahez Feature Workflow
 
-Read and follow the [shared Jahez feature workflow](../../../.agents/skills/jahez-feature/SKILL.md). If the Markdown link does not open, read `.agents/skills/jahez-feature/SKILL.md` from the repository root.
+Read the [repository workflow](../../../AGENTS.md#workflow-for-every-step) and the [shared Jahez feature skill](../../../.agents/skills/jahez-feature/SKILL.md). Apply the same numbered plan, scope, progress, and commit rules in Qoder.

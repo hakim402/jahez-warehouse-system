@@ -6,10 +6,9 @@ Follow the [agent guide](../../../AGENTS.md), [warehouse requirements](../../Req
 
 ## How the agent should work
 
-1. Read [Worker Mobile Progress](../../progress/worker-mobile/PROGRESS.md), inspect the current code, and choose the earliest unfinished step within scope.
-2. Before coding, update [Worker Mobile Plan](PLAN.md) with the screens, local database and queue changes, server dependencies, and device checks for that step. Reuse this file for each step.
-3. Implement in the owning feature folder. Keep screen state and widgets beside the screen. Use the shared Dart API client and keep connection, storage, and retry logic in the repository and offline layers.
-4. Run `flutter analyze` and the relevant device checks from `apps/worker-mobile`. Record completed work, results, blockers, and the next step in [Worker Mobile Progress](../../progress/worker-mobile/PROGRESS.md). Advance after the required checks pass.
+Follow the [repository workflow](../../../AGENTS.md#workflow-for-every-step). Keep the requested step number in [Worker Mobile Plan](PLAN.md) and [Worker Mobile Progress](../../progress/worker-mobile/PROGRESS.md). Record affected screens, local database and queue changes, server dependencies, and device checks in the plan before editing application code.
+
+Keep screen state and widgets beside their screens. Use the shared Dart API client and keep connection, storage, and retry logic in the repository and offline layers. Run the relevant device checks alongside Flutter analysis.
 
 ## First workflow
 
