@@ -139,6 +139,11 @@ Keep business rules in their owning service. REST requests, offline retries, and
 
 ## Production
 
+International API requests use `https://api.jahez.online/api/v1`, with readiness at
+`https://api.jahez.online/api/v1/health/ready`. Office Web runs at `https://office.jahez.online`.
+Socket.IO connects to the API host using `/socket.io/`. The current office configuration uses
+relative `/api/v1` and same-origin Socket.IO through Nginx. See the domain and TLS guidance below.
+
 Follow the [deployment runbook](../../deploy/RUNBOOK.md) for first-time provisioning, TLS, runtime grants, and backups. Both regions use the same image and migrations with independent environment settings.
 
 1. Create the region environment from [`deploy/env/`](../../deploy/env/), configure database roles and secrets, and provision private storage.

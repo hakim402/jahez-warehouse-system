@@ -24,6 +24,11 @@ Jahez manages supplier orders, receiving, dispatch, stock, expenses, and reporti
 
 ## Next milestone
 
+International production uses `https://office.jahez.online` for Office Web and
+`https://api.jahez.online/api/v1` for the server. The current office build uses the relative
+`/api/v1` route through Nginx. Follow the [production domain guide](../../deploy/RUNBOOK.md#international-production-addresses)
+for TLS and client connections.
+
 The next Server step is private file storage and evidence. For the first end-to-end client milestone, create a manual order in Office Web, receive it offline in Worker Mobile, then verify that the office dashboard reflects the synced stock update. Benchmark invoice extraction separately on approved samples before relying on it in receiving. [Server plan](../plan/server/PLAN.md#step-6--files-and-evidence)
 
 ## Planning and progress

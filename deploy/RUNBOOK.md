@@ -4,6 +4,25 @@ Both regions deploy the **same code revision** with the shared [`compose.yml`](c
 env file differs. International runs on Hostinger, mainland China on Alibaba Cloud ECS. Record each
 region's deployed revision separately.
 
+## International production addresses
+
+| Service | Address |
+| --- | --- |
+| Office Web | `https://office.jahez.online` |
+| Server API | `https://api.jahez.online/api/v1` |
+| API readiness | `https://api.jahez.online/api/v1/health/ready` |
+| Socket.IO | `https://api.jahez.online`, default path `/socket.io/` |
+
+Point both DNS records to the Hostinger VPS and provide a TLS certificate covering both names.
+The shared Nginx template serves both hostnames using the international template's quoted `DOMAIN`
+value. Verify DNS and certificate issuance during deployment.
+
+For the current Office Web build, keep `VITE_API_BASE_URL=/api/v1`. Nginx proxies Office Web's
+`/api/` and `/socket.io/` routes to the same backend, keeping browser requests on the office origin.
+Mobile and external API clients use `https://api.jahez.online/api/v1` directly.
+If Office Web switches to the absolute API domain later, first configure and verify REST and
+Socket.IO cross-origin access specifically for `https://office.jahez.online`.
+
 ## Prerequisites (operator-supplied, not in the repo)
 
 - A staging host per region with Docker + Docker Compose.
@@ -29,7 +48,8 @@ region's deployed revision separately.
    env/<region>.env run --rm api node apps/server/dist/migrate.js`, then apply the runtime grants
    listed below. Bring up the full stack with `docker compose --env-file env/<region>.env up -d --build`.
    The `api` service runs `dist/migrate.js` then `dist/main.js`; the `worker` runs `dist/worker.js`.
-6. Health check: `curl -k https://<domain>/api/v1/health/ready`.
+6. International health check: `curl --fail https://api.jahez.online/api/v1/health/ready`.
+   Open `https://office.jahez.online` and verify its proxied API and Socket.IO connections.
 
 ### Required runtime database grants
 

@@ -157,6 +157,8 @@ Steps 1–10 are verified on the recorded local and disposable PostgreSQL checks
 
 ## Step 11 — Regional Staging and Pilot Readiness
 
+**Production domains recorded — 2026-11-27** — Updated international production examples and developer guidance for `api.jahez.online` and `office.jahez.online`. The shared Nginx host list includes both names. Office requests retain same-origin API proxying, and mobile/external clients use the API subdomain. DNS reachability and TLS issuance remain deployment checks.
+
 **Client integration follow-ups** — Added a deferred checklist at the top of Server Plan covering provisioning, shared-device sessions, invoice parsing and accuracy, storage-provider verification, regional staging, recovery, Yiwu access, and mobile-version compatibility. Each item names its owning server step and when client development should revisit it. Implementation remains pending.
 
 **Developer guide** — Added `apps/server/README.md` covering prerequisites, environment setup, database role provisioning, API and worker commands, synthetic accounts, smoke tests, production operations, and remaining release checks. Checked the documented scripts and routes against source and validated local document links. This documentation update changes no application behavior.

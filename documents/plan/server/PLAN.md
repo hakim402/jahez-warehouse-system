@@ -171,6 +171,8 @@ Use [Office Web's roadmap](../office-web/ROADMAP.md) and [Worker Mobile's roadma
 
 ## Step 11 — Regional Staging and Pilot Readiness
 
+**Production domain update** — Document `api.jahez.online` for the international API and `office.jahez.online` for Office Web. Align the international Nginx example, TLS instructions, health checks, and client connection guidance. Validate rendered hostnames and Compose settings before committing.
+
 **Developer guide update** — Add a server README with development setup, database roles, API and worker commands, a smoke-test checklist, production entry points, and the remaining staging checks. Validate commands against package scripts and links against repository files before committing.
 
 **Review follow-up** — Added Docker secret exclusions and writable storage ownership, API readiness gating, distinct runtime-role templates and required provisioning instructions. Restore failures exit nonzero and roll back the database restore. Cloud object recovery remains a regional staging check.
