@@ -157,6 +157,8 @@ Steps 1–10 are verified on the recorded local and disposable PostgreSQL checks
 
 ## Step 11 — Regional Staging and Pilot Readiness
 
+**Developer guide** — Added `apps/server/README.md` covering prerequisites, environment setup, database role provisioning, API and worker commands, synthetic accounts, smoke tests, production operations, and remaining release checks. Checked the documented scripts and routes against source and validated local document links. This documentation update changes no application behavior.
+
 **Deliverables shipped** — 2026-11-26. Backup/restore verified locally (17 checks). Regional staging checks pending real infrastructure.
 
 - Added `apps/server/Dockerfile` (multi-stage pnpm build → slim non-root runtime carrying `dist` + `db/migrations`; one image, two entrypoints — the API runs `migrate` then `main`, the worker runs `worker`).

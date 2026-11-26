@@ -153,6 +153,8 @@ Steps 1–10 are verified. Step 11 is next. Use the [Server Roadmap](ROADMAP.md)
 
 ## Step 11 — Regional Staging and Pilot Readiness
 
+**Developer guide update** — Add a server README with development setup, database roles, API and worker commands, a smoke-test checklist, production entry points, and the remaining staging checks. Validate commands against package scripts and links against repository files before committing.
+
 **Review follow-up** — Added Docker secret exclusions and writable storage ownership, API readiness gating, distinct runtime-role templates and required provisioning instructions. Restore failures exit nonzero and roll back the database restore. Cloud object recovery remains a regional staging check.
 
 **Status** — Deliverables shipped; encrypted backup/restore verified locally (17 checks). Regional staging checks are pending — they require staging hosts, domains, TLS certificates, cloud storage credentials, AI provider keys, and physical Yiwu network access that are not available from the development machine. See the open-checks list in the [deploy runbook](../../../deploy/RUNBOOK.md).
