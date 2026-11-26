@@ -6,10 +6,9 @@ Read the [agent guide](../../../AGENTS.md), [project context](../../context/PROJ
 
 ## How the agent should work
 
-1. Read [Server Progress](../../progress/server/PROGRESS.md) and inspect the current code. Start with the earliest unfinished step within the requested scope.
-2. Before coding, write the step's plan in [Server Plan](PLAN.md). Include its goal, dependencies, affected modules, migrations and API changes, and the checks that will prove it works. Reuse the same plan file for each step.
-3. Implement the step in the owning server modules. Share business operations across REST, sync, and jobs. Record client contract changes in OpenAPI so Office Web and Worker Mobile can use them.
-4. Run server typecheck, build, and the step's acceptance checks. Add a dated entry to [Server Progress](../../progress/server/PROGRESS.md) with completed work, check results, gaps, and the next step. Advance once the step's required checks pass.
+Follow the [repository workflow](../../../AGENTS.md#workflow-for-every-step). Keep the same `Step N` heading in [Server Plan](PLAN.md) and [Server Progress](../../progress/server/PROGRESS.md). Save the plan before coding and include the verified progress entry in the commit pushed to `main`.
+
+Implement in the owning server modules. Share business operations across REST, sync, and jobs. Record client contract changes in OpenAPI for Office Web and Worker Mobile.
 
 ## First workflow
 

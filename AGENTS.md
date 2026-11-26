@@ -12,11 +12,18 @@ These repository instructions apply to Codex and Qoder. Read [Project Context](d
 - Verify tenant and warehouse authorization on the server. Keep prices and costs out of worker responses and offline data.
 - Use descriptive names and reserve comments for the reasons behind business rules, permissions, offline retries, and transactions.
 
-## Plan and record progress
+## Workflow for every step
 
-Before implementing a change, update `PLAN.md` for each affected app with the scope, steps, dependencies, and verification criteria. After implementing and checking the work, update each app's `PROGRESS.md` with what was completed, check results, blockers, and the next step. Reuse the existing files for each task. The [planning and progress index](documents/context/PROJECT-CONTEXT.md#planning-and-progress) links to each app's files.
+A request such as “start Server Step 6” includes the planning, implementation, verification, and progress work below. Use the [planning and progress index](documents/context/PROJECT-CONTEXT.md#planning-and-progress) to find the affected app's roadmap, plan, and progress log.
 
-## Verify changes
+1. **Identify the step.** Read the requested app's roadmap, plan, and progress log. Confirm the step number, scope, and dependencies against the current code.
+2. **Save the plan before coding.** Update the existing `PLAN.md` for every affected app under its matching `Step N` heading. Describe the goal, numbered implementation tasks, affected modules or screens, migrations or API changes where relevant, dependencies, and acceptance checks. Mark the plan `In progress` when implementation starts. For a fix, update the plan under the step that owns it. Write the plan to the repository before editing application code. A roadmap entry or chat outline alone is insufficient.
+3. **Implement the step.** Follow the saved plan and keep work within the requested scope. Update the plan before continuing if the implementation or checks materially change.
+4. **Verify the work.** Run the applicable commands below and exercise the affected workflow with synthetic or redacted data. Record the actual results and any checks still pending.
+5. **Save progress before committing.** Update the existing `PROGRESS.md` under the same `Step N` heading with the date, completed work, verification results, blockers or gaps, and next step. Keep both documents in roadmap order and update the status in `PLAN.md` to match. Mark the step verified once its required checks pass.
+6. **Commit and push each verified update.** Review the staged diff and make a focused commit containing the implementation, plan, and progress updates together. Push to GitHub `main` and confirm the push before advancing. Preserve unrelated work and honor any request to stop at a plan or review checkpoint or to leave work uncommitted. Use the same commit-and-push workflow for requested documentation updates. Deploy only when explicitly requested.
+
+## Verification commands
 
 Run the applicable checks from the repository root with the app dependencies available.
 
@@ -27,4 +34,4 @@ pnpm --dir apps/office-web build
 (cd apps/worker-mobile && flutter analyze)
 ```
 
-For functional changes, exercise the affected workflow with synthetic or redacted data and state what was verified. Use `.env.example` for variable names. Keep credentials in local `.env` files and keep private supplier invoices out of commits and external test requests unless the user authorizes the transfer. Preserve unrelated work. Commit, push, or deploy only when requested.
+Use `.env.example` for variable names. Keep credentials in local `.env` files and keep private supplier invoices out of commits and external test requests unless the user authorizes the transfer.
