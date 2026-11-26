@@ -1,6 +1,6 @@
 # Server Progress
 
-Steps 1–7 are verified on the recorded local and disposable PostgreSQL checks. Step 8 is next. Plan scope and acceptance criteria are in the [Server Plan](../../plan/server/PLAN.md).
+Steps 1–8 are verified on the recorded local and disposable PostgreSQL checks. Step 9 is next. Plan scope and acceptance criteria are in the [Server Plan](../../plan/server/PLAN.md).
 
 ## Step 1 — Configuration and PostgreSQL Readiness
 
@@ -71,7 +71,7 @@ Steps 1–7 are verified on the recorded local and disposable PostgreSQL checks.
 
 **Design notes** — Downloads stream through the authorized API instead of the requirements' "private expiring links"; no public or presigned URLs exist, which keeps access tenant- and warehouse-scoped. File uploads are not yet published in `sync_changes` or live events; clients fetch evidence on demand through `GET /files?entityType=...`. Add file events when the mobile photo queue needs cross-device notification.
 
-**Deployment notes** — Expense and import links are accepted but validated by those modules in later steps; adjustment links are validated from Step 7. Grant the runtime role SELECT/INSERT on `files` and keep the local storage directory outside the web root. `.env.example` lists the storage variables.
+**Deployment notes** — Import links are accepted but validated by that module in a later step; adjustment links are validated from Step 7 and expense links from Step 8. Grant the runtime role SELECT/INSERT on `files` and keep the local storage directory outside the web root. `.env.example` lists the storage variables.
 
 ## Step 7 — Dispatch and Stock Adjustments
 
@@ -86,3 +86,17 @@ Steps 1–7 are verified on the recorded local and disposable PostgreSQL checks.
 **Design notes** — Dispatch is online-only per roadmap; the worker draft stays on the device and there is no server draft state. An adjustment without a lot link corrects the group balance only; lot age cannot attribute it, so a fully adjusted group can still show physical lot remainders. Use `receiptLineId` when the affected lot is known.
 
 **Deployment notes** — Grant the runtime role SELECT/INSERT on `dispatches`, `dispatch_lines`, `dispatch_allocations`, and `stock_adjustments` (`.env.example` updated). No new privileged functions; the advisory stock lock needs no grants.
+
+## Step 8 — Expenses
+
+**Verified** — 2026-11-26. 59 checks on disposable PostgreSQL.
+
+- Shipped migration 0009: tenant-scoped `expense_categories` (defaults transport/labor/handling/rent backfilled for existing companies and seeded by trigger for new tenants) and warehouse-scoped append-only `expenses` with a CHECK requiring exactly one evidence path (invoice file or documented no-invoice note). Office-only RLS reads on both tables; owner-only category writes; office expense inserts.
+- Shipped `GET/POST /expense-categories` and `PATCH /expense-categories/:id` (owner-managed rename/activate/deactivate, no delete), `POST /expenses` (idempotent by client operation id, amount/currency/date validation, active-category requirement, customer and same-warehouse order links, `EXP-...` numbering), `GET /expenses` with category/customer/order filters, and `GET /expenses/:id`. Expense file entity links are validated.
+- Closed the worker cost-leak surface: `expense_invoice` and `invoice_source` files are office-only on upload, list, metadata, and download; `expense.recorded` live events skip worker sockets in the same warehouse room; expenses are deliberately absent from `sync_changes`, which workers pull.
+- Verified on a fresh disposable database: both evidence paths succeed; missing, blank, or double evidence returns 400; excess precision, negative amount, lowercase currency, and invalid calendar dates return 400; unknown category 404, inactive category 409, unknown order link and supplier-as-customer 404; attachments from another warehouse or another tenant are denied; replays return the original record and changed requests 409.
+- Verified workers get 403 on every expense/category read and write, cannot upload, list, filter, read, or download invoice evidence while receipt photos still work, receive no expense live event while the office socket does, and see no expense entries in sync pull. Owner-only category management, cross-tenant and non-member denial, runtime UPDATE/DELETE denial, worker RLS insert/select denial, audit counts, and a clean migration rerun all passed. Typecheck and build passed. Migration 0009 also applied to the local development database.
+
+**Design notes** — Expenses are online-only for the pilot; offline capture can reuse the same service through sync push later. `POST /expenses/extract` (invoice reading) belongs to Step 10. Office reconnect recovery re-fetches expenses over REST because the worker-safe sync feed intentionally excludes them.
+
+**Deployment notes** — Grant the runtime role SELECT/INSERT on `expenses` and SELECT/INSERT/UPDATE on `expense_categories` (`.env.example` updated). The category seed trigger runs as the provisioning role that inserts companies.

@@ -1,6 +1,6 @@
 # Server Plan
 
-Steps 1–7 are verified. Step 8 is next. Use the [Server Roadmap](ROADMAP.md) for scope, the [agent workflow](../../../AGENTS.md#workflow-for-every-step) for the order of work, and [Server Progress](../../progress/server/PROGRESS.md) for results. Update the matching step here before editing server code.
+Steps 1–8 are verified. Step 9 is next. Use the [Server Roadmap](ROADMAP.md) for scope, the [agent workflow](../../../AGENTS.md#workflow-for-every-step) for the order of work, and [Server Progress](../../progress/server/PROGRESS.md) for results. Update the matching step here before editing server code.
 
 ## Step 1 — Configuration and PostgreSQL Readiness
 
@@ -89,7 +89,21 @@ Steps 1–7 are verified. Step 8 is next. Use the [Server Roadmap](ROADMAP.md) f
 
 ## Step 8 — Expenses
 
-**Status** — Pending. Plan expense records, invoice evidence, and documented exceptions using the [Step 8 roadmap](ROADMAP.md#8-expenses).
+**Status** — Verified on disposable PostgreSQL (59 checks).
+
+**Goal** — Record expenses with amount, currency, date, category, and optional customer/order links; require invoice evidence or a documented no-invoice exception; let the owner manage categories; keep every expense and cost field away from workers.
+
+1. **Migration 0009.** Add tenant-scoped `expense_categories` (unique name per tenant, optional Chinese name, active flag; seed transport/labor/handling/rent for existing companies and via a trigger for new tenants) and warehouse-scoped append-only `expenses` (expense number, amount `numeric(14,2) > 0`, 3-letter currency, expense date, category FK, optional customer/order FKs, optional invoice file FK, no-invoice note, and a CHECK requiring exactly one evidence path). RLS: office-only SELECT on both tables; owner-only INSERT/UPDATE on categories; office INSERT on expenses. Revoke UPDATE/DELETE on expenses. Expense numbers come from `document_counters`.
+2. **Categories API.** `GET /expense-categories` (owner/trader), `POST /expense-categories` (owner), `PATCH /expense-categories/:id` (owner: rename, activate/deactivate). No delete — referenced categories stay for history; new expenses require an active category.
+3. **Expenses API.** `POST /api/v1/expenses` (owner/trader, idempotent by `clientOperationId` through `client_operations`, kind `expense.create`): `warehouseId`, `amount` (positive, ≤2 decimals), `currency` (ISO 4217-style 3 letters), `expenseDate`, `categoryId`, optional `customerId` (customer party) and `orderId` (validated in the same warehouse), and exactly one of `invoiceFileId` (an `expense_invoice` file in the same warehouse) or `noInvoiceNote` (the documented exception). `GET /expenses?warehouseId=...` with category/customer/order filters; `GET /expenses/:id` includes the evidence reference. Audit `expense.recorded`.
+4. **Worker cost isolation.** Expenses and categories are office-only at the service and RLS layers. `FilesService` restricts `expense_invoice` and `invoice_source` purposes to office roles on upload, list, metadata, and download, so workers cannot read invoice images that expose costs. Expense changes are published live as `expense.recorded` to office sockets only (worker sockets in the same room are skipped) and are deliberately not written to `sync_changes`, which workers pull.
+5. **Events and links.** Extend `WarehouseChange` with `expense.recorded`; validate `expense` file entity links in `FilesService` against `expenses` in the same warehouse.
+
+**Dependencies** — Steps 2 (roles/RLS), 6 (files), 7 (events pattern). `POST /expenses/extract` (invoice reading) belongs to Step 10. Expenses are online-only for the pilot; offline expense capture can reuse the same service through sync push later.
+
+**Acceptance checks** — Typecheck and build. On disposable PostgreSQL: both evidence paths succeed (invoice file, documented exception); missing/both evidence returns 400; a file from another warehouse or an unknown order link is denied; workers get 403 on expense/category reads and writes, cannot list or download expense-invoice files, receive no expense live event, and see no expense data in sync pull; owner-only category management; amount/currency/date validation; replay idempotency; cross-tenant denial; audit and migration rerun.
+
+**Client contract** — Upload the invoice first via `POST /files` with purpose `expense_invoice`; it can be linked later with `entityType=expense`. Create with `POST /expenses` (`clientOperationId`, `warehouseId`, `amount`, `currency`, `expenseDate`, `categoryId`, optional `customerId`/`orderId`, and `invoiceFileId` XOR `noInvoiceNote`). Identical retries return the original record; changed requests return 409. Workers never receive expense rows, category rows, or expense-invoice files.
 
 ## Step 9 — Background Jobs and Excel Exports
 

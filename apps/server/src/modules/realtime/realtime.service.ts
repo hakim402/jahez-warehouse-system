@@ -7,6 +7,9 @@ import { isUuid } from '../tenancy/types';
 
 type SubscriptionReply = { ok: true; warehouseId: string } | { ok: false; error: string };
 
+// Cost-bearing updates must not reach worker sockets sharing the warehouse room.
+const OFFICE_ONLY_ACTIONS = new Set<string>(['expense.recorded']);
+
 @Injectable()
 export class RealtimeService implements OnModuleDestroy {
   private readonly logger = new Logger(RealtimeService.name);
@@ -73,6 +76,7 @@ export class RealtimeService implements OnModuleDestroy {
           await socket.leave(room);
           return;
         }
+        if (OFFICE_ONLY_ACTIONS.has(change.action) && current.user.role === 'worker') return;
         socket.emit(change.action, change.payload);
       } catch (error) {
         if (!(error instanceof UnauthorizedException)) this.logger.warn('Warehouse subscription could not be revalidated');

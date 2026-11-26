@@ -15,7 +15,7 @@ import { DatabaseService } from '../../platform/database.service';
 import { SERVER_CONFIG, ServerConfig } from '../../platform/server-config';
 import { StorageService } from '../../platform/storage.service';
 import { TenancyService } from '../tenancy/tenancy.service';
-import { AuthenticatedUser, isUuid, WarehouseAccess } from '../tenancy/types';
+import { AuthenticatedUser, isOfficeRole, isUuid, WarehouseAccess } from '../tenancy/types';
 
 const PURPOSES = [
   'receipt_photo', 'piece_photo', 'damage_photo', 'adjustment_photo',
@@ -35,6 +35,8 @@ const EXTENSIONS: Record<string, string> = {
 };
 // Only serve known evidence types; an unrestricted inline HTML/SVG upload would be stored XSS on the API origin.
 const ALLOWED_CONTENT_TYPES = new Set(Object.keys(EXTENSIONS));
+// Invoice images expose prices and costs, so they stay office-only even though the files table is warehouse-wide.
+const OFFICE_ONLY_PURPOSES = new Set(['expense_invoice', 'invoice_source']);
 
 export interface FileRecord {
   id: string;
@@ -74,6 +76,9 @@ export class FilesService {
       ? input.purpose
       : null;
     if (!purpose) throw new BadRequestException(`Purpose must be one of ${PURPOSES.join(', ')}`);
+    if (OFFICE_ONLY_PURPOSES.has(purpose) && !isOfficeRole(user.role)) {
+      throw new ForbiddenException('Invoice evidence is restricted to the owner and trader');
+    }
     const entityType = optionalEnum(input.entityType, ENTITY_TYPES, 'Entity type');
     const entityId = input.entityId === undefined || input.entityId === null || input.entityId === ''
       ? null
@@ -146,9 +151,16 @@ export class FilesService {
       throw new BadRequestException('Entity type and entity id must be provided together');
     }
     const purpose = query.purpose ? optionalEnum(query.purpose, PURPOSES, 'Purpose') : null;
+    if (purpose && OFFICE_ONLY_PURPOSES.has(purpose) && !isOfficeRole(membership.role)) {
+      throw new ForbiddenException('Invoice evidence is restricted to the owner and trader');
+    }
     return this.database.withTenant(membership.tenantId, membership.userId, async (client) => {
       const clauses = ['warehouse_id = $1'];
       const params: unknown[] = [membership.warehouseId];
+      if (!isOfficeRole(membership.role)) {
+        params.push([...OFFICE_ONLY_PURPOSES]);
+        clauses.push(`purpose <> ALL($${params.length})`);
+      }
       if (entityType && entityId) {
         params.push(entityType, entityId);
         clauses.push(`entity_type = $${params.length - 1} AND entity_id = $${params.length}`);
@@ -184,6 +196,9 @@ export class FilesService {
       if (!row) throw new NotFoundException('File not found');
       const membership = await this.tenancy.findWarehouseAccess(user.id, row.warehouse_id, user.tenantId);
       if (!membership) throw new ForbiddenException('Warehouse access denied');
+      if (OFFICE_ONLY_PURPOSES.has(row.purpose) && !isOfficeRole(user.role)) {
+        throw new ForbiddenException('Invoice evidence is restricted to the owner and trader');
+      }
       return { row };
     });
   }
@@ -195,7 +210,7 @@ export class FilesService {
     entityId: string | null,
   ) {
     if (!entityType || !entityId) return;
-    // Expense and import tables arrive in later steps; their links are validated by those modules.
+    // The import table arrives in a later step; its links are validated by that module.
     if (entityType === 'receipt') {
       const found = await client.query('SELECT id FROM receipts WHERE id = $1 AND warehouse_id = $2', [entityId, warehouseId]);
       if (found.rowCount === 0) throw new NotFoundException('Linked receipt not found in this warehouse');
@@ -212,6 +227,9 @@ export class FilesService {
     } else if (entityType === 'adjustment') {
       const found = await client.query('SELECT id FROM stock_adjustments WHERE id = $1 AND warehouse_id = $2', [entityId, warehouseId]);
       if (found.rowCount === 0) throw new NotFoundException('Linked adjustment not found in this warehouse');
+    } else if (entityType === 'expense') {
+      const found = await client.query('SELECT id FROM expenses WHERE id = $1 AND warehouse_id = $2', [entityId, warehouseId]);
+      if (found.rowCount === 0) throw new NotFoundException('Linked expense not found in this warehouse');
     }
   }
 }

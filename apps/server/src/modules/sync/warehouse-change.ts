@@ -3,9 +3,9 @@ import { PoolClient } from 'pg';
 export interface WarehouseChange {
   tenantId: string;
   warehouseId: string;
-  entity: 'order' | 'receipt' | 'finding' | 'dispatch' | 'adjustment';
+  entity: 'order' | 'receipt' | 'finding' | 'dispatch' | 'adjustment' | 'expense';
   entityId: string;
-  action: 'order.confirmed' | 'order.cancelled' | 'receipt.confirmed' | 'finding.resolved' | 'dispatch.confirmed' | 'adjustment.recorded';
+  action: 'order.confirmed' | 'order.cancelled' | 'receipt.confirmed' | 'finding.resolved' | 'dispatch.confirmed' | 'adjustment.recorded' | 'expense.recorded';
   payload: Record<string, unknown>;
 }
 
