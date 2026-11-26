@@ -1,6 +1,24 @@
 # Server Plan
 
-Steps 1–10 are verified. Step 11 is next. Use the [Server Roadmap](ROADMAP.md) for scope, the [agent workflow](../../../AGENTS.md#workflow-for-every-step) for the order of work, and [Server Progress](../../progress/server/PROGRESS.md) for results. Update the matching step here before editing server code.
+The core server workflows have passed the recorded local checks. The follow-ups below remain open for client integration and pilot release. Use the [Server Roadmap](ROADMAP.md) for scope, the [agent workflow](../../../AGENTS.md#workflow-for-every-step) for the order of work, and [Server Progress](../../progress/server/PROGRESS.md) for results. Update the matching step here before editing server code.
+
+## Follow-ups during client development
+
+**Status** — Deferred for now. Review this checklist when starting Office Web or Worker Mobile work. Plan the relevant server changes under their original step number and record verification in Server Progress before marking an item complete.
+
+| When to revisit | Server step | Open task and completion evidence |
+| --- | --- | --- |
+| Before Office Web and Worker Mobile sign-in integration | 2 | Provide a repeatable account-provisioning workflow for companies, owners, workers, and warehouse memberships. Verify that provisioned users can sign in with the intended access. |
+| During Worker Mobile session implementation | 2 | Define and verify shared-tablet idle sign-out, local data cleanup, and remote device revocation with the client. |
+| During Office Web integration | 11 | Start Hostinger staging and verify Docker API/worker startup, restricted database roles, Nginx HTTPS, WebSockets, and the complete order-to-stock flow. |
+| During Office Web invoice review implementation | 10 | Add direct searchable-PDF parsing and benchmark DeepSeek/Qwen extraction on approved samples. Record accuracy, uncertain fields, and trader corrections before enabling live use. |
+| During invoice testing | 10 | Evaluate handwritten invoices with manual correction available. Record the supported formats and remaining automation limits. |
+| During Worker Mobile photo and sync integration | 6 | Verify receipt confirmation independently of photo retries, persistent local files, and S3/OSS upload/download round-trips. Confirm earlier files remain readable after a provider switch. |
+| Before the warehouse pilot | 11 | Test recovery from encrypted database and file backups on the regional off-server target. Include all referenced S3/OSS objects in the recovery drill. |
+| Before use in the Yiwu warehouse | 11 | Verify sign-in, receiving, photos, stock, and live updates on mainland Wi-Fi and mobile data without a VPN. |
+| When two supported mobile versions exist | 11 | Verify the previous mobile release against the deployed API and test upgrade recovery with queued offline work. |
+
+Use [Office Web's roadmap](../office-web/ROADMAP.md) and [Worker Mobile's roadmap](../worker-mobile/ROADMAP.md) to identify the relevant integration milestone. Keep deferred items open until their recorded checks pass.
 
 ## Step 1 — Configuration and PostgreSQL Readiness
 
