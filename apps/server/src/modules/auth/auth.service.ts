@@ -141,11 +141,23 @@ export class AuthService {
 
     const nextRefreshToken = randomBytes(32).toString('hex');
     const nextRefreshHash = hashToken(nextRefreshToken);
+    const presentedHash = hashToken(refreshToken);
 
     const user = await this.database.withTenant(
       session.tenant_id,
       session.user_id,
       async (client) => {
+        // Rotate only while the presented hash still matches so concurrent refreshes cannot both win.
+        const rotated = await client.query(
+          `UPDATE auth_sessions
+           SET refresh_token_hash = $1, last_used_at = now()
+           WHERE id = $2 AND refresh_token_hash = $3 AND revoked_at IS NULL AND expires_at > now()`,
+          [nextRefreshHash, session.id, presentedHash],
+        );
+        if (rotated.rowCount === 0) {
+          throw new UnauthorizedException('Invalid refresh token');
+        }
+
         const users = await client.query<LoginUserRow>(
           'SELECT id, tenant_id, name, role, password_hash FROM users WHERE id = $1',
           [session.user_id],
@@ -155,10 +167,6 @@ export class AuthService {
           throw new UnauthorizedException('Invalid refresh token');
         }
 
-        await client.query(
-          'UPDATE auth_sessions SET refresh_token_hash = $1, last_used_at = now() WHERE id = $2',
-          [nextRefreshHash, session.id],
-        );
         await client.query(
           `INSERT INTO audit_events (tenant_id, user_id, entity, entity_id, action, after)
            VALUES ($1, $2, 'auth_session', $3, 'auth.refresh', $4)`,

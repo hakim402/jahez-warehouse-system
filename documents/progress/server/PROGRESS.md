@@ -1,5 +1,36 @@
 # Server Progress
 
+## 2026-11-26 — Step 2 review fixes: atomic refresh, function grants, write RLS, append-only audit
+
+Completed:
+
+- Made refresh-token rotation atomic by updating the session only where the presented refresh-token hash still matches and the session is active; concurrent refresh calls cannot both succeed.
+- Added migration `0004_auth_grants_write_rls_append_only_audit`.
+- Restricted the four privileged auth and RLS helpers to the runtime role. The migration entry point uses the PostgreSQL driver's effective user from `DATABASE_URL`. The functions qualify application objects and use `search_path = pg_catalog, pg_temp`.
+- Split warehouse RLS into a membership read policy and an owner/trader write policy so workers can read assigned warehouses but cannot update them in PostgreSQL.
+- Made `audit_events` append-only with select/insert policies only and revoked update/delete privileges from the runtime role and `PUBLIC`.
+- Updated `.env.example` runtime-grant guidance for append-only audit and migration-managed auth-function grants.
+
+Checks:
+
+- `npx --yes pnpm@9 --dir apps/server typecheck`: passed.
+- `npx --yes pnpm@9 --dir apps/server build`: passed.
+- Disposable database verification: created `jahez_step2r_verify` with runtime, migration, and unrelated roles, then dropped the database and roles afterward.
+- Migration under the migration role: applied `0004_auth_grants_write_rls_append_only_audit`; rerun reported `No pending migrations`.
+- Concurrent refresh: eight simultaneous calls with the same refresh token produced exactly one `201` and seven `401`.
+- Unrelated database role: calls to `auth_find_user` and `auth_find_session` were denied with permission errors; the runtime role could still sign in and refresh.
+- Worker warehouse access: API read `200`, API write `403`; direct runtime-role SQL read returned one row and update affected zero rows. Owner and trader API writes succeeded; owner direct SQL update affected one row.
+- Audit append-only: runtime-role audit insert succeeded; runtime-role audit update and delete were denied.
+- Follow-up verification on a separate PostgreSQL 17 instance applied `0004` over `0003` and confirmed an idempotent rerun. Verified all four search paths and confirmed execution grants follow the `user` URL option when it differs from the username in the URL authority. Reran sign-in, eight concurrent refresh attempts, worker versus owner/trader warehouse access, and append-only audit checks using synthetic records.
+
+Blockers and notes:
+
+- No review-fix blockers.
+- When rotating to a different runtime role, explicitly grant the new role execution of the four privileged helpers and the required table privileges. Verify the new role, then revoke the old role's privileges. The migration runner skips an already-applied `0004`.
+- Phone sign-in still uses a password credential; SMS/OTP delivery remains unimplemented.
+
+**Next** — Step 3, catalog and manual purchase orders.
+
 ## 2026-11-26 — Step 2 follow-up: auth sessions, RLS, audit, and hardening
 
 Completed:

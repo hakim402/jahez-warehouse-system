@@ -6,13 +6,16 @@ import { Pool } from 'pg';
 const migrationsDir = resolve(__dirname, '../../db/migrations');
 const advisoryLockKey = 7241836501;
 
-export async function runMigrations(pool: Pool): Promise<string[]> {
+export async function runMigrations(pool: Pool, runtimeRole?: string): Promise<string[]> {
   const files = (await readdir(migrationsDir)).filter((file) => file.endsWith('.sql')).sort();
   const client = await pool.connect();
   const applied: string[] = [];
 
   try {
     await client.query('SELECT pg_advisory_lock($1)', [advisoryLockKey]);
+    if (runtimeRole) {
+      await client.query("SELECT set_config('app.runtime_role', $1, false)", [runtimeRole]);
+    }
     await client.query(`
       CREATE TABLE IF NOT EXISTS schema_migrations (
         version text PRIMARY KEY,

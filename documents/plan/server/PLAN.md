@@ -100,6 +100,31 @@ Verification criteria on a disposable database:
 - Run server typecheck and build.
 - Record results, blockers, and open items in [Server progress](../../progress/server/PROGRESS.md), commit and push the follow-up, then stop before Step 3.
 
+### Step 2 review fixes — atomic refresh, function grants, write RLS, append-only audit
+
+**Status** — Review fixes verified on disposable PostgreSQL 17.
+
+Scope: remain within Step 2. Address the four review findings without adding Step 3 order, receipt, or stock functionality.
+
+Steps:
+
+1. Make refresh-token rotation atomic: rotate by updating the session only where the presented refresh-token hash still matches and the session is active, so concurrent refresh calls cannot both succeed.
+2. Add migration `0004` that revokes `PUBLIC` execute on the privileged security-definer auth/RLS helper functions and grants execute only to the intended runtime role. The migration entry point supplies the runtime role from `DATABASE_URL` through `app.runtime_role`.
+3. In the same migration, split warehouse RLS into a membership read policy and an owner/trader write policy so workers can read assigned warehouses but cannot update them in PostgreSQL.
+4. Make `audit_events` append-only: replace the all-command policy with select/insert policies only and revoke update/delete privileges, so the runtime role cannot edit or delete audit records.
+5. Harden the four privileged functions in `0004` by qualifying application objects and setting a trusted search path with `pg_temp` last. Resolve the runtime role through the PostgreSQL driver so the grants follow the effective connection user. Document explicit grant and revoke steps for role rotation.
+
+Verification criteria on a disposable database:
+
+- Run migrations under `MIGRATION_DATABASE_URL`; confirm `0004` applies and rerun is idempotent.
+- Issue concurrent refresh calls with the same refresh token; confirm exactly one succeeds and the others receive `401`.
+- Confirm an unrelated database role cannot call the privileged auth functions, while the runtime role can sign in and refresh.
+- Verify that the four function definitions use the hardened search path and that `0004` grants execution to the effective PostgreSQL user when the connection URL specifies a `user` query parameter.
+- Confirm a worker can read its assigned warehouse through the API and direct runtime-role SQL, but cannot update it through the API or direct runtime-role SQL; owner/trader writes still succeed.
+- Confirm the runtime role cannot update or delete audit records, while audit inserts still succeed.
+- Run server typecheck and build.
+- Record results and blockers in [Server progress](../../progress/server/PROGRESS.md), then stop before Step 3 for review.
+
 ## Dependencies and verification
 
 Use the local PostgreSQL instance for development. With synthetic data, verify database readiness, cross-tenant denial, and a receipt replay that leaves stock counted once. Coordinate the order and receipt contracts with [office web](../office-web/PLAN.md) and [worker mobile](../worker-mobile/PLAN.md).
