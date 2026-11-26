@@ -1,6 +1,6 @@
 # Server Plan
 
-Steps 1–6 are verified. Step 7 is next. Use the [Server Roadmap](ROADMAP.md) for scope, the [agent workflow](../../../AGENTS.md#workflow-for-every-step) for the order of work, and [Server Progress](../../progress/server/PROGRESS.md) for results. Update the matching step here before editing server code.
+Steps 1–7 are verified. Step 8 is next. Use the [Server Roadmap](ROADMAP.md) for scope, the [agent workflow](../../../AGENTS.md#workflow-for-every-step) for the order of work, and [Server Progress](../../progress/server/PROGRESS.md) for results. Update the matching step here before editing server code.
 
 ## Step 1 — Configuration and PostgreSQL Readiness
 
@@ -71,7 +71,21 @@ Steps 1–6 are verified. Step 7 is next. Use the [Server Roadmap](ROADMAP.md) f
 
 ## Step 7 — Dispatch and Stock Adjustments
 
-**Status** — Pending. Plan transactional dispatch, receipt-lot allocation, and evidenced adjustments using the [Step 7 roadmap](ROADMAP.md#7-dispatch-and-stock-adjustments).
+**Status** — Verified on disposable PostgreSQL (54 checks).
+
+**Goal** — Confirm dispatch online with FIFO receipt-lot allocation in one transaction, expose packing-list data, record evidenced stock adjustments, keep stock age correct after partial dispatches, and publish dispatch and adjustment events (Step 5 follow-up).
+
+1. **Migration 0008.** Add append-only warehouse-scoped `dispatches`, `dispatch_lines`, `dispatch_allocations` (line → receipt lot → stock movement), and `stock_adjustments` (reason, note, required photo file, actor, signed cartons, optional lot link). Extend the `stock_movements` insert policy: dispatch rows must be negative and lot-linked, adjust rows non-zero and reference-linked; receipt rule unchanged. Add `UNIQUE (id, tenant_id)` to `stock_movements` for the allocation FK. RLS: members read/write dispatch tables; only owner/trader insert adjustments. Revoke UPDATE/DELETE/TRUNCATE on the new tables. Dispatch and adjustment numbers come from `document_counters`.
+2. **Dispatch module.** `POST /api/v1/dispatches` creates a confirmed dispatch in one transaction (same pattern as receipt confirmation; the worker draft lives on the device, so there is no server draft state). Idempotent by `clientOperationId` through `client_operations` (`dispatch.confirm`). Lines name a stock group (supplier, brand, product — all optional, matching the balance dimensions) plus cartons; duplicate groups are rejected. `GET /dispatches?warehouseId=...&customerId=...` lists recent dispatches; `GET /dispatches/:id` returns the packing list (lines with product names, cartons, qty, CBM, weight, and per-lot allocations with receipt numbers and dates). No prices anywhere.
+3. **Transactional allocation.** Take a per-tenant+warehouse advisory lock (`jahez.stock:...`) shared with negative adjustments. Validate available cartons per group and return `409` with the shortage when stock is insufficient. Allocate FIFO by receipt date; post one negative movement per allocated lot through `InventoryService` with `receipt_line_id` set, and record the allocation row. Qty, CBM, and weight are prorated per carton from the lot; a total is null when any contributing lot lacks the value.
+4. **Adjustments.** `POST /api/v1/stock/adjustments` (owner/trader only) records a signed non-zero carton movement with a required reason and a required `photoFileId` (an `adjustment_photo` file already uploaded to the same warehouse — uploads stay independent, retries keyed by `clientOperationId`). Optional `receiptLineId` ties the adjustment to a lot and derives its stock dimensions; explicit dimensions are then rejected. Negative adjustments validate group stock and, when lot-linked, lot remainder under the same advisory lock. Audit and number as `ADJ-...`.
+5. **Age, events, and links.** Rework `GET /stock/age` to sum all lot-linked movements (receipt +, dispatch −, adjust ±) per receipt lot and hide fully consumed lots; days still count from the receipt date. An adjustment without a lot link affects the group balance only, not lot age. Add a `customerId` stock filter. Extend `WarehouseChange` with `dispatch.confirmed` and `adjustment.recorded`, record them in `sync_changes`, and publish only after commit. Validate `adjustment` file entity links in `FilesService` against `stock_adjustments` in the same warehouse. Movement history exposes dispatch/adjustment numbers and the adjustment reason.
+
+**Dependencies** — Steps 4–6 (movements ledger, client operations, files, realtime). Dispatch is online-only per roadmap; it is not a sync push operation. Adjustment listing is covered by movement history, audit, and `GET /files?entityType=adjustment`.
+
+**Acceptance checks** — Typecheck and build. On disposable PostgreSQL: two concurrent dispatches exceeding combined stock leave the ledger non-negative (one succeeds, one 409); partial-lot balances and age remain correct; packing-list totals and allocations match; over-stock dispatch reports the shortage; replays return the original response and changed requests 409; adjustments require role, reason, and photo, and negative adjustments cannot overdraw; cross-tenant and non-member access is denied; events and sync changes appear only for committed work; runtime cannot update or delete the new tables.
+
+**Client contract** — Dispatch: `POST /dispatches` with `clientOperationId`, `warehouseId`, `customerId`, optional `destination`/`dispatchedAt`, and `lines: [{supplierId?, brand?, productId?, cartons}]`. Insufficient stock returns `409` with per-line `available`/`requested`/`shortage`. Adjustment: `POST /stock/adjustments` with `clientOperationId`, `warehouseId`, `reason`, `photoFileId`, signed `cartons`, optional `qty`/`cbm` (same sign), optional `note`, and either stock dimensions (`customerId?`, `supplierId?`, `brand?`, `productId?`) or `receiptLineId`. Upload the photo first via `POST /files` with purpose `adjustment_photo`; it can be linked later with `entityType=adjustment`.
 
 ## Step 8 — Expenses
 

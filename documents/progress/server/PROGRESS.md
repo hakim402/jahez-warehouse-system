@@ -1,6 +1,6 @@
 # Server Progress
 
-Steps 1–6 are verified on the recorded local and disposable PostgreSQL checks. Step 7 is next. Plan scope and acceptance criteria are in the [Server Plan](../../plan/server/PLAN.md).
+Steps 1–7 are verified on the recorded local and disposable PostgreSQL checks. Step 8 is next. Plan scope and acceptance criteria are in the [Server Plan](../../plan/server/PLAN.md).
 
 ## Step 1 — Configuration and PostgreSQL Readiness
 
@@ -71,4 +71,18 @@ Steps 1–6 are verified on the recorded local and disposable PostgreSQL checks.
 
 **Design notes** — Downloads stream through the authorized API instead of the requirements' "private expiring links"; no public or presigned URLs exist, which keeps access tenant- and warehouse-scoped. File uploads are not yet published in `sync_changes` or live events; clients fetch evidence on demand through `GET /files?entityType=...`. Add file events when the mobile photo queue needs cross-device notification.
 
-**Deployment notes** — Expense, adjustment, and import links are accepted but validated by those modules in later steps. Grant the runtime role SELECT/INSERT on `files` and keep the local storage directory outside the web root. `.env.example` lists the storage variables.
+**Deployment notes** — Expense and import links are accepted but validated by those modules in later steps; adjustment links are validated from Step 7. Grant the runtime role SELECT/INSERT on `files` and keep the local storage directory outside the web root. `.env.example` lists the storage variables.
+
+## Step 7 — Dispatch and Stock Adjustments
+
+**Verified** — 2026-11-26. 54 checks on disposable PostgreSQL.
+
+- Shipped migration 0008: append-only warehouse-scoped `dispatches`, `dispatch_lines`, `dispatch_allocations`, and `stock_adjustments`; the `stock_movements` insert policy now also accepts negative lot-linked dispatch rows and reference-linked adjust rows; adjustment inserts are office-only under RLS.
+- Shipped `POST /dispatches` (confirmed in one transaction, idempotent by client operation id), `GET /dispatches` with a customer filter, and `GET /dispatches/:id` as the packing list with per-lot allocations. Dispatch allocates FIFO by receipt date under a per-warehouse advisory lock shared with adjustments, posts one negative movement per lot through the inventory service, and reports per-line shortages with 409.
+- Shipped `POST /stock/adjustments` (owner/trader only): required reason and an `adjustment_photo` file in the same warehouse, signed cartons, optional lot link that derives the stock dimensions, and overdraw protection for negative adjustments. `GET /stock/age` now counts lot remainders (receipt +, dispatch −, lot-linked adjust ±) and hides consumed lots; movement history shows dispatch/adjustment numbers and the adjustment reason; `customerId` stock filter added. Adjustment file entity links are validated. Dispatch and adjustment changes are recorded in `sync_changes` and published live only after commit (Step 5 follow-up closed).
+- Verified on a fresh disposable database: a 12-carton dispatch allocated 10 + 2 across two receipt lots with correct qty/CBM/weight packing totals and no price fields; two concurrent dispatches exceeding combined stock produced one success and one 409 with the ledger never negative; over-stock dispatch reported the shortage; replays returned the original response with no new movements and changed requests returned 409.
+- Verified adjustment role denial for workers, missing/unknown photo and blank reason rejection, negative overdraw 409, lot-linked dimension derivation, replay idempotency, cross-tenant and non-member denial for reads and writes, live `dispatch.confirmed`/`adjustment.recorded` events plus sync pull recovery, runtime UPDATE/DELETE denial and movement insert-policy denial, audit counts, and a clean migration rerun. Typecheck and build passed. Migration 0008 also applied to the local development database.
+
+**Design notes** — Dispatch is online-only per roadmap; the worker draft stays on the device and there is no server draft state. An adjustment without a lot link corrects the group balance only; lot age cannot attribute it, so a fully adjusted group can still show physical lot remainders. Use `receiptLineId` when the affected lot is known.
+
+**Deployment notes** — Grant the runtime role SELECT/INSERT on `dispatches`, `dispatch_lines`, `dispatch_allocations`, and `stock_adjustments` (`.env.example` updated). No new privileged functions; the advisory stock lock needs no grants.

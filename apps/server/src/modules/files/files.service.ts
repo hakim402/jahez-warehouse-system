@@ -195,7 +195,7 @@ export class FilesService {
     entityId: string | null,
   ) {
     if (!entityType || !entityId) return;
-    // Expense, adjustment, and import tables arrive in later steps; their links are validated by those modules.
+    // Expense and import tables arrive in later steps; their links are validated by those modules.
     if (entityType === 'receipt') {
       const found = await client.query('SELECT id FROM receipts WHERE id = $1 AND warehouse_id = $2', [entityId, warehouseId]);
       if (found.rowCount === 0) throw new NotFoundException('Linked receipt not found in this warehouse');
@@ -209,6 +209,9 @@ export class FilesService {
     } else if (entityType === 'order') {
       const found = await client.query('SELECT id FROM orders WHERE id = $1 AND warehouse_id = $2', [entityId, warehouseId]);
       if (found.rowCount === 0) throw new NotFoundException('Linked order not found in this warehouse');
+    } else if (entityType === 'adjustment') {
+      const found = await client.query('SELECT id FROM stock_adjustments WHERE id = $1 AND warehouse_id = $2', [entityId, warehouseId]);
+      if (found.rowCount === 0) throw new NotFoundException('Linked adjustment not found in this warehouse');
     }
   }
 }

@@ -24,9 +24,42 @@ export interface ReceiptMovementInput {
 
 export interface StockFilters {
   customerMark?: string;
+  customerId?: string;
   supplierId?: string;
   brand?: string;
   productId?: string;
+}
+
+export interface DispatchAllocationInput {
+  tenantId: string;
+  userId: string;
+  warehouseId: string;
+  dispatchId: string;
+  customerId: string;
+  allocations: Array<{
+    receiptLineId: string;
+    supplierId: string | null;
+    brand: string | null;
+    productId: string | null;
+    cartons: number;
+    qty: number | null;
+    cbm: number | null;
+  }>;
+}
+
+export interface AdjustmentMovementInput {
+  tenantId: string;
+  userId: string;
+  warehouseId: string;
+  adjustmentId: string;
+  receiptLineId: string | null;
+  supplierId: string | null;
+  customerId: string | null;
+  brand: string | null;
+  productId: string | null;
+  cartons: number;
+  qty: number | null;
+  cbm: number | null;
 }
 
 @Injectable()
@@ -46,6 +79,40 @@ export class InventoryService {
         ],
       );
     }
+  }
+
+  // Dispatch movements stay lot-linked so stock age survives partial shipments; cartons are negative drawdowns.
+  async postDispatchMovements(client: PoolClient, input: DispatchAllocationInput): Promise<string[]> {
+    const ids: string[] = [];
+    for (const allocation of input.allocations) {
+      const result = await client.query<{ id: string }>(
+        `INSERT INTO stock_movements
+           (tenant_id, warehouse_id, supplier_id, brand, customer_id, product_id, cartons, qty, cbm, kind, ref_id, receipt_line_id, created_by)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'dispatch', $10, $11, $12)
+         RETURNING id`,
+        [
+          input.tenantId, input.warehouseId, allocation.supplierId, allocation.brand, input.customerId,
+          allocation.productId, -allocation.cartons, allocation.qty === null ? null : -allocation.qty,
+          allocation.cbm === null ? null : -allocation.cbm, input.dispatchId, allocation.receiptLineId, input.userId,
+        ],
+      );
+      ids.push(result.rows[0].id);
+    }
+    return ids;
+  }
+
+  async postAdjustmentMovement(client: PoolClient, input: AdjustmentMovementInput): Promise<string> {
+    const result = await client.query<{ id: string }>(
+      `INSERT INTO stock_movements
+         (tenant_id, warehouse_id, supplier_id, brand, customer_id, product_id, cartons, qty, cbm, kind, ref_id, receipt_line_id, created_by)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'adjust', $10, $11, $12)
+       RETURNING id`,
+      [
+        input.tenantId, input.warehouseId, input.supplierId, input.brand, input.customerId, input.productId,
+        input.cartons, input.qty, input.cbm, input.adjustmentId, input.receiptLineId, input.userId,
+      ],
+    );
+    return result.rows[0].id;
   }
 
   async listBalances(membership: WarehouseAccess, filters: StockFilters) {
@@ -105,13 +172,15 @@ export class InventoryService {
                 m.cartons, m.qty, m.cbm, m.supplier_id, s.name AS supplier_name,
                 m.customer_id, c.name AS customer_name, c.shipping_mark AS customer_mark,
                 m.ref_id, m.receipt_line_id, m.created_at, m.created_by,
-                r.receipt_no, r.received_at,
+                r.receipt_no, r.received_at, d.dispatch_no, a.adjustment_no, a.reason AS adjustment_reason,
                 to_char(m.created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') AS cursor_created_at
          FROM stock_movements m
          LEFT JOIN parties s ON s.id = m.supplier_id
          LEFT JOIN parties c ON c.id = m.customer_id
          LEFT JOIN products p ON p.id = m.product_id
          LEFT JOIN receipts r ON r.id = m.ref_id AND m.kind = 'receipt'
+         LEFT JOIN dispatches d ON d.id = m.ref_id AND m.kind = 'dispatch'
+         LEFT JOIN stock_adjustments a ON a.id = m.ref_id AND m.kind = 'adjust'
          WHERE ${where} ${boundary}
          ORDER BY m.created_at DESC, m.id DESC
          LIMIT $${params.length}`,
@@ -139,6 +208,11 @@ export class InventoryService {
           receiptId: row.kind === 'receipt' ? row.ref_id : null,
           receiptNo: row.receipt_no,
           receiptLineId: row.receipt_line_id,
+          dispatchId: row.kind === 'dispatch' ? row.ref_id : null,
+          dispatchNo: row.dispatch_no,
+          adjustmentId: row.kind === 'adjust' ? row.ref_id : null,
+          adjustmentNo: row.adjustment_no,
+          adjustmentReason: row.adjustment_reason,
           receivedAt: row.received_at instanceof Date ? row.received_at.toISOString() : row.received_at,
           createdAt: row.created_at instanceof Date ? row.created_at.toISOString() : row.created_at,
           createdBy: row.created_by,
@@ -149,9 +223,10 @@ export class InventoryService {
 
   async listAge(membership: WarehouseAccess, filters: StockFilters) {
     return this.database.withTenant(membership.tenantId, membership.userId, async (client) => {
-      const { where, params } = movementFilters(membership.warehouseId, filters, "m.kind = 'receipt'");
+      // Age counts what remains of each receipt lot: dispatch and lot-linked adjustments draw it down.
+      const { where, params } = movementFilters(membership.warehouseId, filters, 'm.receipt_line_id IS NOT NULL');
       const result = await client.query(
-        `SELECT m.ref_id AS receipt_id, r.receipt_no, r.received_at,
+        `SELECT r.id AS receipt_id, r.receipt_no, r.received_at,
                 m.supplier_id, s.name AS supplier_name,
                 m.customer_id, c.name AS customer_name, c.shipping_mark AS customer_mark,
                 m.brand, m.product_id, p.name_ar, p.name_en, p.name_cn,
@@ -160,13 +235,15 @@ export class InventoryService {
                 SUM(m.cbm) AS cbm,
                 FLOOR(EXTRACT(EPOCH FROM (now() - r.received_at)) / 86400)::int AS days_in_storage
          FROM stock_movements m
-         JOIN receipts r ON r.id = m.ref_id
+         JOIN receipt_lines rl ON rl.id = m.receipt_line_id
+         JOIN receipts r ON r.id = rl.receipt_id
          LEFT JOIN parties s ON s.id = m.supplier_id
          LEFT JOIN parties c ON c.id = m.customer_id
          LEFT JOIN products p ON p.id = m.product_id
          WHERE ${where}
-         GROUP BY m.ref_id, r.receipt_no, r.received_at, m.supplier_id, s.name,
+         GROUP BY r.id, r.receipt_no, r.received_at, m.supplier_id, s.name,
                   m.customer_id, c.name, c.shipping_mark, m.brand, m.product_id, p.name_ar, p.name_en, p.name_cn
+         HAVING SUM(m.cartons) > 0
          ORDER BY r.received_at ASC, r.receipt_no`,
         params,
       );
@@ -199,6 +276,7 @@ function movementFilters(warehouseId: string, filters: StockFilters, extra?: str
   const params: unknown[] = [warehouseId];
   if (extra) clauses.push(extra);
   if (filters.customerMark) { params.push(filters.customerMark); clauses.push(`c.shipping_mark = $${params.length}`); }
+  if (filters.customerId) { params.push(filters.customerId); clauses.push(`m.customer_id = $${params.length}`); }
   if (filters.supplierId) { params.push(filters.supplierId); clauses.push(`m.supplier_id = $${params.length}`); }
   if (filters.brand) { params.push(filters.brand); clauses.push(`m.brand = $${params.length}`); }
   if (filters.productId) { params.push(filters.productId); clauses.push(`m.product_id = $${params.length}`); }
