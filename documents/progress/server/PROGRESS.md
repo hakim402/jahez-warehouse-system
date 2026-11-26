@@ -65,4 +65,8 @@ Steps 1–6 are verified on the recorded local and disposable PostgreSQL checks.
 
 **Staging-dependent checks** — With real credentials: S3-compatible and OSS put/get round-trips, reading earlier cloud objects after a provider switch, and endpoint/TLS behavior from Yiwu. The disposable run used a dummy endpoint only to prove the stored-provider read path and clean failure handling.
 
+**Review fixes** — Re-audited against the Step 6 roadmap: the local provider now creates and write-checks its directory at startup (an unwritable path fails startup), and missing S3/OSS objects map to 404 like local reads. Added the upload/retry client contract to the plan. Re-verified on a fresh disposable database: unwritable dir fails startup, fresh dir is created at startup, upload/download round-trip, and a deleted stored object returns 404. Typecheck and build passed.
+
+**Design notes** — Downloads stream through the authorized API instead of the requirements' "private expiring links"; no public or presigned URLs exist, which keeps access tenant- and warehouse-scoped. File uploads are not yet published in `sync_changes` or live events; clients fetch evidence on demand through `GET /files?entityType=...`. Add file events when the mobile photo queue needs cross-device notification.
+
 **Deployment notes** — Expense, adjustment, and import links are accepted but validated by those modules in later steps. Grant the runtime role SELECT/INSERT on `files` and keep the local storage directory outside the web root. `.env.example` lists the storage variables.

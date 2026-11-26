@@ -1,8 +1,8 @@
-import { Inject, Injectable, NotFoundException, ServiceUnavailableException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException, OnModuleInit, ServiceUnavailableException } from '@nestjs/common';
 import { GetObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import OSS from 'ali-oss';
 import { createReadStream } from 'node:fs';
-import { access, mkdir, writeFile } from 'node:fs/promises';
+import { access, mkdir, unlink, writeFile } from 'node:fs/promises';
 import { dirname, resolve, sep } from 'node:path';
 import { Readable } from 'node:stream';
 import { SERVER_CONFIG, ServerConfig, StorageDriver } from './server-config';
@@ -14,10 +14,20 @@ export interface StorageProvider {
 }
 
 @Injectable()
-export class StorageService {
+export class StorageService implements OnModuleInit {
   private readonly providers = new Map<StorageDriver, StorageProvider>();
 
   constructor(@Inject(SERVER_CONFIG) private readonly config: ServerConfig) {}
+
+  // Validate the selected provider at startup; cloud credentials are config-checked, local disk must be writable.
+  async onModuleInit() {
+    if (this.config.storage.driver !== 'local') return;
+    const dir = this.config.storage.localDir;
+    await mkdir(dir, { recursive: true });
+    const probe = resolve(dir, '.startup-write-check');
+    await writeFile(probe, 'ok');
+    await unlink(probe);
+  }
 
   get writeProvider(): StorageProvider {
     return this.providerFor(this.config.storage.driver);
@@ -93,9 +103,17 @@ class S3StorageProvider implements StorageProvider {
   }
 
   async get(key: string): Promise<Readable> {
-    const result = await this.client.send(new GetObjectCommand({ Bucket: this.bucket, Key: key }));
-    if (!result.Body) throw new NotFoundException('Stored file is missing');
-    return result.Body as Readable;
+    try {
+      const result = await this.client.send(new GetObjectCommand({ Bucket: this.bucket, Key: key }));
+      if (!result.Body) throw new NotFoundException('Stored file is missing');
+      return result.Body as Readable;
+    } catch (error) {
+      const err = error as { name?: string; $metadata?: { httpStatusCode?: number } };
+      if (err.name === 'NoSuchKey' || err.$metadata?.httpStatusCode === 404) {
+        throw new NotFoundException('Stored file is missing');
+      }
+      throw error;
+    }
   }
 }
 
@@ -119,7 +137,15 @@ class OssStorageProvider implements StorageProvider {
   }
 
   async get(key: string): Promise<Readable> {
-    const result = await this.client.getStream(key);
-    return result.stream as Readable;
+    try {
+      const result = await this.client.getStream(key);
+      return result.stream as Readable;
+    } catch (error) {
+      const err = error as { code?: string; status?: number };
+      if (err.code === 'NoSuchKey' || err.status === 404) {
+        throw new NotFoundException('Stored file is missing');
+      }
+      throw error;
+    }
   }
 }
