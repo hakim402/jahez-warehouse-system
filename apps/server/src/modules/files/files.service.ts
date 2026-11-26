@@ -8,7 +8,6 @@ import {
   PayloadTooLargeException,
 } from '@nestjs/common';
 import { createHash, randomUUID } from 'node:crypto';
-import { extname } from 'node:path';
 import { Readable } from 'node:stream';
 import { PoolClient } from 'pg';
 import { recordAudit } from '../../platform/audit';
@@ -28,11 +27,14 @@ const EXTENSIONS: Record<string, string> = {
   'image/png': '.png',
   'image/webp': '.webp',
   'image/heic': '.heic',
+  'image/heif': '.heic',
   'application/pdf': '.pdf',
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': '.xlsx',
   'application/vnd.ms-excel': '.xls',
   'text/csv': '.csv',
 };
+// Only serve known evidence types; an unrestricted inline HTML/SVG upload would be stored XSS on the API origin.
+const ALLOWED_CONTENT_TYPES = new Set(Object.keys(EXTENSIONS));
 
 export interface FileRecord {
   id: string;
@@ -85,13 +87,16 @@ export class FilesService {
       throw new PayloadTooLargeException('File exceeds the configured upload limit');
     }
     const contentType = file.mimetype || 'application/octet-stream';
+    if (!ALLOWED_CONTENT_TYPES.has(contentType)) {
+      throw new BadRequestException('Unsupported file type; upload photos, PDF, Excel, or CSV evidence');
+    }
     const sha256 = createHash('sha256').update(file.buffer).digest('hex');
 
     return this.database.withTenant(user.tenantId, user.id, async (client) => {
       // Claim the upload id first so an independent photo retry returns the original record instead of duplicating evidence.
       const id = randomUUID();
       const now = new Date();
-      const extension = EXTENSIONS[contentType] ?? safeExtension(file.originalname);
+      const extension = EXTENSIONS[contentType];
       const objectKey = `${user.tenantId}/${now.getUTCFullYear()}/${String(now.getUTCMonth() + 1).padStart(2, '0')}/${id}${extension}`;
       const provider = this.storage.writeProvider;
       const claimed = await client.query<FileRecord>(
@@ -246,9 +251,4 @@ function optionalTimestamp(value: unknown): Date | null {
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) throw new BadRequestException('Taken at must be an ISO timestamp');
   return parsed;
-}
-
-function safeExtension(originalName: string | undefined): string {
-  const ext = originalName ? extname(originalName).toLowerCase() : '';
-  return /^\.[a-z0-9]{1,8}$/.test(ext) ? ext : '';
 }

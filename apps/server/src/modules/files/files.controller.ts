@@ -54,9 +54,11 @@ export class FilesController {
   @Get(':id/content')
   async content(@Req() request: AuthenticatedRequest, @Param('id') id: string, @Res() response: Response) {
     const { row, stream } = await this.files.download(request.user!, id);
+    const disposition = row.content_type.startsWith('image/') ? 'inline' : 'attachment';
     response.setHeader('Content-Type', row.content_type);
     response.setHeader('Content-Length', row.size_bytes);
-    response.setHeader('Content-Disposition', `inline; filename="${row.id}"`);
+    response.setHeader('Content-Disposition', `${disposition}; filename="${row.id}"`);
+    response.setHeader('X-Content-Type-Options', 'nosniff');
     response.setHeader('Cache-Control', 'private, no-store');
     stream.on('error', () => response.destroy());
     stream.pipe(response);
