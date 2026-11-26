@@ -17,6 +17,7 @@ export class JobsService implements OnModuleInit, OnModuleDestroy {
   private readonly handlers = new Map<string, JobHandler>();
   private readonly ensured = new Set<string>();
   private consuming = false;
+  private startup: Promise<unknown> | null = null;
 
   constructor(@Inject(SERVER_CONFIG) config: ServerConfig) {
     this.boss = new PgBoss({
@@ -31,8 +32,18 @@ export class JobsService implements OnModuleInit, OnModuleDestroy {
     this.boss.on('error', (error) => this.logger.warn(`Job queue error: ${error.message}`));
   }
 
-  async onModuleInit(): Promise<void> {
-    await this.boss.start();
+  onModuleInit(): void {
+    void this.start().catch(() => this.logger.warn('Job queue unavailable; the next queue operation will retry'));
+  }
+
+  private start(): Promise<unknown> {
+    if (!this.startup) {
+      this.startup = this.boss.start().catch((error) => {
+        this.startup = null;
+        throw error;
+      });
+    }
+    return this.startup;
   }
 
   register(name: string, handler: JobHandler): void {
@@ -72,6 +83,7 @@ export class JobsService implements OnModuleInit, OnModuleDestroy {
 
   /** Creates the queue once with the shared retry policy; safe to call from any process. */
   private async ensureQueue(name: string): Promise<void> {
+    await this.start();
     if (this.ensured.has(name)) return;
     await this.boss.createQueue(name, { retryLimit: 3, retryBackoff: true, retryDelay: 1000 });
     this.ensured.add(name);

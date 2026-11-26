@@ -22,11 +22,16 @@ region's deployed revision separately.
    `envsubst '${DOMAIN} ${TLS_CERT} ${TLS_KEY} ${MAX_UPLOAD_MB}' < nginx/jahez.conf.template > nginx/jahez.conf`
    using the region's values (export them or source the env first).
 4. Place TLS cert/key in `deploy/tls/` matching `TLS_CERT`/`TLS_KEY`.
-5. Bring the stack up: `docker compose --env-file env/<region>.env up -d --build`.
+5. Start PostgreSQL first with `docker compose --env-file env/<region>.env up -d postgres`.
+   Provision the separate `jahez_app` runtime login using a private password through the database
+   administrator connection. Set `DATABASE_URL` to that login and keep `MIGRATION_DATABASE_URL`
+   on the migration role. Build the API image, run migrations with `docker compose --env-file
+   env/<region>.env run --rm api node apps/server/dist/migrate.js`, then apply the runtime grants
+   listed below. Bring up the full stack with `docker compose --env-file env/<region>.env up -d --build`.
    The `api` service runs `dist/migrate.js` then `dist/main.js`; the `worker` runs `dist/worker.js`.
 6. Health check: `curl -k https://<domain>/api/v1/health/ready`.
 
-### Least-privilege database hardening (recommended before pilot)
+### Required runtime database grants
 
 Create a separate runtime role and migration role instead of one superuser, then apply the grants
 listed in [`apps/server/.env.example`](../apps/server/.env.example): USAGE on `public`, SELECT/INSERT
@@ -36,6 +41,9 @@ on the `pgboss` schema, and REVOKE UPDATE/DELETE/TRUNCATE on the append-only led
 
 ## Backups and restore drill
 
+- For S3/OSS, enable versioning and configure a separate regional backup or replication target.
+  The scripts below archive local disk only. Verify recovery of every provider referenced in the
+  database, including objects retained after switching the write provider, in the staging drill.
 - Schedule `backup/backup.sh` (cron) with the region env exported. It writes an encrypted PostgreSQL
   dump, an encrypted files archive, and a sha256 manifest to the off-server `BACKUP_DIR`.
 - Restore drill: create an empty target database, then run `backup/restore.sh` with `RESTORE_*`

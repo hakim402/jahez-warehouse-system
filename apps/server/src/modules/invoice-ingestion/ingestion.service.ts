@@ -91,7 +91,7 @@ export class IngestionService {
     this.requireOffice(user);
     const importId = requireUuid(id, 'Import id');
     return this.database.withTenant(user.tenantId, user.id, async (client) => {
-      const existing = await client.query('SELECT * FROM invoice_imports WHERE id = $1', [importId]);
+      const existing = await client.query('SELECT * FROM invoice_imports WHERE id = $1 FOR UPDATE', [importId]);
       if (existing.rowCount === 0) throw new NotFoundException('Import not found');
       if (existing.rows[0].status !== 'draft') throw new BadRequestException('Only a drafted import can be reviewed');
       const draft = mergeDraft(existing.rows[0].draft as InvoiceDraft, input);
@@ -108,48 +108,50 @@ export class IngestionService {
     this.requireOffice(user);
     const importId = requireUuid(id, 'Import id');
 
-    // 1. Load and validate under RLS, building the delegate input without mutating anything.
-    const prepared = await this.database.withTenant(user.tenantId, user.id, async (client) => {
-      const existing = await client.query('SELECT * FROM invoice_imports WHERE id = $1', [importId]);
-      if (existing.rowCount === 0) throw new NotFoundException('Import not found');
-      const row = existing.rows[0];
-      if (row.status === 'committed') return { already: true as const, entityId: row.committed_entity_id, kind: row.kind };
-      if (row.status !== 'draft') throw new BadRequestException('Import is not ready to commit');
-      const draft = row.draft as InvoiceDraft;
-      const unreviewed = unreviewedLowConfidencePaths(draft);
-      if (unreviewed.length > 0) {
-        throw new ConflictException({ message: 'Resolve uncertain fields before committing', fields: unreviewed });
-      }
-      const file = await client.query('SELECT content_type FROM files WHERE id = $1', [row.source_file_id]);
-      const contentType = file.rows[0]?.content_type ?? '';
-      return { already: false as const, importId, kind: row.kind as ImportKind, warehouseId: row.warehouse_id, sourceFileId: row.source_file_id, draft, contentType };
-    });
-
-    if (prepared.already) {
-      return { status: 'committed', [prepared.kind === 'expense' ? 'expenseId' : 'orderId']: prepared.entityId };
-    }
-
-    // 2. Delegate to the authoritative order/expense services (each runs its own validated transaction).
-    let entityId: string;
-    if (prepared.kind === 'purchase') {
-      entityId = await this.commitPurchase(user, prepared as any);
-    } else {
-      entityId = await this.commitExpense(user, prepared as any);
-    }
-
-    // 3. Mark the import committed.
-    await this.database.withTenant(user.tenantId, user.id, async (client) => {
-      await client.query(
-        "UPDATE invoice_imports SET status = 'committed', committed_entity_id = $1 WHERE id = $2",
-        [entityId, importId],
-      );
-      await recordAudit(client, {
-        tenantId: user.tenantId, userId: user.id, warehouseId: (prepared as any).warehouseId,
-        entity: 'import', entityId: importId, action: 'invoice.import.committed',
-        after: { kind: prepared.kind, entityId },
+    return this.database.withTenant(user.tenantId, user.id, async () => {
+      // Lock review and commit together with the delegated order or expense transaction.
+      const prepared = await this.database.withTenant(user.tenantId, user.id, async (client) => {
+        const existing = await client.query('SELECT * FROM invoice_imports WHERE id = $1 FOR UPDATE', [importId]);
+        if (existing.rowCount === 0) throw new NotFoundException('Import not found');
+        const row = existing.rows[0];
+        if (row.status === 'committed') return { already: true as const, entityId: row.committed_entity_id, kind: row.kind };
+        if (row.status !== 'draft') throw new BadRequestException('Import is not ready to commit');
+        const draft = row.draft as InvoiceDraft;
+        const unreviewed = unreviewedLowConfidencePaths(draft);
+        if (unreviewed.length > 0) {
+          throw new ConflictException({ message: 'Resolve uncertain fields before committing', fields: unreviewed });
+        }
+        const file = await client.query('SELECT content_type FROM files WHERE id = $1', [row.source_file_id]);
+        const contentType = file.rows[0]?.content_type ?? '';
+        return { already: false as const, importId, kind: row.kind as ImportKind, warehouseId: row.warehouse_id, sourceFileId: row.source_file_id, draft, contentType };
       });
+
+      if (prepared.already) {
+        return { status: 'committed', [prepared.kind === 'expense' ? 'expenseId' : 'orderId']: prepared.entityId };
+      }
+
+      // Nested service calls reuse the identity-scoped transaction.
+      let entityId: string;
+      if (prepared.kind === 'purchase') {
+        entityId = await this.commitPurchase(user, prepared as any);
+      } else {
+        entityId = await this.commitExpense(user, prepared as any);
+      }
+
+      // 3. Mark the import committed.
+      await this.database.withTenant(user.tenantId, user.id, async (client) => {
+        await client.query(
+          "UPDATE invoice_imports SET status = 'committed', committed_entity_id = $1 WHERE id = $2",
+          [entityId, importId],
+        );
+        await recordAudit(client, {
+          tenantId: user.tenantId, userId: user.id, warehouseId: (prepared as any).warehouseId,
+          entity: 'import', entityId: importId, action: 'invoice.import.committed',
+          after: { kind: prepared.kind, entityId },
+        });
+      });
+      return { status: 'committed', [prepared.kind === 'expense' ? 'expenseId' : 'orderId']: entityId };
     });
-    return { status: 'committed', [prepared.kind === 'expense' ? 'expenseId' : 'orderId']: entityId };
   }
 
   private async commitPurchase(user: AuthenticatedUser, p: { warehouseId: string; sourceFileId: string; draft: InvoiceDraft; contentType: string }): Promise<string> {

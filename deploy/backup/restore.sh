@@ -34,13 +34,18 @@ decrypt() {
 decrypt "$RESTORE_DB_DUMP" "$WORK/db.dump"
 
 # --clean --if-exists makes the restore re-runnable; --no-owner avoids owner-role mismatch.
-pg_restore --dbname="$RESTORE_PG_URL" --clean --if-exists --no-owner "$WORK/db.dump" 2>"$WORK/restore.log" || {
-  echo "pg_restore reported warnings/errors (see below); verifying data is the caller's responsibility" >&2
+if [ -n "${RESTORE_FILES_ARCHIVE:-}" ]; then
+  : "${RESTORE_STORAGE_DIR:?RESTORE_STORAGE_DIR is required with a files archive}"
+  decrypt "$RESTORE_FILES_ARCHIVE" "$WORK/files.tar"
+  tar -tf "$WORK/files.tar" >/dev/null
+fi
+pg_restore --dbname="$RESTORE_PG_URL" --clean --if-exists --no-owner --exit-on-error --single-transaction "$WORK/db.dump" 2>"$WORK/restore.log" || {
+  echo "Database restore failed" >&2
   cat "$WORK/restore.log" >&2
+  exit 1
 }
 
 if [ -n "${RESTORE_FILES_ARCHIVE:-}" ] && [ -n "${RESTORE_STORAGE_DIR:-}" ]; then
-  decrypt "$RESTORE_FILES_ARCHIVE" "$WORK/files.tar"
   mkdir -p "$RESTORE_STORAGE_DIR"
   tar -C "$RESTORE_STORAGE_DIR" -xf "$WORK/files.tar"
 fi

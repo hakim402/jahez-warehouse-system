@@ -97,7 +97,15 @@ export class DispatchService {
       for (const [index, line] of lines.entries()) {
         const lots = await this.loadLots(client, warehouseId, customerId, line);
         lotsByLine.push(lots);
-        const available = lots.reduce((sum, lot) => sum + Math.max(0, Number(lot.remaining)), 0);
+        const group = await client.query<{ available: string }>(
+          `SELECT COALESCE(SUM(cartons), 0) AS available FROM stock_movements
+           WHERE warehouse_id = $1 AND customer_id IS NOT DISTINCT FROM $2
+             AND supplier_id IS NOT DISTINCT FROM $3 AND brand IS NOT DISTINCT FROM $4
+             AND product_id IS NOT DISTINCT FROM $5`,
+          [warehouseId, customerId, line.supplierId, line.brand, line.productId],
+        );
+        const available = Math.min(Number(group.rows[0].available),
+          lots.reduce((sum, lot) => sum + Math.max(0, Number(lot.remaining)), 0));
         if (line.cartons > available) {
           shortages.push({ line: index, available, requested: line.cartons, shortage: line.cartons - available });
         }

@@ -108,13 +108,21 @@ export async function inventory(client: PoolClient, warehouseId: string, filters
     .uuid('m.supplier_id', filters.supplierId);
   const rows = await query(client, `
     SELECT c.shipping_mark AS customer_mark, s.name AS supplier_name, m.brand, p.name_en AS product,
-           SUM(m.cartons) AS cartons, SUM(m.qty) AS qty, SUM(m.cbm) AS cbm, MIN(m.created_at) AS first_in
+           SUM(m.cartons) AS cartons, SUM(m.qty) AS qty, SUM(m.cbm) AS cbm, (SELECT MIN(r.received_at) FROM stock_movements lot
+             JOIN receipts r ON r.id = lot.ref_id
+             WHERE lot.kind = 'receipt' AND lot.warehouse_id = m.warehouse_id
+               AND lot.customer_id IS NOT DISTINCT FROM m.customer_id
+               AND lot.supplier_id IS NOT DISTINCT FROM m.supplier_id
+               AND lot.product_id IS NOT DISTINCT FROM m.product_id
+               AND lot.brand IS NOT DISTINCT FROM m.brand
+               AND (SELECT SUM(used.cartons) FROM stock_movements used
+                    WHERE used.receipt_line_id = lot.receipt_line_id) > 0) AS first_in
     FROM stock_movements m
     LEFT JOIN parties c ON c.id = m.customer_id
     LEFT JOIN parties s ON s.id = m.supplier_id
     LEFT JOIN products p ON p.id = m.product_id
     ${q.where()}
-    GROUP BY m.customer_id, m.supplier_id, m.product_id, m.brand, c.shipping_mark, s.name, p.name_en
+    GROUP BY m.warehouse_id, m.customer_id, m.supplier_id, m.product_id, m.brand, c.shipping_mark, s.name, p.name_en
     HAVING SUM(m.cartons) <> 0
     ORDER BY c.shipping_mark NULLS LAST, p.name_en NULLS LAST`, q.params);
   const now = Date.now();
@@ -195,11 +203,14 @@ export async function orderVsReceived(client: PoolClient, warehouseId: string, f
   const rows = await query(client, `
     SELECT o.order_no, o.status AS order_status, p.name_en AS product, ol.brand, ol.size,
            ol.cartons AS ordered_cartons, ol.qty AS ordered_qty, ol.cbm AS ordered_cbm,
-           COALESCE(SUM(rl.cartons), 0) AS received_cartons, COALESCE(SUM(rl.qty), 0) AS received_qty
+           COALESCE(SUM(rl.cartons), 0) AS received_cartons, COALESCE(SUM(rl.qty), 0) AS received_qty,
+           COALESCE(SUM(rl.cbm), 0) AS received_cbm,
+           (SELECT count(*) FROM findings f WHERE f.order_line_id = ol.id AND f.status = 'open') AS open_findings
     FROM orders o
     JOIN order_lines ol ON ol.order_id = o.id
     LEFT JOIN products p ON p.id = ol.product_id
-    LEFT JOIN receipt_lines rl ON rl.order_line_id = ol.id
+    LEFT JOIN receipt_lines rl ON rl.order_line_id = ol.id AND rl.product_id = ol.product_id
+      AND EXISTS (SELECT 1 FROM receipts r WHERE r.id = rl.receipt_id AND r.status = 'confirmed')
     ${q.where()}
     GROUP BY o.order_no, o.status, p.name_en, ol.brand, ol.size, ol.id, ol.cartons, ol.qty, ol.cbm
     ORDER BY o.order_no, ol.id`, q.params);
@@ -210,6 +221,7 @@ export async function orderVsReceived(client: PoolClient, warehouseId: string, f
       orderNo: r.order_no, orderStatus: text(r.order_status), product: text(r.product),
       brand: text(r.brand), size: text(r.size), orderedCartons: ordered, orderedQty: num(r.ordered_qty),
       receivedCartons: received, receivedQty: num(r.received_qty), difference: received - ordered,
+      orderedCbm: num(r.ordered_cbm), receivedCbm: num(r.received_cbm), openFindings: num(r.open_findings),
       lineStatus: received === 0 ? 'pending' : received < ordered ? 'partial' : received === ordered ? 'complete' : 'extra',
     };
   });
@@ -226,6 +238,9 @@ export async function orderVsReceived(client: PoolClient, warehouseId: string, f
       { header: 'Received Qty', key: 'receivedQty', numFmt: QTY_FORMAT },
       { header: 'Difference', key: 'difference', numFmt: QTY_FORMAT },
       { header: 'Line Status', key: 'lineStatus', width: 12 },
+      { header: 'Ordered CBM', key: 'orderedCbm', numFmt: CBM_FORMAT },
+      { header: 'Received CBM', key: 'receivedCbm', numFmt: CBM_FORMAT },
+      { header: 'Open Findings', key: 'openFindings', numFmt: QTY_FORMAT },
     ],
     rows: mapped,
     totals: sum(mapped, { orderedCartons: 'orderedCartons', receivedCartons: 'receivedCartons', difference: 'difference' }, 'orderNo'),

@@ -2,6 +2,7 @@ import { Injectable, Logger, OnModuleDestroy, UnauthorizedException } from '@nes
 import { Server as HttpServer } from 'node:http';
 import { Server } from 'socket.io';
 import { WarehouseChange } from '../sync/warehouse-change';
+import { DatabaseService } from '../../platform/database.service';
 import { AuthenticatedSession, SessionAuthService } from '../tenancy/session-auth.service';
 import { isUuid } from '../tenancy/types';
 
@@ -15,7 +16,7 @@ export class RealtimeService implements OnModuleDestroy {
   private readonly logger = new Logger(RealtimeService.name);
   private io: Server | null = null;
 
-  constructor(private readonly sessions: SessionAuthService) {}
+  constructor(private readonly sessions: SessionAuthService, private readonly database: DatabaseService) {}
 
   attach(server: HttpServer) {
     this.io = new Server(server);
@@ -58,7 +59,10 @@ export class RealtimeService implements OnModuleDestroy {
   publish(change: WarehouseChange) {
     if (!this.io) return;
     // Committed changes remain available from sync even if live delivery fails.
-    void this.deliver(this.io, change).catch(() => this.logger.warn('Warehouse update delivery failed'));
+    const io = this.io;
+    this.database.afterCommit(() => {
+      void this.deliver(io, change).catch(() => this.logger.warn('Warehouse update delivery failed'));
+    });
   }
 
   async onModuleDestroy() {

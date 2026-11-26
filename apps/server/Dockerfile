@@ -14,6 +14,7 @@ WORKDIR /app
 ENV NODE_ENV=production
 RUN groupadd -r jahez && useradd -r -g jahez jahez
 COPY --from=build --chown=jahez:jahez /app/apps/server ./apps/server
+RUN mkdir -p /data/storage && chown jahez:jahez /data/storage
 USER jahez
 EXPOSE 3000
 # Default runs migrations then the API; the worker service overrides this with dist/worker.js.

@@ -11,6 +11,11 @@ Steps 1–10 are verified on the recorded local and disposable PostgreSQL checks
 - Applied and reran the baseline migration using separate migration credentials. A missing or renamed applied file failed the migration check. Runtime CREATE, ALTER, and DROP attempts were denied.
 - Typecheck and build passed. The outage check used an unreachable endpoint while the local PostgreSQL instance kept running.
 
+**Completion-review fixes** — Queue startup no longer gates API liveness. Queue sends and worker consumption wait for initialization and retry a failed start.
+
+
+**Follow-up verification** — Cold API startup returned liveness 200 and readiness 503 with PostgreSQL unavailable. Typecheck and build passed.
+
 ## Step 2 — Identity, Tenancy, and Audit
 
 **Verified** — 2026-11-25 to 2026-11-26. Commits `679bc50`, `f447834`, and `4787ed4`.
@@ -73,6 +78,11 @@ Steps 1–10 are verified on the recorded local and disposable PostgreSQL checks
 
 **Deployment notes** — Import links are accepted but validated by that module in a later step; adjustment links are validated from Step 7 and expense links from Step 8. Grant the runtime role SELECT/INSERT on `files` and keep the local storage directory outside the web root. `.env.example` lists the storage variables.
 
+**Completion-review fixes** — Nested tenant service calls reuse the same PostgreSQL client, so authorized file reads work with a pool size of one.
+
+
+**Follow-up verification** — Authorized file metadata succeeded with a pool size of one; local downloads and worker invoice denial passed. Typecheck and build passed.
+
 ## Step 7 — Dispatch and Stock Adjustments
 
 **Verified** — 2026-11-26. 54 checks on disposable PostgreSQL.
@@ -86,6 +96,11 @@ Steps 1–10 are verified on the recorded local and disposable PostgreSQL checks
 **Design notes** — Dispatch is online-only per roadmap; the worker draft stays on the device and there is no server draft state. An adjustment without a lot link corrects the group balance only; lot age cannot attribute it, so a fully adjusted group can still show physical lot remainders. Use `receiptLineId` when the affected lot is known.
 
 **Deployment notes** — Grant the runtime role SELECT/INSERT on `dispatches`, `dispatch_lines`, `dispatch_allocations`, and `stock_adjustments` (`.env.example` updated). No new privileged functions; the advisory stock lock needs no grants.
+
+**Completion-review fixes** — Dispatch now checks both the group ledger balance and available FIFO lots, preventing unlinked negative adjustments from being ignored.
+
+
+**Follow-up verification** — Receipt 10, adjustment −8, dispatch 5 now returned 409 and left balance 2. Typecheck and build passed.
 
 ## Step 8 — Expenses
 
@@ -116,6 +131,11 @@ Steps 1–10 are verified on the recorded local and disposable PostgreSQL checks
 
 **Deployment notes** — Run the worker entry point (`start:worker`) alongside the API so queued exports are consumed; the API only enqueues. Grant the runtime role SELECT/INSERT on `export_jobs` plus the column-level UPDATE listed in `.env.example`, and USAGE/CREATE on the `pgboss` schema (migration 0010 grants the latter when `app.runtime_role` is set). The migration role must own the `public` schema so reruns can re-verify DDL. Generated workbooks land under the configured storage provider at `exports/{tenant}/{warehouse}/{job}.xlsx`.
 
+**Completion-review fixes** — Order comparison excludes substituted products and includes CBM and open findings. Inventory age uses the oldest remaining receipt lot.
+
+
+**Follow-up verification** — Substitution report remained pending with zero correct cartons. All seven workbooks generated and downloaded. Typecheck and build passed.
+
 ## Step 10 — Invoice Ingestion and Trader Review
 
 **Verified** — 2026-11-26. 37 checks on disposable PostgreSQL.
@@ -126,9 +146,14 @@ Steps 1–10 are verified on the recorded local and disposable PostgreSQL checks
 - Added the office-only ingestion API: POST /orders/extract and /expenses/extract (purchase requires an invoice_source file, expense an expense_invoice file), GET /imports + /imports/:id (draft + confidence + unreviewed fields), PATCH /imports/:id (trader edits set confidence to 1, resolve supplier/customer/category/product ids, and record reviewed fields), and POST /imports/:id/commit which enforces the review gate then delegates to OrdersService.createDraft (purchase, source excel|photo + source-file reference) or ExpensesService.recordExpense (expense, idempotent by import id), keeping existing validation authoritative. Manual order/expense entry is unchanged.
 - Verified on a fresh disposable database: a purchase XLSX ingest parsed 2 lines and header (supplier, total 2880) with provider `xlsx`; commit before id resolution returned 400; after review it created a draft order with total 2880, source `excel`, and 2 lines, and a re-commit returned the same order. An expense image ingest via the `sample` provider returned amount 100.5 with expenseDate/categoryName flagged low-confidence; commit before review returned 409; after review it created an expense with the amount and invoice-file link. Config routing resolved international→deepseek, cn-mainland→qwen, and an explicit sample override. Workers got 403 on extract/list/status/commit; cross-tenant read 404 and write 403; a purchase with an expense_invoice file returned 400. Runtime DELETE and kind UPDATE were denied; migration rerun was clean; typecheck and build passed.
 
-**Design notes** — The review gate blocks only fields that were extracted with a value but below the 0.75 confidence threshold; required fields (product/supplier/customer/category ids, expense amount+date) are enforced at commit, so absent optional data never blocks review. Purchase commit delegates to createDraft (not idempotent under a partial failure between order creation and marking the import committed — a small window accepted for the pilot); expense commit is idempotent via clientOperationId = import id. **Recorded pending:** direct searchable-PDF text parsing and live DeepSeek/Qwen accuracy need real API keys and user-authorized synthetic samples — no real supplier invoice is sent externally — so PDFs currently route to the vision provider and the pipeline is verified with the deterministic `sample` extractor. Handwritten invoices stay out of automatic scope (manual fallback preserved).
+**Design notes** — The review gate blocks only fields that were extracted with a value but below the 0.75 confidence threshold; required fields (product/supplier/customer/category ids, expense amount+date) are enforced at commit, so absent optional data never blocks review. Purchase commit delegates to createDraft (atomic and serialized with the import commit); expense commit is idempotent via clientOperationId = import id. **Recorded pending:** direct searchable-PDF text parsing and live DeepSeek/Qwen accuracy need real API keys and user-authorized synthetic samples — no real supplier invoice is sent externally — so PDFs currently route to the vision provider and the pipeline is verified with the deterministic `sample` extractor. Handwritten invoices stay out of automatic scope (manual fallback preserved).
 
 **Deployment notes** — Grant the runtime role SELECT/INSERT on `invoice_imports` plus the column-level UPDATE listed in `.env.example`. Set INVOICE_AI_PROVIDER (or rely on the regional default) and provide INVOICE_AI_API_KEY/DEEPSEEK_API_KEY plus base URL and model for deepseek/qwen; the `sample` provider needs no key and never calls the network. The worker entry point must run to consume `invoice.extract`.
+
+**Completion-review fixes** — Review and commit lock the import row and share one tenant transaction with order or expense creation, preventing duplicate orders and partial commits.
+
+
+**Follow-up verification** — Two simultaneous purchase commits returned the same order ID. Typecheck and build passed.
 
 ## Step 11 — Regional Staging and Pilot Readiness
 
@@ -147,3 +172,7 @@ Steps 1–10 are verified on the recorded local and disposable PostgreSQL checks
 **Pending (staging-only, recorded as open checks)** — Docker image build and Compose startup (Docker unavailable in the dev environment); Nginx config load and HTTPS/WebSocket routing under a real domain (nginx not installed locally); live S3/OSS reads/writes with real bucket credentials; live DeepSeek/Qwen extraction accuracy with authorized synthetic samples (carried from Step 10); regional reachability from Yiwu without a VPN; mobile-upgrade compatibility against the deployed `/api/v1`; and a full-schema regional restore drill to the off-server target. These require staging hosts, domains, TLS certificates, cloud credentials, AI keys, and physical Yiwu access. Server typecheck/build remain green.
 
 **Deployment notes** — Follow `deploy/RUNBOOK.md`. Harden the database with separate least-privilege runtime and migration roles (grants in `apps/server/.env.example`) before pilot. Point `BACKUP_DIR` at a region-local off-server mount and schedule `backup.sh`; rehearse `restore.sh` per region before onboarding other companies.
+
+**Completion-review fixes** — Added Docker secret exclusions and writable storage ownership, API readiness gating, distinct runtime-role templates and required provisioning instructions. Restore failures exit nonzero and roll back the database restore. Cloud object recovery remains a regional staging check.
+
+**Follow-up verification** — All three Compose templates and shell syntax passed. A failing pg_restore fixture returned nonzero with no success message. Real Docker startup, TLS, S3/OSS recovery, Yiwu access, and regional restore remain open. Typecheck and build passed.

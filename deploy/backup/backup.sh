@@ -32,8 +32,8 @@ pg_dump --dbname="$BACKUP_PG_URL" --format=custom --file="$WORK/db.dump"
 if [ -d "$BACKUP_STORAGE_DIR" ]; then
   tar -C "$BACKUP_STORAGE_DIR" -cf "$WORK/files.tar" .
 else
-  echo "warning: BACKUP_STORAGE_DIR missing; archiving an empty file set" >&2
-  tar -C "$WORK" -cf "$WORK/files.tar" -T /dev/null
+  echo "BACKUP_STORAGE_DIR does not exist" >&2
+  exit 1
 fi
 
 # 3. Encrypt with AES-256-CBC + PBKDF2 (salted).

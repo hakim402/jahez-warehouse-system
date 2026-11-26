@@ -4,6 +4,8 @@ Steps 1–10 are verified. Step 11 is next. Use the [Server Roadmap](ROADMAP.md)
 
 ## Step 1 — Configuration and PostgreSQL Readiness
 
+**Review follow-up** — Queue startup no longer gates API liveness. Queue sends and worker consumption wait for initialization and retry a failed start.
+
 **Status** — Verified.
 
 1. Share typed configuration between the NestJS API and worker. Validate the deployment profile, connection settings, port, pool size, and timeouts.
@@ -57,6 +59,8 @@ Steps 1–10 are verified. Step 11 is next. Use the [Server Roadmap](ROADMAP.md)
 
 ## Step 6 — Files and Evidence
 
+**Review follow-up** — Nested tenant service calls reuse the same PostgreSQL client, so authorized file reads work with a pool size of one.
+
 **Status** — Verified on disposable PostgreSQL. S3/OSS round-trip checks remain staging-dependent.
 
 1. Extend `server-config.ts` and `.env.example` with validated storage settings: `STORAGE_DRIVER` (`local` default, `s3`, `oss`), `STORAGE_LOCAL_DIR` (relative to `apps/server`, outside the web root), `STORAGE_MAX_UPLOAD_MB`, and per-provider credentials (`S3_BUCKET`, `S3_REGION`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, optional `S3_ENDPOINT`/`S3_FORCE_PATH_STYLE`; `OSS_BUCKET`, `OSS_REGION`, `OSS_ACCESS_KEY_ID`, `OSS_ACCESS_KEY_SECRET`, optional `OSS_ENDPOINT`). Reject an unknown driver or missing credentials for the selected driver at startup.
@@ -70,6 +74,8 @@ Steps 1–10 are verified. Step 11 is next. Use the [Server Roadmap](ROADMAP.md)
 **Client contract** — Upload is `POST /api/v1/files?warehouseId=...` as multipart: file part `file`, fields `uploadId` (client UUID, the retry key), `purpose`, optional `entityType`/`entityId` pair, optional `takenAt`. Accepted content types: JPEG, PNG, WebP, HEIC/HEIF, PDF, XLSX, XLS, CSV; anything else returns `400`. Identical retries return the original record; changed bytes return `409`; a failed storage write leaves no record so the same `uploadId` can retry. Downloads are `GET /api/v1/files/:id/content` with the bearer token — there are no public or presigned URLs. Images serve inline; other types serve as attachments, always with `X-Content-Type-Options: nosniff`. The local storage directory is created and write-checked at startup.
 
 ## Step 7 — Dispatch and Stock Adjustments
+
+**Review follow-up** — Dispatch now checks both the group ledger balance and available FIFO lots, preventing unlinked negative adjustments from being ignored.
 
 **Status** — Verified on disposable PostgreSQL (54 checks).
 
@@ -107,6 +113,8 @@ Steps 1–10 are verified. Step 11 is next. Use the [Server Roadmap](ROADMAP.md)
 
 ## Step 9 — Background Jobs and Excel Exports
 
+**Review follow-up** — Order comparison excludes substituted products and includes CBM and open findings. Inventory age uses the oldest remaining receipt lot.
+
 **Status** — Verified on disposable PostgreSQL (78 checks).
 
 **Goal** — Generate the seven pilot Excel reports on the server through pg-boss background jobs consumed by the existing worker entry point. Return a job id from `POST /exports`, restrict status and file download to authorized office users, and make retried jobs safe to repeat. Keep report logic DRY: one shared filter parser, one shared workbook writer, one registry of small per-report query builders.
@@ -125,6 +133,8 @@ Steps 1–10 are verified. Step 11 is next. Use the [Server Roadmap](ROADMAP.md)
 
 ## Step 10 — Invoice Ingestion and Trader Review
 
+**Review follow-up** — Review and commit lock the import row and share one tenant transaction with order or expense creation, preventing duplicate orders and partial commits.
+
 **Status** — Verified on disposable PostgreSQL (37 checks).
 
 **Goal** — Ingest supplier purchase invoices and expense invoices from Excel or a photo/scan, return a draft with source values and per-field confidence, require trader review of uncertain fields, and commit the reviewed draft into a real order or expense through the existing services. Route extraction to the regional provider and reuse the shared job and file services. Never send real supplier invoices to an external service during verification.
@@ -142,6 +152,8 @@ Steps 1–10 are verified. Step 11 is next. Use the [Server Roadmap](ROADMAP.md)
 **Client contract** — Upload the invoice with `POST /files` (purchase → purpose `invoice_source`; expense → purpose `expense_invoice`). Call `POST /orders/extract` or `POST /expenses/extract` `{warehouseId, fileId}` → `{id, status:'queued'}`. Poll `GET /imports/:id` until `status:'draft'`. `PATCH /imports/:id` to correct values, set `supplierId`/`customerId` and per-line `productId` (purchase) or `categoryId` (expense), and list `reviewedFields` for anything below the confidence threshold. `POST /imports/:id/commit` → `{status:'committed', orderId|expenseId}`. Office roles only.
 
 ## Step 11 — Regional Staging and Pilot Readiness
+
+**Review follow-up** — Added Docker secret exclusions and writable storage ownership, API readiness gating, distinct runtime-role templates and required provisioning instructions. Restore failures exit nonzero and roll back the database restore. Cloud object recovery remains a regional staging check.
 
 **Status** — Deliverables shipped; encrypted backup/restore verified locally (17 checks). Regional staging checks are pending — they require staging hosts, domains, TLS certificates, cloud storage credentials, AI provider keys, and physical Yiwu network access that are not available from the development machine. See the open-checks list in the [deploy runbook](../../../deploy/RUNBOOK.md).
 
