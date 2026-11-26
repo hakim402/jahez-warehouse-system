@@ -1,5 +1,38 @@
 # Server Progress
 
+## 2026-11-26 — Step 3: Catalog and manual purchase orders
+
+Completed:
+
+- Added migration `0005_catalog_manual_orders` for `parties`, `products`, `orders`, and `order_lines` with tenant references, audit columns, warehouse assignment, order status checks, and composite tenant foreign keys.
+- Added tenant RLS for catalog tables; order reads require warehouse membership and order writes require owner/trader warehouse membership; order-line access follows the parent order.
+- Added catalog APIs for parties and products: create, list, read, and edit, limited to owner/trader roles, with audit events.
+- Added manual purchase-order APIs: create draft, list/read, edit draft, confirm draft to `ready`, and cancel `draft`/`ready` orders. Writes require owner/trader warehouse membership; lifecycle changes are audited.
+- Added `GET /api/v1/orders/awaiting?warehouseId=...` for the assigned warehouse queue. It returns only `ready` orders with worker-safe fields and excludes prices, amounts, deposits, totals, and currency.
+- Normalized order date responses to `YYYY-MM-DD` and made confirm/cancel return `200`.
+- Closed the four review findings. The auth guard reads the current role from the user tied to the active session. Order inputs validate calendar dates and monetary precision, and use integer arithmetic for line amounts and totals. Migration `0005` enforces customer and supplier types through foreign keys.
+
+Checks:
+
+- `npx --yes pnpm@9 --dir apps/server typecheck`: passed.
+- `npx --yes pnpm@9 --dir apps/server build`: passed.
+- Disposable database verification: created `jahez_step3_verify` with separate runtime and migration roles, then dropped the database and roles afterward.
+- Migration under the migration role: applied `0005_catalog_manual_orders`; rerun reported `No pending migrations`.
+- Trader lifecycle: created a draft order, edited it, confirmed it to `ready`, and cancelled it; editing after confirmation and confirming a cancelled order were rejected.
+- Worker permissions: confirm and edit were denied; the assigned worker saw the confirmed order in the warehouse queue; a recursive key scan found no price, amount, deposit, total, or currency fields; the full office order endpoint was denied to the worker.
+- Tenant isolation: another tenant could not read, edit, confirm, or cancel the order, could not query the other warehouse queue, and did not see the order in its own queue; direct runtime-role SQL under the other tenant context returned zero rows.
+- Audit records: `party.create`, `product.create`, `order.create`, `order.update`, `order.confirm`, and `order.cancel` were present.
+- Review fixes verified through the API on a fresh disposable PostgreSQL 17 instance. An existing trader token lost office access after a downgrade while retaining the worker-safe queue. Invalid dates, extra unit-price precision, and mismatched amounts or totals returned `400`. Referenced party type changes returned `409`, unreferenced changes succeeded, and PostgreSQL rejected a direct type change for a referenced supplier. Verified exact cent rounding, cross-tenant denial, audit records, and an idempotent migration rerun. Typecheck and build passed again.
+
+Blockers and notes:
+
+- No Step 3 catalog/manual-order blockers.
+- Receipt sync, stock movements, dispatch, expenses, invoice extraction, and live updates remain unimplemented.
+- The worker queue exposes only `ready` orders; partly received/received queue behavior belongs to receiving.
+- Disposable runtime grants included DML on the new catalog/order tables and `SELECT/INSERT` only on `audit_events`. Production grants remain environment-managed.
+
+**Next** — Step 4, receipt confirmation, stock ledger, and offline sync.
+
 ## 2026-11-26 — Step 2 review fixes: atomic refresh, function grants, write RLS, append-only audit
 
 Completed:

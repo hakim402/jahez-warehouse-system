@@ -125,6 +125,34 @@ Verification criteria on a disposable database:
 - Run server typecheck and build.
 - Record results and blockers in [Server progress](../../progress/server/PROGRESS.md), then stop before Step 3 for review.
 
+## Step 3 — Catalog and manual purchase orders
+
+**Status** — Implementation and review fixes verified on disposable PostgreSQL 17.
+
+Scope: catalog parties/products and manual purchase-order lifecycle only: draft, edit, confirm, cancel, and a worker-safe confirmed-order queue for the assigned warehouse. Do not add invoice extraction, receipt sync, stock movements, dispatch, expenses, or reports in this step.
+
+Steps:
+
+1. Add migration `0005` for `parties`, `products`, `orders`, and `order_lines` with tenant references, audit columns, warehouse assignment on orders, and status values `draft`, `ready`, `partly_received`, `received`, and `cancelled`. Add tenant RLS; restrict order writes to owner/trader warehouse members and order reads to warehouse members. Make order-line access follow the parent order.
+2. Add catalog APIs for parties and products: create, list, read, and edit under `/api/v1/parties` and `/api/v1/products`, limited to owner/trader roles and the current tenant. Record audit events for catalog changes.
+3. Add manual purchase-order APIs under `/api/v1/orders`: create draft, list/read, edit draft, confirm draft to `ready`, and cancel `draft`/`ready` orders. Require owner/trader warehouse membership for writes and warehouse membership for reads. Validate supplier, customer, warehouse, and line references within the tenant. Record audit events for order lifecycle changes.
+4. Expose `GET /api/v1/orders/awaiting?warehouseId=...` for the assigned warehouse queue. Return only `ready` orders and worker-safe fields: order identifiers, supplier/customer names, dates, status, and line product/brand/size/carton/quantity/CBM/weight fields. Exclude prices, amounts, deposits, totals, and currency from worker responses.
+5. Keep runtime database access least-privilege; document runtime grants for the new tables.
+6. Close the review findings. Resolve the role from the active session's current user, validate real calendar dates, calculate money at PostgreSQL precision, and enforce customer and supplier types on order references.
+
+Dependencies: Step 2 tenancy guards, auth sessions, RLS helpers, and append-only audit. No office-web or worker-mobile changes are required in this step.
+
+Verification criteria on a disposable database:
+
+- Run migrations under `MIGRATION_DATABASE_URL`; confirm `0005` applies and rerun is idempotent.
+- Seed or create two synthetic tenants with parties, products, warehouses, and memberships.
+- Verify a trader can create, edit, confirm, and cancel a manual order; confirm changes status to `ready`; edit is rejected after confirmation; worker confirm/edit is denied.
+- Verify the assigned worker sees the confirmed order in the warehouse queue and the response contains no price, amount, deposit, total, or currency fields.
+- Verify another tenant cannot read, edit, confirm, or cancel the order, and cannot see it in its own warehouse queue.
+- Verify an existing access token loses office access after a role downgrade. Check impossible dates, exact line and total arithmetic, mismatched supplied amounts, and party type changes with and without existing orders.
+- Run server typecheck and build.
+- Record results and blockers in [Server progress](../../progress/server/PROGRESS.md), then stop for review before receipt sync.
+
 ## Dependencies and verification
 
 Use the local PostgreSQL instance for development. With synthetic data, verify database readiness, cross-tenant denial, and a receipt replay that leaves stock counted once. Coordinate the order and receipt contracts with [office web](../office-web/PLAN.md) and [worker mobile](../worker-mobile/PLAN.md).

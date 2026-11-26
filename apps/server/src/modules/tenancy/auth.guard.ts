@@ -2,11 +2,12 @@ import { CanActivate, ExecutionContext, Inject, Injectable, UnauthorizedExceptio
 import { JwtPayload, verify } from 'jsonwebtoken';
 import { DatabaseService } from '../../platform/database.service';
 import { SERVER_CONFIG, ServerConfig } from '../../platform/server-config';
-import { AuthenticatedRequest, isUserRole, isUuid } from './types';
+import { AuthenticatedRequest, isUserRole, isUuid, UserRole } from './types';
 
 interface SessionRow {
   revoked_at: Date | null;
   expires_at: Date;
+  role: UserRole;
 }
 
 @Injectable()
@@ -52,9 +53,13 @@ export class AuthGuard implements CanActivate {
     }
 
     const session = await this.database.withTenant(tenantId, userId, (client) =>
-      client.query<SessionRow>('SELECT revoked_at, expires_at FROM auth_sessions WHERE id = $1', [
-        sessionId,
-      ]),
+      client.query<SessionRow>(
+        `SELECT s.revoked_at, s.expires_at, u.role
+         FROM auth_sessions s
+         JOIN users u ON u.id = s.user_id AND u.tenant_id = s.tenant_id
+         WHERE s.id = $1 AND s.user_id = $2 AND s.tenant_id = $3`,
+        [sessionId, userId, tenantId],
+      ),
     );
     const row = session.rows[0];
     if (!row || row.revoked_at !== null || row.expires_at.getTime() <= Date.now()) {
@@ -64,7 +69,7 @@ export class AuthGuard implements CanActivate {
     request.user = {
       id: userId,
       tenantId,
-      role: payload.role,
+      role: row.role,
       sessionId,
     };
     return true;

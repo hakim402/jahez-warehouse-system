@@ -33,6 +33,10 @@ export function isUserRole(value: unknown): value is UserRole {
   return value === 'owner' || value === 'trader' || value === 'worker';
 }
 
+export function isOfficeRole(value: unknown): value is 'owner' | 'trader' {
+  return value === 'owner' || value === 'trader';
+}
+
 export function isUuid(value: unknown): value is string {
   return (
     typeof value === 'string' &&
