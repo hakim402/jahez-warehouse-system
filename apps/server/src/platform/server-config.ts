@@ -39,8 +39,12 @@ export function validateServerConfig(env: NodeJS.ProcessEnv): ServerConfig {
   }
 
   const jwtSecret = env.JWT_SECRET?.trim();
-  if (!jwtSecret || jwtSecret.length < 32) {
+  if (!jwtSecret) {
+    errors.push('JWT_SECRET is required');
+  } else if (jwtSecret.length < 32) {
     errors.push('JWT_SECRET must be at least 32 characters');
+  } else if (/change_me|placeholder|example/i.test(jwtSecret)) {
+    errors.push('JWT_SECRET must not be a placeholder');
   }
 
   const databaseUrl = validateDatabaseUrl(env.DATABASE_URL, 'DATABASE_URL', true, errors);

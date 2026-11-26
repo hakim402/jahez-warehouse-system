@@ -6,6 +6,7 @@ export interface AuthenticatedUser {
   id: string;
   tenantId: string;
   role: UserRole;
+  sessionId: string;
 }
 
 export interface WarehouseSummary {
@@ -30,4 +31,11 @@ export interface AuthenticatedRequest extends Request {
 
 export function isUserRole(value: unknown): value is UserRole {
   return value === 'owner' || value === 'trader' || value === 'worker';
+}
+
+export function isUuid(value: unknown): value is string {
+  return (
+    typeof value === 'string' &&
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value)
+  );
 }

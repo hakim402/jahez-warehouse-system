@@ -1,5 +1,5 @@
 import { Inject, Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
-import { Pool, QueryResult, QueryResultRow } from 'pg';
+import { Pool, PoolClient, QueryResult, QueryResultRow } from 'pg';
 import { SERVER_CONFIG, ServerConfig } from './server-config';
 
 export interface DatabaseReadiness {
@@ -30,6 +30,27 @@ export class DatabaseService implements OnModuleDestroy {
     params?: unknown[],
   ): Promise<QueryResult<T>> {
     return this.pool.query<T>(text, params);
+  }
+
+  async withTenant<T>(
+    tenantId: string,
+    userId: string,
+    fn: (client: PoolClient) => Promise<T>,
+  ): Promise<T> {
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+      await client.query("SELECT set_config('app.tenant_id', $1, true)", [tenantId]);
+      await client.query("SELECT set_config('app.user_id', $1, true)", [userId]);
+      const result = await fn(client);
+      await client.query('COMMIT');
+      return result;
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
   }
 
   async checkReadiness(): Promise<DatabaseReadiness> {

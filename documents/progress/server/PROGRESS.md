@@ -1,5 +1,40 @@
 # Server Progress
 
+## 2026-11-26 — Step 2 follow-up: auth sessions, RLS, audit, and hardening
+
+Completed:
+
+- Left `JWT_SECRET` blank in `apps/server/.env.example` and rejected blank, short, and placeholder secrets at startup.
+- Returned `400` for malformed warehouse IDs before membership lookup.
+- Added phone sign-in with scrypt password hashes, 15-minute JWT access tokens, opaque refresh tokens stored as SHA-256 hashes, refresh rotation, sign-out, session listing, and owner device-session revocation.
+- Checked session activity on every authenticated request so revoked or expired sessions fail even if the access token has not expired.
+- Added migration `0003_rls_audit_auth_sessions` with `auth_sessions`, `audit_events`, tenant-context helper functions, and row-level security for companies, users, warehouses, memberships, sessions, and audit events.
+- Enforced warehouse reads and writes through current tenant and warehouse membership; workers cannot write warehouses through the API.
+- Added audit records for sign-in, refresh, sign-out, session revocation, and warehouse updates.
+- Fixed a SQL parameter/column name collision in `app_has_warehouse_access` that would have allowed any warehouse in the tenant for a user with at least one membership.
+
+Checks:
+
+- `npx --yes pnpm@9 --dir apps/server typecheck`: passed.
+- `npx --yes pnpm@9 --dir apps/server build`: passed.
+- Disposable database verification: created `jahez_step2f_verify` with separate runtime and migration roles, then dropped the database and roles afterward.
+- Migration under the migration role: applied `0003_rls_audit_auth_sessions`; rerun reported `No pending migrations`.
+- Blank and placeholder `JWT_SECRET`: API startup exited with code `1`.
+- Phone sign-in, refresh rotation, rotated-refresh rejection, sign-out, expired access token, revoked-session access token, and revoked-session refresh token: passed.
+- Owner revocation of another user’s device session: passed; the revoked session’s access token returned `401`.
+- Warehouse authorization: owner write `200`; worker write `403`; cross-tenant read/write `403`; non-member read/write `403`; malformed warehouse ID `400`.
+- Runtime-role RLS checks with tenant/user context: cross-tenant and non-member warehouse reads returned zero rows; cross-tenant and non-member writes affected zero rows; cross-tenant audit insert was denied; runtime `CREATE TABLE` was denied.
+- Audit records: `auth.sign_in`, `auth.refresh`, `auth.sign_out`, `auth.session_revoked`, and `warehouse.update` were present and tenant-scoped.
+
+Blockers and notes:
+
+- No Step 2 follow-up blockers.
+- Phone sign-in currently uses a password credential; SMS/OTP delivery is not implemented.
+- Set a long random `JWT_SECRET` in the local `.env` before starting the API or worker.
+- Disposable runtime grants were `USAGE` on schema public and `SELECT/INSERT/UPDATE/DELETE` on the application tables, with no DDL. Production grants remain environment-managed.
+
+Next: Stop before Step 3. Step 3 remains unstarted.
+
 ## 2026-11-25 — Step 2: Companies, warehouses, users, memberships, and warehouse access
 
 Completed:

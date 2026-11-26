@@ -76,6 +76,30 @@ Verification criteria on a disposable database:
 - Run server typecheck and build.
 - Record results and blockers in [Server progress](../../progress/server/PROGRESS.md), commit and push the step, then stop after Step 2.
 
+### Step 2 follow-up — auth sessions, RLS, audit, and hardening
+
+Scope: remain within Step 2. Complete phone sign-in and device sessions, add PostgreSQL row-level security and audit events, and harden configuration and warehouse ID validation. Do not add orders, receipts, stock movements, dispatch, expenses, or invoice ingestion.
+
+Steps:
+
+1. Leave `JWT_SECRET` blank in `.env.example`. Reject blank, short, and placeholder secrets at startup. Return `400` for malformed warehouse IDs before authorization lookups.
+2. Add phone sign-in using a password credential, short-lived access tokens, refresh-token rotation, sign-out, and device-session listing/revocation. Add `users.password_hash` and an `auth_sessions` table.
+3. Add a new migration with PostgreSQL row-level security keyed by current tenant and user, warehouse-membership checks, and an `audit_events` table. Provide security-definer lookup helpers for sign-in and refresh so the runtime role remains least-privilege.
+4. Enforce permissions from the current tenant and warehouse membership: validate active sessions on authenticated requests, require membership for warehouse reads, require owner/trader membership for warehouse writes, and run tenant-scoped writes in transactions that set RLS context and record audit events.
+
+Dependencies: Step 2 schema and tenancy guards, Step 1 runtime/migration role separation, and local PostgreSQL for disposable verification. No office-web or worker-mobile changes are required in this follow-up.
+
+Verification criteria on a disposable database:
+
+- Run the new migration under `MIGRATION_DATABASE_URL`; confirm success and idempotent rerun.
+- Seed two synthetic tenants with password credentials, warehouses, and memberships.
+- Verify phone sign-in, refresh rotation, rejection of a rotated refresh token, sign-out, owner session revocation, expired access tokens, and revoked sessions.
+- Verify cross-tenant and unauthorized warehouse reads/writes return `403` through the API and are denied by RLS under the runtime role; malformed warehouse IDs return `400`.
+- Verify audit records exist for sign-in, refresh, sign-out, session revocation, and warehouse updates.
+- Verify blank and placeholder `JWT_SECRET` values are rejected at startup.
+- Run server typecheck and build.
+- Record results, blockers, and open items in [Server progress](../../progress/server/PROGRESS.md), commit and push the follow-up, then stop before Step 3.
+
 ## Dependencies and verification
 
 Use the local PostgreSQL instance for development. With synthetic data, verify database readiness, cross-tenant denial, and a receipt replay that leaves stock counted once. Coordinate the order and receipt contracts with [office web](../office-web/PLAN.md) and [worker mobile](../worker-mobile/PLAN.md).

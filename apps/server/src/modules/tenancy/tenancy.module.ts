@@ -9,6 +9,6 @@ import { WarehousesController } from './warehouses.controller';
   imports: [PlatformModule],
   controllers: [WarehousesController],
   providers: [TenancyService, AuthGuard, WarehouseAccessGuard],
-  exports: [TenancyService],
+  exports: [TenancyService, AuthGuard],
 })
 export class TenancyModule {}
