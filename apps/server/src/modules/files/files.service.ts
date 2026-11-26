@@ -210,7 +210,6 @@ export class FilesService {
     entityId: string | null,
   ) {
     if (!entityType || !entityId) return;
-    // The import table arrives in a later step; its links are validated by that module.
     if (entityType === 'receipt') {
       const found = await client.query('SELECT id FROM receipts WHERE id = $1 AND warehouse_id = $2', [entityId, warehouseId]);
       if (found.rowCount === 0) throw new NotFoundException('Linked receipt not found in this warehouse');
@@ -230,6 +229,9 @@ export class FilesService {
     } else if (entityType === 'expense') {
       const found = await client.query('SELECT id FROM expenses WHERE id = $1 AND warehouse_id = $2', [entityId, warehouseId]);
       if (found.rowCount === 0) throw new NotFoundException('Linked expense not found in this warehouse');
+    } else if (entityType === 'import') {
+      const found = await client.query('SELECT id FROM invoice_imports WHERE id = $1 AND warehouse_id = $2', [entityId, warehouseId]);
+      if (found.rowCount === 0) throw new NotFoundException('Linked import not found in this warehouse');
     }
   }
 }

@@ -98,6 +98,8 @@ export class OrdersService {
     const expectedDate = optionalDate(input.expectedDate);
     const deposit = formatMoney(parseMoney(input.deposit, 2, 'Deposit'), 2, 'Deposit');
     const currency = optionalString(input.currency);
+    const source = optionalSource(input.source);
+    const sourceFileUrl = optionalString(input.sourceFileUrl);
 
     return this.database.withTenant(user.tenantId, user.id, async (client) => {
       await assertParty(client, supplierId, 'supplier');
@@ -107,10 +109,10 @@ export class OrdersService {
       const inserted = await client.query<OrderRow>(
         `INSERT INTO orders
            (tenant_id, warehouse_id, order_no, customer_id, supplier_id, order_date, expected_date,
-            deposit, currency, status, source, created_by)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'draft', 'manual', $10)
+            deposit, currency, status, source, source_file_url, created_by)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'draft', $10, $11, $12)
          RETURNING *`,
-        [user.tenantId, warehouseId, orderNo, customerId, supplierId, orderDate, expectedDate, deposit, currency, user.id],
+        [user.tenantId, warehouseId, orderNo, customerId, supplierId, orderDate, expectedDate, deposit, currency, source, sourceFileUrl, user.id],
       );
       const order = inserted.rows[0];
       const savedLines = await insertLines(client, user, order.id, lines);
@@ -282,6 +284,15 @@ function optionalString(value: unknown): string | null {
   if (value === undefined || value === null || value === '') return null;
   if (typeof value !== 'string') throw new BadRequestException('Invalid text field');
   return value.trim();
+}
+
+const ORDER_SOURCES = ['manual', 'excel', 'photo'] as const;
+function optionalSource(value: unknown): string {
+  if (value === undefined || value === null || value === '') return 'manual';
+  if (typeof value !== 'string' || !(ORDER_SOURCES as readonly string[]).includes(value)) {
+    throw new BadRequestException(`Source must be one of ${ORDER_SOURCES.join(', ')}`);
+  }
+  return value;
 }
 
 function optionalDate(value: unknown): string | null {

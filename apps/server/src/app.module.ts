@@ -7,6 +7,7 @@ import { ExpensesModule } from './modules/expenses/expenses.module';
 import { ExportsModule } from './modules/exports/exports.module';
 import { FilesModule } from './modules/files/files.module';
 import { InventoryModule } from './modules/inventory/inventory.module';
+import { InvoiceIngestionModule } from './modules/invoice-ingestion/invoice-ingestion.module';
 import { JobsModule } from './modules/jobs/jobs.module';
 import { OrdersModule } from './modules/orders/orders.module';
 import { RealtimeModule } from './modules/realtime/realtime.module';
@@ -16,7 +17,7 @@ import { TenancyModule } from './modules/tenancy/tenancy.module';
 import { PlatformModule } from './platform/platform.module';
 
 @Module({
-  imports: [PlatformModule, TenancyModule, AuthModule, CatalogModule, DispatchModule, ExpensesModule, ExportsModule, FilesModule, InventoryModule, JobsModule, OrdersModule, ReceivingModule, SyncModule, RealtimeModule],
+  imports: [PlatformModule, TenancyModule, AuthModule, CatalogModule, DispatchModule, ExpensesModule, ExportsModule, FilesModule, InventoryModule, InvoiceIngestionModule, JobsModule, OrdersModule, ReceivingModule, SyncModule, RealtimeModule],
   controllers: [HealthController],
 })
 export class AppModule {}

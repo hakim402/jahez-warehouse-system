@@ -5,6 +5,15 @@ export const SERVER_CONFIG = Symbol('SERVER_CONFIG');
 
 export type DeploymentProfile = 'international' | 'cn-mainland';
 export type StorageDriver = 'local' | 's3' | 'oss';
+export type InvoiceAiProvider = 'deepseek' | 'qwen' | 'sample' | 'none';
+
+export interface InvoiceAiConfig {
+  provider: InvoiceAiProvider;
+  baseUrl?: string;
+  model?: string;
+  apiKey?: string;
+  timeoutMs: number;
+}
 
 export interface S3StorageConfig {
   bucket: string;
@@ -40,6 +49,7 @@ export interface ServerConfig {
   databasePoolMax: number;
   databaseTimeoutMs: number;
   storage: StorageConfig;
+  invoiceAi: InvoiceAiConfig;
 }
 
 export function validateServerConfig(env: NodeJS.ProcessEnv): ServerConfig {
@@ -83,6 +93,7 @@ export function validateServerConfig(env: NodeJS.ProcessEnv): ServerConfig {
   );
 
   const storage = validateStorageConfig(env, errors);
+  const invoiceAi = validateInvoiceAiConfig(env, deploymentProfile as DeploymentProfile, errors);
 
   if (errors.length > 0) {
     throw new Error(`Invalid server configuration:\n- ${errors.join('\n- ')}`);
@@ -97,6 +108,7 @@ export function validateServerConfig(env: NodeJS.ProcessEnv): ServerConfig {
     databasePoolMax,
     databaseTimeoutMs,
     storage,
+    invoiceAi,
   };
 }
 
@@ -221,4 +233,29 @@ function validateOssConfig(env: NodeJS.ProcessEnv, required: boolean, errors: st
     }
   }
   return { bucket, region, accessKeyId, accessKeySecret, endpoint };
+}
+
+const INVOICE_AI_PROVIDERS: readonly InvoiceAiProvider[] = ['deepseek', 'qwen', 'sample', 'none'];
+
+// Provider selection defaults by region; keys are enforced at extraction time so a missing key never
+// blocks startup — it only fails the ingest that needs it.
+function validateInvoiceAiConfig(
+  env: NodeJS.ProcessEnv,
+  deploymentProfile: DeploymentProfile,
+  errors: string[],
+): InvoiceAiConfig {
+  const explicit = env.INVOICE_AI_PROVIDER?.trim();
+  let provider: InvoiceAiProvider = deploymentProfile === 'cn-mainland' ? 'qwen' : 'deepseek';
+  if (explicit) {
+    if (!INVOICE_AI_PROVIDERS.includes(explicit as InvoiceAiProvider)) {
+      errors.push(`INVOICE_AI_PROVIDER must be one of ${INVOICE_AI_PROVIDERS.join(', ')}`);
+    } else {
+      provider = explicit as InvoiceAiProvider;
+    }
+  }
+  const timeoutMs = parseInteger(env.INVOICE_AI_TIMEOUT_MS ?? '30000', 'INVOICE_AI_TIMEOUT_MS', 1000, 120000, errors);
+  const apiKey = (env.INVOICE_AI_API_KEY ?? env.DEEPSEEK_API_KEY)?.trim() || undefined;
+  const baseUrl = env.INVOICE_AI_BASE_URL?.trim() || (provider === 'deepseek' ? 'https://api.deepseek.com' : undefined);
+  const model = env.INVOICE_AI_MODEL?.trim() || (provider === 'deepseek' ? 'deepseek-flash' : undefined);
+  return { provider, baseUrl, model, apiKey, timeoutMs };
 }
