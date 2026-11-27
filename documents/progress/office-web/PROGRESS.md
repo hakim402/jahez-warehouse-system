@@ -70,6 +70,11 @@
 
 ## Step 3 — Live receiving and stock dashboard
 
+### 2026-11-28 — Receiving filter alignment
+
+- Corrected the shared toolbar date input width so the All orders status control and date field stay side by side instead of splitting into two rows. Retained the glass styling and existing filtering.
+- Office Web build passed. Synthetic Chrome checks confirmed equal control top positions at 1440 px and 390 px, including Arabic RTL. Status selection, date filtering, and clearing passed. Inspected the desktop screenshot against `07-receiving.png`. No server or mobile changes. Next: continue the remaining Step 3 integration checks.
+
 ### 2026-11-28 — Glass dashboard and stock controls
 
 - Dashboard cards and panels inherit the shared frosted surface. Receiving status and inventory shipping mark, supplier, and brand filters use the shared custom dropdown.

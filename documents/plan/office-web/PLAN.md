@@ -51,6 +51,11 @@ Dependencies are Server Step 3 for order and catalog contracts, Step 1 for accou
 
 ## Step 3 — Live receiving and stock dashboard
 
+### Receiving filter alignment — Verified (2026-11-28)
+
+1. Follow the single filter row in `07-receiving.png` and `reference-dropdown.png`. Correct the shared toolbar date input width so status and date remain side by side, with responsive wrapping only when necessary.
+2. Preserve existing date/status filtering and API dependencies. Verify the Office Web build and synthetic desktop/narrow filter alignment and functionality. Office Web CSS only.
+
 **2026-11-28 refinement — Verified.** Apply Step 1 glass surfaces to dashboard cards and panels, and share its custom filters in receiving and inventory. Preserve existing warehouse requests.
 
 **Status** Partially verified. The build and synthetic browser checks passed, including receipt events and reconnect recovery. Receipt history, historical summary-card comparisons, and live Worker Mobile receiving verification remain open.

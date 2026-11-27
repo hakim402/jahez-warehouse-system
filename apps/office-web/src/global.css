@@ -275,6 +275,7 @@ html[dir="rtl"] .rtl-icon { transform: scaleX(-1); }
 .table-toolbar .workspace-actions { gap: var(--space-2); }
 .table-toolbar .text-input { min-block-size: 42px; font-size: 14px; }
 .table-toolbar .filter-select { inline-size: auto; max-inline-size: 100%; }
+.table-toolbar input[type="date"] { inline-size: auto; min-inline-size: 0; }
 .filter-select { display: inline-flex; align-items: center; justify-content: space-between; gap: 12px; text-align: start; cursor: pointer; }
 .filter-select > span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .filter-select svg { display: block; color: var(--jahez-muted); }
