@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { ChevronDown, LogOut, Menu, X } from 'lucide-react';
 import { Dialog, DropdownMenu } from 'radix-ui';
 import { useTranslation } from 'react-i18next';
 import { Outlet } from 'react-router';
 import { LanguageMenu } from '../shared/ui/LanguageMenu';
+import { RecordState } from '../shared/ui/RecordState';
 import { OfficeNavigation } from './OfficeNavigation';
 import { signOut, useSession } from './session';
 import { useActiveWarehouse } from './use-active-warehouse';
@@ -69,7 +70,9 @@ export function OfficeShell() {
           </div>
         </header>
         <main id="office-content" className={styles.content} tabIndex={-1}>
-          <Outlet context={warehouse} />
+          <Suspense fallback={<RecordState state="loading" />}>
+            <Outlet context={warehouse} />
+          </Suspense>
         </main>
       </div>
     </div>

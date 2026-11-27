@@ -29,9 +29,17 @@ This step changes Office Web only. The server and Worker Mobile contracts stay a
 
 ## Step 2 — Catalog and manual purchase orders
 
-Build supplier, customer mark, and product management. Let traders list, view, create, edit, confirm, and cancel purchase orders as their status permits.
+**Status** Partially verified. The Office Web build and synthetic browser workflow passed. A live Jahez account and Worker Mobile receiving handoff still need end-to-end verification.
 
-Use `02-purchase-orders.png`, `03-purchase-order-editor.png`, `04-purchase-order-details.png`, and `05-catalog.png`. Use `catalog-products.png` as sample product imagery. Bind the screens to the orders, parties, and products APIs.
+**Goal** Let Jahez office users maintain the catalog and create, review, and confirm a manual purchase order for receiving.
+
+1. Add typed `/parties`, `/products`, and `/orders` requests using the Step 1 authenticated client and account-scoped query keys. Order reads use the active verified warehouse when configured and the server's membership-scoped list when no warehouse is configured. New orders require a verified active warehouse.
+2. Build the purchase order list from `02-purchase-orders.png` with search, supplier and date filters, status counts, and pagination. Reuse the table states and dropdown references. Add protected Purchase orders and Catalog navigation.
+3. Build the editor and detail from `03-purchase-order-editor.png` and `04-purchase-order-details.png`. Preserve existing line details and draft edits after a failed save. Use integer arithmetic for quantity and monetary previews and use saved values from the server. Respect the draft edit contract and available confirm or cancel actions. Reconcile an ambiguous create through the order list before retrying.
+4. Build the product, supplier, and customer tabs from `05-catalog.png` using the shared table layout and `reference-dialog.png` for add and edit forms. The tabs share the same layout. The product imagery reference is sample artwork. Render actual catalog photos only when available from the record.
+5. Verify the build, desktop and narrow layouts, English, Arabic RTL, and Simplified Chinese, filters and table states, catalog create and edit, order create and edit, validation, confirm and cancel, and the receiving handoff. Use synthetic data for browser checks and track live-server and Worker Mobile verification separately.
+
+Dependencies are Server Step 3 for order and catalog contracts, Step 1 for account and verified warehouse context, and the assigned worker for end-to-end receiving verification. This step works in Office Web.
 
 ## Step 3 — Live receiving and stock dashboard
 

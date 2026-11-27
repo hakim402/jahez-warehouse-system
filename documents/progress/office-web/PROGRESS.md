@@ -48,6 +48,14 @@
 - 2026-11-27: Installed `@tanstack/react-query` 5.108.4. A synthetic smoke check confirmed separate cache keys for two warehouses. Catalog and order integration remain pending.
 - 2026-11-27: Installed `@tanstack/react-table` 9.3.1 and verified it rendered synthetic stock data in the browser fixture. Office Web table integration remains pending.
 
+### 2026-11-27 — Catalog and manual purchase orders implemented
+
+- Built protected Purchase orders and Catalog routes using `02-purchase-orders.png`, `03-purchase-order-editor.png`, `04-purchase-order-details.png`, and `05-catalog.png`. Used the shared dialog and table-state references for catalog editing, loading, empty, filtered, and error views.
+- Added product, supplier, and customer creation and editing. Added order search, status and date filters, pagination, details, draft editing, confirmation, and cancellation. New orders require a verified warehouse. The editor keeps the draft after an error and lets the user check recent orders before retrying an ambiguous create.
+- `pnpm --dir apps/office-web build` passed. The running Vite order route and proxied readiness endpoint returned HTTP 200. The protected live order endpoint returned HTTP 401 without a session.
+- In headless Chrome with synthetic data, verified pagination, filters, create and edit for all three catalog types, local and server-side field errors, recovery after an ambiguous create, order reload and editing, confirm and cancel, and the mock receiving queue. Verified Arabic RTL and Simplified Chinese, and checked the desktop mockup layouts and narrow editor and catalog views. Focused checks confirmed half-up decimal rounding, Arabic numeral input, quantity limits, and preservation of existing line metadata.
+- Still open: verify with an authorized Jahez account against the running API and confirm the same order is visible to an assigned worker on Worker Mobile. Complete those checks before marking Step 2 verified.
+
 ## Step 3 — Live receiving and stock dashboard
 
 - 2026-11-27: Installed `socket.io-client` 4.8.4. A synthetic smoke check confirmed client initialization with the connection disabled. Live events and reconnect still need end-to-end verification.

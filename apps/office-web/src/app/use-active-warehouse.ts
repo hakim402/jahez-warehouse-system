@@ -23,6 +23,7 @@ export function useActiveWarehouse() {
 
   const denied = query.error instanceof ApiError && [403, 404].includes(query.error.status);
   return {
+    configuredId: warehouseId || undefined,
     warehouse: query.isError ? undefined : query.data,
     title: !warehouseId ? 'noWarehouse' : query.isError ? 'warehouseUnavailable' : 'loadingWarehouse',
     message: !warehouseId ? 'noWarehouseHelp' : denied ? 'warehouseDenied' : query.isError ? 'warehouseError' : undefined,

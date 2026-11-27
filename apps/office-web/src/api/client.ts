@@ -1,7 +1,7 @@
 const apiBase = (import.meta.env.VITE_API_BASE_URL?.trim() || '/api/v1').replace(/\/+$/, '');
 
 export class ApiError extends Error {
-  constructor(readonly status: number) {
+  constructor(readonly status: number, readonly validationMessage?: string) {
     super('The API returned HTTP ' + status);
   }
 }
@@ -27,6 +27,10 @@ export async function requestJson<T>(
     signal: signal ? AbortSignal.any([signal, timeout]) : timeout,
     cache: 'no-store',
   });
-  if (!response.ok) throw new ApiError(response.status);
+  if (!response.ok) {
+    const body: unknown = response.status === 400 ? await response.json().catch(() => null) : null;
+    const message = body && typeof body === 'object' && 'message' in body ? body.message : null;
+    throw new ApiError(response.status, typeof message === 'string' ? message : undefined);
+  }
   return response.json() as Promise<T>;
 }

@@ -1,6 +1,7 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import { arabic, chinese, english } from './translations';
+import { recordCopy } from './records-copy';
 
 export const languages = {
   en: { label: 'English', direction: 'ltr' },
@@ -40,9 +41,9 @@ export async function initLanguage() {
     fallbackLng: 'en',
     supportedLngs: Object.keys(languages),
     resources: {
-      en: { translation: english },
-      ar: { translation: arabic },
-      'zh-Hans': { translation: chinese },
+      en: { translation: { ...english, ...recordCopy(0) } },
+      ar: { translation: { ...arabic, ...recordCopy(1) } },
+      'zh-Hans': { translation: { ...chinese, ...recordCopy(2) } },
     },
     interpolation: { escapeValue: false },
   });

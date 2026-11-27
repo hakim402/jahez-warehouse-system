@@ -41,7 +41,7 @@ html[lang="zh-Hans"] { font-family: var(--jahez-font-zh); }
 *, *::before, *::after { box-sizing: border-box; }
 body { margin: 0; min-inline-size: 0; }
 h1, h2, p { margin: 0; }
-button, input { font: inherit; color: inherit; }
+button, input, select, textarea { font: inherit; color: inherit; }
 a { color: inherit; }
 svg { flex: none; }
 input[type="tel"] { text-align: left; }
@@ -193,3 +193,119 @@ button:disabled {
 }
 
 .skip-link:focus { transform: none; }
+
+.workspace-heading, .workspace-actions, .table-toolbar, .table-footer, .list-tabs {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.workspace-heading { margin-block-end: var(--space-6); }
+.workspace-heading h1 { font-size: clamp(1.75rem, 4vw, 2.25rem); line-height: 1.15; letter-spacing: -0.025em; }
+.workspace-actions { justify-content: flex-start; }
+.workspace-actions .button, .workspace-heading .button, .table-toolbar .button { min-block-size: 44px; font-size: 14px; }
+.button { text-decoration: none; }
+.button-danger { background: var(--jahez-danger); color: var(--jahez-white); border-color: transparent; }
+.muted-text { color: var(--jahez-muted); font-size: 14px; }
+.record-link { color: var(--jahez-brand-deep); font-weight: 700; text-decoration: none; }
+.record-link:hover, .back-link:hover { text-decoration: underline; }
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--jahez-brand-deep);
+  margin-block-end: var(--space-3);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+html[dir="rtl"] .rtl-icon { transform: scaleX(-1); }
+.workspace-panel { box-shadow: 0 10px 28px rgb(57 39 104 / 9%); }
+.panel-heading { padding: var(--space-4) var(--space-6); font-size: 1.125rem; }
+.table-scroll { position: relative; max-inline-size: 100%; overflow-x: auto; }
+.table-scroll:focus-visible { outline-offset: -3px; }
+
+.list-tabs, .table-toolbar, .table-footer {
+  padding-inline: var(--space-5);
+  border-block-end: 1px solid var(--jahez-border);
+}
+
+.list-tab-group { display: flex; flex-wrap: wrap; column-gap: var(--space-5); }
+.list-tab-group button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-block-size: 55px;
+  border: 0;
+  border-block-end: 2px solid transparent;
+  background: transparent;
+  padding: var(--space-2) 0;
+  color: var(--jahez-muted);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.list-tab-group button[aria-pressed="true"] { border-color: var(--jahez-brand-deep); color: var(--jahez-brand-deep); }
+.list-tab-group button span { border-radius: var(--radius-pill); padding-inline: 6px; background: var(--jahez-lavender); font-size: 11px; }
+.table-toolbar { padding-block: var(--space-3); }
+.table-toolbar .workspace-actions { gap: var(--space-2); }
+.table-toolbar .text-input { min-block-size: 42px; font-size: 14px; }
+.table-toolbar select { inline-size: auto; max-inline-size: 100%; }
+
+.record-search { position: relative; flex: 1 1 240px; max-inline-size: 375px; }
+.record-search svg { position: absolute; inset-inline-start: var(--space-3); inset-block-start: 50%; transform: translateY(-50%); color: var(--jahez-muted); pointer-events: none; }
+.record-search input { padding-inline-start: var(--space-8); }
+.records-table { inline-size: 100%; border-collapse: collapse; font-size: 14px; text-align: start; }
+.records-table :is(th, td) { padding: var(--space-3) var(--space-5); border-block-end: 1px solid var(--jahez-border); text-align: start; }
+.records-table th { background: rgb(238 232 252 / 72%); color: var(--jahez-muted); font-size: 12px; white-space: nowrap; }
+.records-table td { block-size: 56px; padding-block: var(--space-2); }
+.records-table td:has(.icon-button) { padding-block: 6px; }
+.records-table .secondary-line { display: block; color: var(--jahez-muted); font-size: 12px; }
+.table-footer { min-block-size: 56px; padding-block: var(--space-2); border: 0; color: var(--jahez-muted); font-size: 13px; }
+.pagination { display: flex; gap: var(--space-1); }
+.pagination button { display: grid; place-items: center; min-inline-size: 34px; min-block-size: 34px; border: 0; border-radius: 8px; background: transparent; cursor: pointer; }
+.pagination button[aria-current="page"], .pagination button:hover:not(:disabled) { color: var(--jahez-brand-deep); background: var(--jahez-lavender); }
+.pagination button:disabled { opacity: 0.45; cursor: default; }
+
+.record-state { min-block-size: 180px; padding: var(--space-6); display: grid; align-content: center; justify-items: center; gap: var(--space-3); text-align: center; color: var(--jahez-muted); }
+.record-state-icon { display: grid; place-items: center; inline-size: 40px; block-size: 40px; border-radius: var(--radius-control); background: var(--jahez-lavender); color: var(--jahez-brand-deep); }
+.record-state[role="alert"] .record-state-icon { color: var(--jahez-danger); }
+.record-skeleton { display: grid; gap: var(--space-2); inline-size: min(100%, 420px); }
+.record-skeleton span { block-size: 9px; border-radius: var(--radius-pill); background: var(--jahez-border); }
+.record-skeleton span:nth-child(2) { inline-size: 70%; }
+.record-skeleton span:nth-child(3) { inline-size: 53%; }
+
+.field small { margin-inline-start: var(--space-2); color: var(--jahez-muted); font-weight: 400; }
+.office-dialog-overlay { position: fixed; z-index: 60; inset: 0; background: rgb(23 19 43 / 32%); backdrop-filter: blur(4px); }
+.office-dialog {
+  position: fixed;
+  z-index: 61;
+  inset-block-start: 50%;
+  inset-inline: 0;
+  transform: translateY(-50%);
+  margin-inline: auto;
+  inline-size: min(540px, calc(100% - 32px));
+  max-block-size: calc(100dvh - 32px);
+  overflow: auto;
+  border: 1px solid var(--jahez-border);
+  border-radius: var(--radius-card);
+  background: #fcfaff;
+  box-shadow: 0 16px 44px rgb(23 19 43 / 24%);
+}
+
+.office-dialog-heading, .office-dialog-actions { display: flex; align-items: center; gap: var(--space-2); padding: var(--space-3) var(--space-5); }
+.office-dialog-heading { justify-content: space-between; border-block-end: 1px solid var(--jahez-border); }
+.office-dialog-heading h2 { font-size: 1.125rem; }
+.office-dialog-body { padding: var(--space-5); }
+.office-dialog-actions { justify-content: flex-end; border-block-start: 1px solid var(--jahez-border); }
+.office-dialog-actions .button { min-block-size: 44px; font-size: 14px; }
+
+@media (max-width: 540px) {
+  .table-toolbar select { max-inline-size: min(100%, 170px); }
+  .list-tabs, .table-toolbar, .table-footer, .records-table :is(th, td) { padding-inline: var(--space-3); }
+}
