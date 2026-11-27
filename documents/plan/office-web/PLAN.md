@@ -20,13 +20,25 @@ Dependency setup is verified.
 
 Sign-in integration uses the existing auth API. Step 1 feature work still needs a sign-in design review, an app shell reference, and an API for discovering assigned warehouses.
 
+### Dashboard UI dependencies
+
+Dependency setup is verified.
+
+1. Add `lucide-react` for icons and `radix-ui` for unstyled dialogs, dropdown menus, and popovers. Style these controls with Jahez CSS Modules when their screens are implemented.
+2. Add the table and chart dependencies under Steps 2 and 3. Keep the package manifest and pnpm lockfile in sync.
+3. Verify a clean frozen install with strict peer and engine checks, run the Office Web build, and smoke test all four libraries with synthetic data.
+
 ## Step 2 — Catalog and manual purchase orders
 
 Add `@tanstack/react-query` for catalog and order reads, mutations, and cache invalidation. Integration uses the documented catalog and order endpoints.
 
+Add `@tanstack/react-table` for table state in order, stock, and movement history views. The rendered tables use Jahez styles.
+
 ## Step 3 — Live receiving and stock dashboard
 
 Add `socket.io-client` in the server's 4.8 range for authenticated warehouse events. The live dashboard depends on the server's Socket.IO endpoint and the receiving and stock REST contracts.
+
+Add `recharts` for dashboard charts and its `react-is` peer at the installed React version. Chart metrics depend on the approved dashboard design and available server data.
 
 ## Dependencies and verification
 

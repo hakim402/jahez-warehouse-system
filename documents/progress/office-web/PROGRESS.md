@@ -15,12 +15,20 @@
 - A synthetic smoke check verified route matching, translations in all three languages, and Arabic text direction. Visual RTL, sign-in, and warehouse switching await implementation and testing.
 - Next: review the sign-in reference, obtain the app shell reference, connect the shared auth client, and resolve assigned-warehouse discovery with the server.
 
+### 2026-11-27 — Dashboard UI dependencies verified
+
+- Installed `lucide-react` 1.82.0 and `radix-ui` 1.8.1 for future Jahez-styled controls. The strict frozen install and Office Web typecheck and production build passed.
+- A temporary Vite fixture rendered the icon, Radix controls in an RTL container, a table row, and a chart bar in headless Chrome. The fixture bundled all four libraries into a single chunk and emitted Vite's size warning. The Office Web build did not emit that warning.
+- Next: integrate icons and controls into the approved screen designs and verify keyboard interaction and RTL behavior in Office Web.
+
 ## Step 2 — Catalog and manual purchase orders
 
 - 2026-11-27: Installed `@tanstack/react-query` 5.108.4. A synthetic smoke check confirmed separate cache keys for two warehouses. Catalog and order integration remain pending.
+- 2026-11-27: Installed `@tanstack/react-table` 9.3.1 and verified it rendered synthetic stock data in the browser fixture. Office Web table integration remains pending.
 
 ## Step 3 — Live receiving and stock dashboard
 
 - 2026-11-27: Installed `socket.io-client` 4.8.4. A synthetic smoke check confirmed client initialization with the connection disabled. Live events and reconnect still need end-to-end verification.
+- 2026-11-27: Installed `recharts` 3.11.1 and its `react-is` 19.3.1 peer, matching React 19.3.1. Verified a chart bar rendered in the browser fixture. Dashboard chart design and data integration remain pending.
 
 [Office web plan](../../plan/office-web/PLAN.md)
