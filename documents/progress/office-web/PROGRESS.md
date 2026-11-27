@@ -8,6 +8,11 @@
 
 ## Step 1 — App shell, API connection, and sign-in
 
+### 2026-11-28 — Minimal language selector
+
+- Removed the shared language trigger background and border on the header and sign-in page. Retained the globe, selected language, chevron, 44 px target, keyboard focus outline, and glass dropdown. Hover/open states use brand-colored text.
+- Office Web build passed. Synthetic Chrome checks confirmed transparent borderless triggers, keyboard menu opening, switching to Chinese and Arabic, and mobile RTL without page overflow. Inspected the desktop screenshot. No API changes. Existing Step 1 integration gaps remain.
+
 ### 2026-11-28 — Icon-only profile control
 
 - Replaced the header initials tile and chevron with one profile icon. Removed the trigger background and border, retaining its accessible label, focus outline, 44 px target, and existing account dropdown.

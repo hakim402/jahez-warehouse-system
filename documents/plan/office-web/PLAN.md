@@ -10,6 +10,11 @@ The filenames below refer to `documents/designs/office-web/`. Use `reference-dro
 
 ## Step 1 — App shell, API connection, and sign-in
 
+### Language trigger refinement — Verified (2026-11-28)
+
+1. Match the minimal header language control in `06-dashboard-overview.png` and `reference-dropdown.png`: remove its background and border, retain the globe, language label, chevron, 44 px target, and visible keyboard focus. Share this appearance with the sign-in language control.
+2. Verify Office Web build and synthetic language switching, transparent trigger, dropdown opening, and Arabic RTL. No API changes.
+
 ### Header profile control — Verified (2026-11-28)
 
 1. Refine the header from `06-dashboard-overview.png` and `reference-dropdown.png` per the user's direction: replace the initials tile and chevron with one profile icon, with no trigger background or border. Preserve the accessible 44 px target and account dropdown.
