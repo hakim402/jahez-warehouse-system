@@ -37,8 +37,6 @@
 .status[data-order-status="partly_received"] { background: #fff2dc; color: #784700; }
 .status[data-order-status="received"] { background: #e4f5ee; color: #086149; }
 .status[data-order-status="cancelled"] { background: #fceaf0; color: var(--jahez-danger); }
-.dates { display: grid; gap: var(--space-3); padding: var(--space-3); min-inline-size: 210px; }
-.dates :global(.text-input) { min-block-size: 40px; font-size: 14px; }
 .sortButton { display: inline-flex; gap: var(--space-1); align-items: center; padding: 4px 0; background: none; color: inherit; border: 0; cursor: pointer; font: inherit; }
 .orderCode { white-space: nowrap; }
 .reviewList { display: grid; gap: var(--space-2); padding-inline-start: var(--space-6); }

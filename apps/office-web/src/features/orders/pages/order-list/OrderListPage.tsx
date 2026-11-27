@@ -1,11 +1,10 @@
-import { ArrowDown, ArrowUp, CalendarDays, ChevronDown, ChevronRight, Plus } from 'lucide-react';
-import { Popover } from 'radix-ui';
+import { ArrowDown, ArrowUp, ChevronRight, Plus } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { useRecordFormat } from '../../../../shared/format-record';
 import { DataTable, type RecordColumn } from '../../../../shared/ui/DataTable';
-import { LabeledField } from '../../../../shared/ui/LabeledField';
+import { DateRangeFilter } from '../../../../shared/ui/DateRangeFilter';
 import { ListTabs, SearchField } from '../../../../shared/ui/ListControls';
 import { FilterSelect } from '../../../../shared/ui/FilterSelect';
 import { RecordState } from '../../../../shared/ui/RecordState';
@@ -113,23 +112,8 @@ export default function OrderListPage() {
                   options={[{ value: '', label: t('allSuppliers') }, ...catalog.data.parties
                     .filter((party) => party.type === 'supplier')
                     .map((party) => ({ value: party.id, label: partyName(party, format.language) }))]} />
-                <Popover.Root>
-                  <Popover.Trigger className="button">
-                    <CalendarDays size={16} aria-hidden="true" />{t('orderDate')}<ChevronDown size={14} aria-hidden="true" />
-                  </Popover.Trigger>
-                  <Popover.Portal>
-                    <Popover.Content className={'menu-content ' + styles.dates} align="end" sideOffset={8} aria-label={t('orderDate')}>
-                      <LabeledField label={t('fromDate')}>
-                        {(props) => <input {...props} type="date" value={fromDate} max={toDate || undefined}
-                          onChange={(event) => setFromDate(event.currentTarget.value)} />}
-                      </LabeledField>
-                      <LabeledField label={t('toDate')}>
-                        {(props) => <input {...props} type="date" value={toDate} min={fromDate || undefined}
-                          onChange={(event) => setToDate(event.currentTarget.value)} />}
-                      </LabeledField>
-                    </Popover.Content>
-                  </Popover.Portal>
-                </Popover.Root>
+                <DateRangeFilter label={t('orderDate')} from={fromDate} to={toDate}
+                  onFromChange={setFromDate} onToChange={setToDate} />
               </div>
             </div>
             {filtered.length ? <DataTable records={filtered} columns={columns} label={t('purchaseOrders')} /> :

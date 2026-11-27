@@ -35,6 +35,12 @@ This step changes Office Web only. The server and Worker Mobile contracts stay a
 
 ## Step 2 — Catalog and manual purchase orders
 
+### Order date filter refinement — Verified (2026-11-28)
+
+1. Refine the existing date-range popover using `02-purchase-orders.png` and `reference-dropdown.png`, retaining the requested glass finish. Extract a reusable date-range control with a matching filter trigger, clear heading, aligned From/To fields, clear action, and close action. Show the selected range on the trigger.
+2. Preserve the current inclusive date filtering, range bounds, translations, keyboard focus, and existing orders API. Keep control styles beside shared UI and shared glass tokens in `global.css`.
+3. Verify build, synthetic date selection/clearing, range constraints, popover keyboard close/focus return, desktop and narrow layouts, and Arabic RTL. No server/mobile changes.
+
 **2026-11-28 refinement — Verified.** Apply the Step 1 shared glass controls to catalog and order filters and catalog dialogs. Preserve existing filtering and form behavior.
 
 **Status** Partially verified. The Office Web build and synthetic browser workflow passed. A live Jahez account and Worker Mobile receiving handoff still need end-to-end verification.

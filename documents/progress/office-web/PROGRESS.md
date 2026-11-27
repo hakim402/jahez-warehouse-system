@@ -52,6 +52,12 @@
 
 ## Step 2 — Catalog and manual purchase orders
 
+### 2026-11-28 — Order date dropdown refinement
+
+- Extracted a reusable `DateRangeFilter` with a glass panel, calendar heading, aligned labeled From/To fields, clear and close actions, and selected-range text on the trigger. Reused shared glass tokens, translations, date formatting, and inclusive order filtering.
+- Office Web build passed. Synthetic Chrome checks passed inclusive range filtering, input min/max bounds, clearing, selected trigger, Escape and focus restoration, desktop and 390 px layouts, and Arabic RTL. Inspected desktop, mobile, and Arabic screenshots. No server/mobile changes or live data mutations.
+- This refinement is verified. Existing live account and Worker Mobile handoff checks remain pending.
+
 ### 2026-11-28 — Glass filters and dialog inputs
 
 - Catalog language/photo and order supplier filters now use the shared styled dropdown. Catalog dialog inputs use the global glass finish.
