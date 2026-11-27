@@ -10,9 +10,18 @@ The filenames below refer to `documents/designs/office-web/`. Use `reference-dro
 
 ## Step 1 — App shell, API connection, and sign-in
 
-Build Jahez sign-in, session handling, protected navigation, a shared API client, and assigned warehouse selection. Set up Jahez styling and English, Arabic RTL, and Simplified Chinese.
+**Status** Partially verified. The Office Web implementation passed the build, live proxy checks, and synthetic browser checks. Live account sign-in and switching among assigned warehouses remain open verification items.
 
-Use `01-sign-in.png` and `background.png` for sign-in. Use the sidebar and top bar in `06-dashboard-overview.png` for the signed-in shell. The auth endpoints are available. Assigned warehouse selection still needs an API that lists the signed-in user's warehouses.
+**Goal** Give Jahez owners and traders a working, accessible sign-in and authenticated Office Web shell in English, Arabic RTL, and Simplified Chinese.
+
+1. Build the sign-in page from `01-sign-in.png` and `background.png`. Use the supplied Jahez wordmark, the language selector from `reference-dropdown.png`, labeled phone and password fields, password visibility, and translated loading and error states.
+2. Put global styles and Jahez theme values in `src/global.css`. Keep feature styles in adjacent CSS Modules. Self-host Roboto, Cairo, and Noto Sans SC. Persist the language choice and set HTML language and direction. Share accessible controls when the sign-in and shell both use them.
+3. Add one typed REST request layer and local Vite proxies for `/api/v1` and `/socket.io/`. Wire the existing login, refresh, and logout endpoints. Restore the session within the browser tab, serialize rotating token refreshes, clear queries on account changes, and sign out after 30 minutes of inactivity on a shared device.
+4. Build protected navigation using the sidebar and top bar from `06-dashboard-overview.png`, with responsive navigation and account sign-out. Limit working routes to Step 1. Keep the backend's tenant and role in the session and support an optional configured Jahez tenant when a phone is ambiguous.
+5. Resolve an optional `VITE_DEFAULT_WAREHOUSE_ID` with the existing access-checked `GET /warehouses/:id`. Display the verified warehouse or the applicable unassigned or unavailable state. Configure `VITE_TENANT_ID` only when the deployment needs an explicit tenant for sign-in. Warehouse discovery and switching across assigned warehouses need a server contract and remain pending.
+6. Build Office Web and check the running local API proxy. Exercise sign-in, role gating, reload, refresh, account sign-out, and known-warehouse states with synthetic data. Check the supplied layouts, keyboard behavior, and language switching at desktop and narrow widths.
+
+This step changes Office Web only. The server and Worker Mobile contracts stay as they are.
 
 ## Step 2 — Catalog and manual purchase orders
 

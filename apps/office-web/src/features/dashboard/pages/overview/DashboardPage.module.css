@@ -1,0 +1,20 @@
+.title {
+  font-size: clamp(1.75rem, 3vw, 2rem);
+  margin-block-end: var(--space-6);
+}
+
+.warehouse {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-3);
+  padding: var(--space-6);
+}
+
+.warehouse h2 {
+  font-size: 1rem;
+}
+
+.details {
+  color: var(--jahez-muted);
+  margin-block-start: var(--space-2);
+}

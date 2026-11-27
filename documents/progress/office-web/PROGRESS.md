@@ -21,6 +21,14 @@
 - A temporary Vite fixture rendered the icon, Radix controls in an RTL container, a table row, and a chart bar in headless Chrome. The fixture bundled all four libraries into a single chunk and emitted Vite's size warning. The Office Web build did not emit that warning.
 - Next: integrate icons and controls into the approved screen designs and verify keyboard interaction and RTL behavior in Office Web.
 
+### 2026-11-27 — Sign-in and app shell implemented
+
+- Built the sign-in screen and protected shell from `01-sign-in.png`, `background.png`, and `06-dashboard-overview.png`. Shared the language menu across screens, kept global styles and brand tokens in `src/global.css`, and placed layout-specific styles in CSS Modules. Self-hosted Roboto, Cairo, and Noto Sans SC.
+- Connected login, refresh, and logout through a shared API client. Added tab session recovery, one refresh for concurrent unauthorized requests, account cache clearing, and a 30-minute idle sign-out. The shell verifies an optional configured warehouse with the existing warehouse detail API.
+- `pnpm --dir apps/office-web build` passed. The running API readiness endpoint, Vite sign-in route, proxied readiness endpoint, and Socket.IO polling handshake all returned HTTP 200.
+- In an isolated Chrome fixture, verified protected routes, all three languages and persisted Arabic RTL, keyboard focus, password visibility, desktop and mobile layouts, bad credentials, worker denial, token refresh on 401 and reload, configured and inaccessible warehouses, missing configuration, manual sign-out, and idle sign-out. Sign-in submission and warehouse responses used synthetic data.
+- Still open: verify with a live Jahez account and agree the assigned-warehouse discovery API before implementing warehouse switching. Later feature pages and dashboard data remain in their roadmap steps.
+
 ## Step 2 — Catalog and manual purchase orders
 
 - 2026-11-27: Installed `@tanstack/react-query` 5.108.4. A synthetic smoke check confirmed separate cache keys for two warehouses. Catalog and order integration remain pending.

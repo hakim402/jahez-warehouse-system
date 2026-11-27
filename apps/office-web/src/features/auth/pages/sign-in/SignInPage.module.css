@@ -1,0 +1,80 @@
+.page {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-block-size: 100dvh;
+  padding: 96px var(--space-4) 64px;
+}
+
+.language {
+  position: absolute;
+  inset-block-start: var(--space-7);
+  inset-inline-end: var(--space-8);
+}
+
+.card {
+  inline-size: min(100%, 448px);
+  padding: 38px 40px 40px;
+  box-shadow: 0 14px 44px rgb(57 39 104 / 14%);
+}
+
+.heading {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-2);
+  text-align: center;
+}
+
+.heading h1 {
+  font-size: 32px;
+  letter-spacing: -0.035em;
+  line-height: 1.16;
+  margin-block-start: var(--space-2);
+}
+
+.heading p {
+  font-size: 14px;
+  color: var(--jahez-muted);
+}
+
+.logo {
+  display: block;
+  object-fit: contain;
+}
+
+.form {
+  display: grid;
+  gap: var(--space-5);
+  margin-block-start: var(--space-7);
+}
+
+.password {
+  position: relative;
+}
+
+.password input {
+  padding-inline-end: 52px;
+}
+
+.visibility {
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline-end: 4px;
+  transform: translateY(-50%);
+}
+
+:global(html[dir="rtl"]) .card input::placeholder {
+  direction: rtl;
+  text-align: right;
+}
+
+@media (max-width: 540px) {
+  .language {
+    inset-block-start: var(--space-4);
+    inset-inline-end: var(--space-4);
+  }
+
+  .card {
+    padding: var(--space-6);
+  }
+}
