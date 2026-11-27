@@ -7,6 +7,7 @@ import { useRecordFormat } from '../../../../shared/format-record';
 import { DataTable, type RecordColumn } from '../../../../shared/ui/DataTable';
 import { LabeledField } from '../../../../shared/ui/LabeledField';
 import { ListTabs, SearchField } from '../../../../shared/ui/ListControls';
+import { FilterSelect } from '../../../../shared/ui/FilterSelect';
 import { RecordState } from '../../../../shared/ui/RecordState';
 import { partyName, useCatalog } from '../../../catalog/catalog-api';
 import { OrderStatusBadge } from '../../components/OrderStatusBadge';
@@ -108,12 +109,10 @@ export default function OrderListPage() {
             <div className="table-toolbar">
               <SearchField label={t('searchOrders')} value={search} onChange={setSearch} />
               <div className="workspace-actions">
-                <select aria-label={t('supplier')} className="text-input" value={supplierId}
-                  onChange={(event) => setSupplierId(event.currentTarget.value)}>
-                  <option value="">{t('allSuppliers')}</option>
-                  {catalog.data.parties.filter((party) => party.type === 'supplier').map((party) =>
-                    <option key={party.id} value={party.id}>{partyName(party, format.language)}</option>)}
-                </select>
+                <FilterSelect label={t('supplier')} value={supplierId} onChange={setSupplierId}
+                  options={[{ value: '', label: t('allSuppliers') }, ...catalog.data.parties
+                    .filter((party) => party.type === 'supplier')
+                    .map((party) => ({ value: party.id, label: partyName(party, format.language) }))]} />
                 <Popover.Root>
                   <Popover.Trigger className="button">
                     <CalendarDays size={16} aria-hidden="true" />{t('orderDate')}<ChevronDown size={14} aria-hidden="true" />

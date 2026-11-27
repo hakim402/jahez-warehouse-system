@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { DataTable, type RecordColumn } from '../../../shared/ui/DataTable';
 import { ListTabs, SearchField } from '../../../shared/ui/ListControls';
+import { FilterSelect } from '../../../shared/ui/FilterSelect';
 import { RecordState } from '../../../shared/ui/RecordState';
 import { useRecordFormat } from '../../../shared/format-record';
 import { OrderWorkspaceState } from '../../orders/components/OrderWorkspaceState';
@@ -94,9 +95,9 @@ export function InventoryPage() {
     <ListTabs selected={tab} onChange={setTab} label={t('inventory')} items={(['balances', 'movements', 'age'] as const).map((id) => ({ id, name: t(id), count: id === 'movements' ? records.length : data.query.data?.[id].length ?? 0 }))} />
     <div className="table-toolbar"><SearchField label={t('searchProducts')} value={search} onChange={setSearch} /><div className="workspace-actions">
       {([{ key: 'customerMark', label: 'shippingMark', value: customer, set: setCustomer }, { key: 'supplierName', label: 'supplier', value: supplier, set: setSupplier }, { key: 'brand', label: 'brand', value: brand, set: setBrand }] as const).map((filter) =>
-        <select key={filter.key} className="text-input" aria-label={t(filter.label)} value={filter.value} onChange={(event) => filter.set(event.target.value)}>
-          <option value="">{t(filter.label)}</option>{Array.from(new Set(records.map((row) => row[filter.key]).filter(Boolean))).map((value) => <option key={value} value={value!}>{value}</option>)}
-        </select>)}
+        <FilterSelect key={filter.key} label={t(filter.label)} value={filter.value} onChange={filter.set}
+          options={[{ value: '', label: t(filter.label) }, ...Array.from(new Set(records.map((row) => row[filter.key]).filter(Boolean)))
+            .map((value) => ({ value: value!, label: value! }))]} />)}
     </div></div>
     {tab === 'movements' && data.movements.isError ? <RecordState state="error" action={() => { void data.movements.refetch(); }} /> : tab === 'movements' && !data.movements.data ? <RecordState state="loading" /> : <StockTable key={tab} records={filtered} kind={tab} />}
     {tab === 'movements' && data.movements.hasNextPage && <div className="table-footer"><button className="button" disabled={data.movements.isFetchingNextPage} onClick={() => void data.movements.fetchNextPage()}>{t('loadMore')}</button></div>}

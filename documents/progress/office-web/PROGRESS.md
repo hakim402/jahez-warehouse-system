@@ -8,6 +8,13 @@
 
 ## Step 1 — App shell, API connection, and sign-in
 
+### 2026-11-28 — Shared glass surfaces and controls
+
+- Reviewed the overview, dropdown, and dialog reference images. Added shared glass surface, input, floating-panel, blur, and highlight tokens in `src/global.css`. Applied them to cards, header, sidebar, mobile drawer, menus, dialogs, and input fields. Sign-in fields now reuse the global input styling.
+- Added a shared Radix filter select with custom trigger, chevron, selected check, focus states, constrained scrolling, and RTL direction. Existing language labels and filter values are preserved.
+- `pnpm --dir apps/office-web build` passed, including TypeScript. An isolated Chrome fixture with synthetic API data passed all four filter page checks, photo filtering and reset, search, keyboard opening/Escape and focus return, dialog glass fields and focus restoration, desktop (1440 × 1000), narrow layout (390 × 844), and Arabic RTL dropdown direction. Inspected the captured dashboard, dropdown, dialog, and RTL screenshots. No live records were changed.
+- This visual refinement is verified. Existing live-account and warehouse-switching verification gaps remain. Next: continue the planned Office Web features.
+
 ### 2026-11-27 — Local active warehouse configured
 
 - Diagnosed the unassigned dashboard state as a missing `VITE_DEFAULT_WAREHOUSE_ID`. Set the private local Office Web environment to the existing Yiwu Warehouse ID. Confirmed Majed's owner membership in PostgreSQL.
@@ -45,6 +52,11 @@
 
 ## Step 2 — Catalog and manual purchase orders
 
+### 2026-11-28 — Glass filters and dialog inputs
+
+- Catalog language/photo and order supplier filters now use the shared styled dropdown. Catalog dialog inputs use the global glass finish.
+- Build and synthetic browser filtering, clearing, search, dialog close/focus, narrow layout, and RTL checks passed as recorded under Step 1. Existing live-account and mobile handoff checks remain pending.
+
 - 2026-11-27: Installed `@tanstack/react-query` 5.108.4. A synthetic smoke check confirmed separate cache keys for two warehouses. Catalog and order integration remain pending.
 - 2026-11-27: Installed `@tanstack/react-table` 9.3.1 and verified it rendered synthetic stock data in the browser fixture. Office Web table integration remains pending.
 
@@ -57,6 +69,11 @@
 - Still open: verify with an authorized Jahez account against the running API and confirm the same order is visible to an assigned worker on Worker Mobile. Complete those checks before marking Step 2 verified.
 
 ## Step 3 — Live receiving and stock dashboard
+
+### 2026-11-28 — Glass dashboard and stock controls
+
+- Dashboard cards and panels inherit the shared frosted surface. Receiving status and inventory shipping mark, supplier, and brand filters use the shared custom dropdown.
+- Build and synthetic receiving status/inventory dropdown checks passed. Reviewed the dashboard glass finish and Arabic narrow-layout dropdown screenshot. Server and Worker Mobile were unchanged. Existing receipt history and live integration gaps remain.
 
 ### 2026-11-27 — Overview design correction
 

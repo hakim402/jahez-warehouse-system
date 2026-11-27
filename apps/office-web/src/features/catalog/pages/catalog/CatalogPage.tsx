@@ -5,6 +5,7 @@ import { languages, type Language } from '../../../../app/i18n';
 import { useRecordFormat } from '../../../../shared/format-record';
 import { DataTable, type RecordColumn } from '../../../../shared/ui/DataTable';
 import { ListTabs, SearchField } from '../../../../shared/ui/ListControls';
+import { FilterSelect } from '../../../../shared/ui/FilterSelect';
 import { RecordState } from '../../../../shared/ui/RecordState';
 import { partyName, productName, productNameFields, useCatalog, type Party, type Product } from '../../catalog-api';
 import { CatalogEditor, catalogAction, photoSource, type CatalogEditorState } from './CatalogEditor';
@@ -108,19 +109,13 @@ export default function CatalogPage() {
         <div className="table-toolbar">
           <SearchField label={t(kind === 'product' ? 'searchProducts' : 'searchParties')} value={search} onChange={setSearch} />
           {kind === 'product' && <div className="workspace-actions">
-            <select className="text-input" aria-label={t('nameLanguage')} value={nameLanguage}
-              onChange={(event) => setNameLanguage(event.currentTarget.value as Language | '')}>
-              <option value="">{t('nameLanguage')}</option>
-              {catalogLanguages.map((language) => <option key={language} value={language} lang={language}>
-                {languages[language].label}
-              </option>)}
-            </select>
-            <select className="text-input" aria-label={t('photoStatus')} value={photoStatus}
-              onChange={(event) => setPhotoStatus(event.currentTarget.value)}>
-              <option value="">{t('photoStatus')}</option>
-              <option value="with">{t('withPhoto')}</option>
-              <option value="without">{t('withoutPhoto')}</option>
-            </select>
+            <FilterSelect label={t('nameLanguage')} value={nameLanguage}
+              onChange={(value) => setNameLanguage(value as Language | '')}
+              options={[{ value: '', label: t('nameLanguage') }, ...catalogLanguages.map((language) =>
+                ({ value: language, label: languages[language].label, lang: language }))]} />
+            <FilterSelect label={t('photoStatus')} value={photoStatus} onChange={setPhotoStatus}
+              options={[{ value: '', label: t('photoStatus') }, { value: 'with', label: t('withPhoto') },
+                { value: 'without', label: t('withoutPhoto') }]} />
           </div>}
         </div>
         {catalog.isError ? <RecordState state="error" action={() => { void catalog.refetch(); }} /> :

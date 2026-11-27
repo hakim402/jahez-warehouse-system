@@ -10,6 +10,12 @@ The filenames below refer to `documents/designs/office-web/`. Use `reference-dro
 
 ## Step 1 — App shell, API connection, and sign-in
 
+### Glass surfaces refinement — Verified (2026-11-28)
+
+1. Use `06-dashboard-overview.png`, `reference-dropdown.png`, and `reference-dialog.png` for shell and control proportions, with the requested translucent glass finish. Define reusable glass surface, input, and floating-panel tokens in `src/global.css` and apply them to all cards, header, sidebar, mobile drawer, menus, and dialogs.
+2. Share one accessible Radix filter select across catalog, orders, receiving, and inventory. Style its trigger, options, selected state, scrolling, and focus without native dropdown chrome. Retain existing filter values, clearing, translations, and API requests. Give dialog inputs the shared glass styling.
+3. Verify the Office Web build and synthetic browser filtering, keyboard selection, dialog focus, glass rendering, desktop/narrow layout, and Arabic RTL. Record results under Steps 1–3. No API, server, or mobile changes are required.
+
 **Local warehouse configuration fix** — Set the existing `VITE_DEFAULT_WAREHOUSE_ID` to Yiwu Warehouse in the private Office Web environment. Verify Majed's warehouse membership in PostgreSQL and the hook's configured lookup. Reload Vite so the configured warehouse replaces the unassigned state.
 
 **Status** Partially verified. The Office Web implementation passed the build, live proxy checks, and synthetic browser checks. Live account sign-in and switching among assigned warehouses remain open verification items.
@@ -29,6 +35,8 @@ This step changes Office Web only. The server and Worker Mobile contracts stay a
 
 ## Step 2 — Catalog and manual purchase orders
 
+**2026-11-28 refinement — Verified.** Apply the Step 1 shared glass controls to catalog and order filters and catalog dialogs. Preserve existing filtering and form behavior.
+
 **Status** Partially verified. The Office Web build and synthetic browser workflow passed. A live Jahez account and Worker Mobile receiving handoff still need end-to-end verification.
 
 **Goal** Let Jahez office users maintain the catalog and create, review, and confirm a manual purchase order for receiving.
@@ -42,6 +50,8 @@ This step changes Office Web only. The server and Worker Mobile contracts stay a
 Dependencies are Server Step 3 for order and catalog contracts, Step 1 for account and verified warehouse context, and the assigned worker for end-to-end receiving verification. This step works in Office Web.
 
 ## Step 3 — Live receiving and stock dashboard
+
+**2026-11-28 refinement — Verified.** Apply Step 1 glass surfaces to dashboard cards and panels, and share its custom filters in receiving and inventory. Preserve existing warehouse requests.
 
 **Status** Partially verified. The build and synthetic browser checks passed, including receipt events and reconnect recovery. Receipt history, historical summary-card comparisons, and live Worker Mobile receiving verification remain open.
 

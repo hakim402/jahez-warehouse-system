@@ -2,6 +2,7 @@ import { useSearchParams } from 'react-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ListTabs, SearchField } from '../../../shared/ui/ListControls';
+import { FilterSelect } from '../../../shared/ui/FilterSelect';
 import { useWarehouseData } from '../../stock/warehouse-api';
 import { WarehouseGate, QueueTable, FindingsTable } from '../../stock/pages/WarehouseViews';
 
@@ -25,9 +26,9 @@ export default function ReceivingPage() {
       ]} />
       {tab === 'queue' ? <><div className="table-toolbar">
         <SearchField label={t('searchOrders')} value={search} onChange={setSearch} />
-        <div className="workspace-actions"><select className="text-input" aria-label={t('status')} value={status} onChange={(event) => setStatus(event.target.value)}>
-          <option value="">{t('allOrders')}</option><option value="ready">{t('ready')}</option><option value="partly_received">{t('partly_received')}</option>
-        </select><input className="text-input" type="date" aria-label={t('expectedDate')} value={date} onChange={(event) => setDate(event.target.value)} /></div>
+        <div className="workspace-actions"><FilterSelect label={t('status')} value={status} onChange={setStatus}
+          options={[{ value: '', label: t('allOrders') }, { value: 'ready', label: t('ready') },
+            { value: 'partly_received', label: t('partly_received') }]} /><input className="text-input" type="date" aria-label={t('expectedDate')} value={date} onChange={(event) => setDate(event.target.value)} /></div>
       </div><QueueTable records={rows} /></> : <FindingsTable records={findings} />}
     </WarehouseGate></section></>;
 }

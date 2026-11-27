@@ -8,7 +8,9 @@
 .sidebar, .drawer {
   display: flex;
   flex-direction: column;
-  background: rgb(251 249 255 / 82%);
+  background: var(--glass-surface);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
 }
 
 .sidebar {
@@ -99,7 +101,10 @@
   min-block-size: 72px;
   padding: var(--space-3) var(--space-6);
   border-block-end: 1px solid var(--jahez-border);
-  background: rgb(251 249 255 / 74%);
+  background: var(--glass-surface);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  box-shadow: var(--glass-highlight);
 }
 
 .warehouse {
@@ -137,7 +142,7 @@
   inset-inline-start: 0;
   inline-size: min(280px, 90vw);
   box-shadow: 0 6px 26px rgb(23 19 43 / 25%);
-  background: var(--jahez-white);
+  background: var(--glass-surface);
 }
 
 .drawer .brand { padding-inline-end: 56px; }
