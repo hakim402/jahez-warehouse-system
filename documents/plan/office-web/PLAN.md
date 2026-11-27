@@ -1,47 +1,39 @@
 # Office Web Plan
 
-## First milestone
+The first milestone is a Jahez trader creating a purchase order and seeing stock update after a worker's receipt syncs. The full sequence follows the [Office Web roadmap](ROADMAP.md).
 
-Enable office staff to create a manual supplier order and see stock change when a worker's receipt syncs.
+Before coding a step, expand its heading here with the goal, numbered tasks, affected screens or modules, design references, API and other dependencies, and acceptance checks. Mark the step `In progress` when implementation starts.
 
-1. Wire the API base URL and authenticated API client.
-2. Build manual order entry and show the saved order on the office web.
-3. Show receipt status and refresh stock when the server publishes a committed update.
+After verification, record the date, completed work, actual check results, gaps, and next action under the matching step in [Office Web PROGRESS.md](../../progress/office-web/PROGRESS.md). Mark the plan step `Verified` once its required checks pass. Follow the [repository workflow](../../../AGENTS.md#workflow-for-every-step).
 
 ## Step 1 — App shell, API connection, and sign-in
 
-### Dependency setup
-
-Dependency setup is verified.
-
-1. Add `react-router` 7 for app routing on the current Node.js 22.16 runtime and `i18next` with `react-i18next` for English, Arabic, and Simplified Chinese.
-2. Add the Step 2 and Step 3 dependencies below in the same Office Web package update. Update the manifest and pnpm lockfile together.
-3. Verify a frozen install, confirm the installed versions, and build the Office Web starter.
-
-Sign-in integration uses the existing auth API. Step 1 feature work still needs a sign-in design review, an app shell reference, and an API for discovering assigned warehouses.
-
-### Dashboard UI dependencies
-
-Dependency setup is verified.
-
-1. Add `lucide-react` for icons and `radix-ui` for unstyled dialogs, dropdown menus, and popovers. Style these controls with Jahez CSS Modules when their screens are implemented.
-2. Add the table and chart dependencies under Steps 2 and 3. Keep the package manifest and pnpm lockfile in sync.
-3. Verify a clean frozen install with strict peer and engine checks, run the Office Web build, and smoke test all four libraries with synthetic data.
+Build Jahez sign-in, session handling, protected navigation, a shared API client, and assigned warehouse selection. Set up Jahez styling and English, Arabic RTL, and Simplified Chinese.
 
 ## Step 2 — Catalog and manual purchase orders
 
-Add `@tanstack/react-query` for catalog and order reads, mutations, and cache invalidation. Integration uses the documented catalog and order endpoints.
-
-Add `@tanstack/react-table` for table state in order, stock, and movement history views. The rendered tables use Jahez styles.
+Build supplier, customer mark, and product management. Let traders list, view, create, edit, confirm, and cancel purchase orders as their status permits.
 
 ## Step 3 — Live receiving and stock dashboard
 
-Add `socket.io-client` in the server's 4.8 range for authenticated warehouse events. The live dashboard depends on the server's Socket.IO endpoint and the receiving and stock REST contracts.
+Show order progress, receipts, discrepancies, stock balances, movements, and stock age. Verify that a synced receipt updates the dashboard and that the view catches up after reconnecting.
 
-Add `recharts` for dashboard charts and its `react-is` peer at the installed React version. Chart metrics depend on the approved dashboard design and available server data.
+## Step 4 — Findings, evidence, and dispatch views
 
-## Dependencies and verification
+Show ordered and received values together, let traders resolve findings, and display private evidence. Add dispatch history, packing details, and authorized stock adjustments.
 
-Use the order, stock, and live update contracts in the [server plan](../server/PLAN.md). Verify with a synthetic order that an authorized user can save it and see stock update after receipt sync.
+## Step 5 — Expenses and owner settings
 
-[Office web progress](../../progress/office-web/PROGRESS.md)
+Add expense entry and history with invoice evidence or a documented exception. Add owner controls for users, warehouse access, tolerances, and expense categories.
+
+## Step 6 — Reports and Excel downloads
+
+Add report filters, export progress, and authorized Excel downloads. Include the trilingual purchase order export with product photos.
+
+## Step 7 — Invoice import and review
+
+Upload invoice files, show the source beside the extracted draft, and let traders correct flagged values and confirm. Keep manual entry available when extraction fails.
+
+## Step 8 — Regional pilot verification
+
+Verify the full pilot in international and mainland China staging, including permissions, all three languages, responsive layouts, downloads, and live reconnect.
