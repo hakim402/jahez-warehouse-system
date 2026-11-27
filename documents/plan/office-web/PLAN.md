@@ -10,6 +10,11 @@ The filenames below refer to `documents/designs/office-web/`. Use `reference-dro
 
 ## Step 1 — App shell, API connection, and sign-in
 
+### Header profile control — Verified (2026-11-28)
+
+1. Refine the header from `06-dashboard-overview.png` and `reference-dropdown.png` per the user's direction: replace the initials tile and chevron with one profile icon, with no trigger background or border. Preserve the accessible 44 px target and account dropdown.
+2. Verify build, synthetic click/keyboard menu opening, Escape/focus return, and narrow/RTL layout. No API changes.
+
 ### Glass surfaces refinement — Verified (2026-11-28)
 
 1. Use `06-dashboard-overview.png`, `reference-dropdown.png`, and `reference-dialog.png` for shell and control proportions, with the requested translucent glass finish. Define reusable glass surface, input, and floating-panel tokens in `src/global.css` and apply them to all cards, header, sidebar, mobile drawer, menus, and dialogs.

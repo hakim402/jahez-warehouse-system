@@ -31,7 +31,7 @@
   text-decoration: none;
 }
 
-.brandIcon, .avatar {
+.brandIcon {
   display: grid;
   place-items: center;
   flex: none;
@@ -45,13 +45,8 @@
   border-radius: var(--radius-control);
 }
 
-.avatar {
-  inline-size: 28px;
-  block-size: 28px;
-  border-radius: var(--radius-pill);
-  font-size: 11px;
-  font-weight: 800;
-}
+.profileTrigger { color: var(--jahez-muted); }
+.profileTrigger:hover, .profileTrigger[data-state="open"] { background: transparent; color: var(--jahez-brand-deep); }
 
 .navigation {
   display: flex;

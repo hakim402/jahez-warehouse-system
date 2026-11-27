@@ -8,6 +8,11 @@
 
 ## Step 1 — App shell, API connection, and sign-in
 
+### 2026-11-28 — Icon-only profile control
+
+- Replaced the header initials tile and chevron with one profile icon. Removed the trigger background and border, retaining its accessible label, focus outline, 44 px target, and existing account dropdown.
+- Office Web build passed. Synthetic Chrome checks passed real pointer click and keyboard opening, Escape/focus return, transparent trigger with one icon and no text, desktop/mobile layouts, and Arabic RTL. Inspected the desktop screenshot. No API or session behavior changes. Existing live account verification remains pending.
+
 ### 2026-11-28 — Shared glass surfaces and controls
 
 - Reviewed the overview, dropdown, and dialog reference images. Added shared glass surface, input, floating-panel, blur, and highlight tokens in `src/global.css`. Applied them to cards, header, sidebar, mobile drawer, menus, dialogs, and input fields. Sign-in fields now reuse the global input styling.

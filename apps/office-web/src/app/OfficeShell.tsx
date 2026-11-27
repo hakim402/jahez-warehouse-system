@@ -1,5 +1,5 @@
 import { Suspense, useState } from 'react';
-import { ChevronDown, LogOut, Menu, X } from 'lucide-react';
+import { CircleUserRound, LogOut, Menu, X } from 'lucide-react';
 import { Dialog, DropdownMenu } from 'radix-ui';
 import { useTranslation } from 'react-i18next';
 import { Outlet } from 'react-router';
@@ -20,8 +20,6 @@ export function OfficeShell() {
   if (!session) return null;
 
   const { name, role } = session.user;
-  const initials = name.trim().split(/\s+/).slice(0, 2)
-    .map((word) => Array.from(word)[0]).join('').toUpperCase();
 
   return (
     <div className={styles.shell + ' office-background'}>
@@ -55,9 +53,8 @@ export function OfficeShell() {
           <div className={styles.accountControls}>
             <LanguageMenu />
             <DropdownMenu.Root>
-              <DropdownMenu.Trigger className="menu-trigger" aria-label={t('accountMenu')}>
-                <span className={styles.avatar} aria-hidden="true">{initials}</span>
-                <ChevronDown size={14} aria-hidden="true" />
+              <DropdownMenu.Trigger className={styles.profileTrigger + ' icon-button'} aria-label={t('accountMenu')}>
+                <CircleUserRound size={26} strokeWidth={1.6} aria-hidden="true" />
               </DropdownMenu.Trigger>
               <DropdownMenu.Portal>
                 <DropdownMenu.Content className="menu-content" align="end" sideOffset={8}>
