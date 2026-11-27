@@ -58,6 +58,12 @@
 
 ## Step 3 — Live receiving and stock dashboard
 
+### 2026-11-27 — Overview design correction
+
+- Rebuilt the overview from `06-dashboard-overview.png` with four icon cards, two chart panels, compact expected deliveries and attention sections, and a four-column recent activity table. Overview links select the relevant receiving or inventory tab.
+- Charts read movement pages through the complete comparison period and group receipts by ledger posting date. Weekday counts deduplicate receipt IDs. Historical summary-card comparisons remain unavailable in the current API and are labeled accordingly.
+- The production build passed. Browser screenshots verified both chart panels and compact sections at 1440 × 1157, plus 390 px English and Arabic RTL layouts. Focused data checks passed for current/prior periods, receipt deduplication, date boundaries, and values above chart numeric precision.
+
 ### 2026-11-27 — Receiving, inventory, and live dashboard
 
 - Implemented current dashboard counts, expected deliveries, open findings, receiving search and date/status filters, and inventory balances, movement pages, and stock age. Reviewed the dashboard, receiving, and inventory references. Reused shared tables and state controls with translated labels.

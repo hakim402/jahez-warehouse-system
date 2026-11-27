@@ -1,3 +1,4 @@
+import { useSearchParams } from 'react-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ListTabs, SearchField } from '../../../shared/ui/ListControls';
@@ -7,7 +8,9 @@ import { WarehouseGate, QueueTable, FindingsTable } from '../../stock/pages/Ware
 export default function ReceivingPage() {
   const { t } = useTranslation();
   const data = useWarehouseData();
-  const [tab, setTab] = useState('queue');
+  const [params, setParams] = useSearchParams();
+  const tab = params.get('tab') === 'findings' ? 'findings' : 'queue';
+  const setTab = (value: string) => setParams(value === 'findings' ? { tab: value } : {});
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('');
   const [date, setDate] = useState('');

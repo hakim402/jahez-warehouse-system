@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router';
+import { Link, useSearchParams } from 'react-router';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { DataTable, type RecordColumn } from '../../../shared/ui/DataTable';
@@ -78,7 +78,10 @@ export function StockTable({ records, kind }: { records: StockRow[]; kind: 'bala
 export function InventoryPage() {
   const { t } = useTranslation();
   const data = useWarehouseData();
-  const [tab, setTab] = useState<'balances' | 'movements' | 'age'>('balances');
+  const [params, setParams] = useSearchParams();
+  const requestedTab = params.get('tab');
+  const tab = requestedTab === 'movements' || requestedTab === 'age' ? requestedTab : 'balances';
+  const setTab = (value: string) => setParams(value === 'balances' ? {} : { tab: value });
   const [search, setSearch] = useState('');
   const [customer, setCustomer] = useState('');
   const [supplier, setSupplier] = useState('');

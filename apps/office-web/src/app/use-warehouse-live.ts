@@ -16,7 +16,7 @@ export function useWarehouseLive(warehouseId: string | undefined) {
     const refresh = () => {
       if (disposed) return;
       void cache.invalidateQueries({ predicate: (query) =>
-        ['warehouse-data', 'orders', 'order'].includes(String(query.queryKey[0])) });
+        ['warehouse-data', 'dashboard-history', 'orders', 'order'].includes(String(query.queryKey[0])) });
     };
     const events = ['order.confirmed', 'order.cancelled', 'receipt.confirmed', 'finding.resolved', 'dispatch.confirmed', 'adjustment.recorded'];
     for (const event of events) socket.on(event, refresh);

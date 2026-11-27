@@ -43,13 +43,14 @@ Dependencies are Server Step 3 for order and catalog contracts, Step 1 for accou
 
 ## Step 3 — Live receiving and stock dashboard
 
-**Status** Partially verified. The build and synthetic browser checks passed, including receipt events and reconnect recovery. Receipt history, historical chart contracts, and live Worker Mobile receiving verification remain open.
+**Status** Partially verified. The build and synthetic browser checks passed, including receipt events and reconnect recovery. Receipt history, historical summary-card comparisons, and live Worker Mobile receiving verification remain open.
 
 1. Use `06-dashboard-overview.png`, `07-receiving.png`, and `09-inventory.png` for the dashboard, receiving queue and findings, and inventory tabs. Reuse shared table, filter, loading, and error controls with all three languages.
 2. Add account and warehouse scoped queries for `/orders/awaiting`, `/findings`, `/stock`, `/stock/movements`, and `/stock/age`. Preserve exact integer stock strings. Load movement pages through the server cursor.
 3. Subscribe to warehouse Socket.IO events with the current access token. Refresh REST views on events, subscription and reconnect. Recreate the connection when credentials or warehouse change, recover unauthorized connections through the session manager, and poll while disconnected.
-4. Show current queue counts, open findings, exact cartons in stock, expected deliveries, and recent stock activity on the dashboard. Receipt history and historical comparison charts require server contracts. Receipt evidence and finding resolution belong to Step 4.
+4. Show current queue counts, open findings, exact cartons in stock, expected deliveries, and recent stock activity on the dashboard. Derive receipt charts from ledger posting dates. Receipt history and historical summary-card comparisons require server contracts. Receipt evidence and finding resolution belong to Step 4.
 5. Verify the production build and exercise synthetic receiving, inventory, and reconnect flows. Check desktop and narrow layouts, Arabic RTL, missing warehouse access, and error recovery. Record live Worker Mobile checks separately.
+6. Correct the overview to match `06-dashboard-overview.png`, including icon cards, two chart panels, compact deliveries and attention panels, and the four-column recent activity table. Read complete movement pages for the four-week charts and retain a clear unavailable state on failure. Verified the rendered design at desktop and narrow widths.
 
 ## Step 4 — Findings, evidence, and dispatch views
 

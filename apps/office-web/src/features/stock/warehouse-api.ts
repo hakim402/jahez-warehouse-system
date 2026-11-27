@@ -17,7 +17,7 @@ export type StockRow = {
   cartons: string | number; qty: string | number | null; cbm: number | null;
   receiptId?: string; receiptNo?: string; daysInStorage?: number; createdAt?: string; kind?: string;
 };
-export type Movement = StockRow & { id: string; kind: string; createdAt: string; receiptId?: string };
+export type Movement = StockRow & { id: string; kind: string; createdAt: string; receiptId?: string; dispatchNo?: string; adjustmentNo?: string };
 type MovementPage = { warehouseId: string; movements: Movement[]; nextCursor: string | null };
 
 export function exactCount(value: string | number | null, language: string) {
