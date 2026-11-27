@@ -33,6 +33,11 @@
 
 - Added a translucent lavender tint, backdrop blur, and an inset highlight to the sign-in card. The Office Web build passed. Verified the effect and label readability in the running Chrome preview at 1440 × 900 and 390 × 844.
 
+### 2026-11-27 — Glass inputs and compact sign-in card
+
+- Added a translucent gradient and blur to both sign-in fields. Reduced the card to 420 px on desktop and tightened the spacing while keeping the inputs 50 px tall.
+- The Office Web build passed. Checked both fields and the card at 1440 × 900 and 390 × 844 in the running Chrome preview, including keyboard focus and the invalid-field border.
+
 ## Step 2 — Catalog and manual purchase orders
 
 - 2026-11-27: Installed `@tanstack/react-query` 5.108.4. A synthetic smoke check confirmed separate cache keys for two warehouses. Catalog and order integration remain pending.
