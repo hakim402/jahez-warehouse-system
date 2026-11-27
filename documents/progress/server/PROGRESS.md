@@ -157,6 +157,8 @@ Steps 1–10 are verified on the recorded local and disposable PostgreSQL checks
 
 ## Step 11 — Regional Staging and Pilot Readiness
 
+**Shared client integration guide — 2026-11-27** — Added a guide derived from the implemented server controllers and services with endpoint workflows, role restrictions, session rotation, receipt and upload retry behavior, sync cursors, and Socket.IO reconnect rules. Linked it from the server README, agent guides, and both client roadmaps. Added the design index pointing to the supplied mobile references and recording the empty Office Web design folder. Client dependencies include warehouse discovery, local browser proxy configuration, and the planned OpenAPI generation.
+
 **Production domains recorded — 2026-11-27** — Updated international production examples and developer guidance for `api.jahez.online` and `office.jahez.online`. The shared Nginx host list includes both names. Office requests retain same-origin API proxying, and mobile/external clients use the API subdomain. DNS reachability and TLS issuance remain deployment checks.
 
 **Client integration follow-ups** — Added a deferred checklist at the top of Server Plan covering provisioning, shared-device sessions, invoice parsing and accuracy, storage-provider verification, regional staging, recovery, Yiwu access, and mobile-version compatibility. Each item names its owning server step and when client development should revisit it. Implementation remains pending.

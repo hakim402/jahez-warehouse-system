@@ -171,6 +171,8 @@ Use [Office Web's roadmap](../office-web/ROADMAP.md) and [Worker Mobile's roadma
 
 ## Step 11 — Regional Staging and Pilot Readiness
 
+**Client integration documentation** — Inspect the implemented controllers and services, write one shared guide for Office Web and Worker Mobile, and link it from agent guidance and client roadmaps. Document actual contracts, permissions, retry rules, designs, and known gaps. Verify links and request examples before publishing.
+
 **Production domain update** — Document `api.jahez.online` for the international API and `office.jahez.online` for Office Web. Align the international Nginx example, TLS instructions, health checks, and client connection guidance. Validate rendered hostnames and Compose settings before committing.
 
 **Developer guide update** — Add a server README with development setup, database roles, API and worker commands, a smoke-test checklist, production entry points, and the remaining staging checks. Validate commands against package scripts and links against repository files before committing.

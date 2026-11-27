@@ -4,6 +4,8 @@ Jahez manages supplier orders, receiving, dispatch, stock, expenses, and reporti
 
 ## Source documents
 
+- The [Backend Integration Guide](../api/BACKEND-INTEGRATION.md) covers the implemented API, permissions, session lifecycle, offline sync, files, and live events for both clients. The [design index](../designs/README.md) maps each app to its reference images. Read both before client work.
+
 - The [System Design v2 requirements](../Requirments%20/REQUIREMENTS.md) define the pilot scope and behavior. The [original Word document](../Requirments%20/Requirments.docx) contains the source design.
 - [Technology stack](../tech-stack/README.md) records the approved tools, regional architecture, and configuration choices.
 - [Project structure](../tech-stack/PROJECT-STRUCTURE.md) defines feature ownership and implementation order. The [app layouts](../tech-stack/PROJECT-STRUCTURE.md#app-structure) show where React pages and components, Flutter screens and widgets, and NestJS modules belong.

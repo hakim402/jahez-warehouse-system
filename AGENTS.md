@@ -2,6 +2,8 @@
 
 These repository instructions apply to Codex and Qoder. Read [Project Context](documents/context/PROJECT-CONTEXT.md) at the start of a task. Use the linked requirements and architecture sections relevant to the change. Check the current code before treating a planned component as implemented.
 
+For Office Web or Worker Mobile integration, read the shared [Backend Integration Guide](documents/api/BACKEND-INTEGRATION.md), then inspect the relevant [design references](documents/designs/README.md) before UI coding. Use `documents/designs/office-web/` for Office Web and `documents/designs/worker-mobile/` for Worker Mobile. Record the chosen design and API dependencies in the app's numbered plan. Follow the linked tech-stack layout and keep code DRY through the existing feature services, request layer, and reusable controls. Record a missing reference and ask for direction before inventing a replacement design.
+
 ## Work in the owning application
 
 - `apps/server` owns the NestJS API, background worker, warehouse rules, and database migrations.

@@ -2,6 +2,8 @@
 
 The backend for Jahez Warehouse System. One NestJS application provides the REST API and a separate worker process handles Excel exports and invoice extraction.
 
+For Office Web and Worker Mobile development, use the shared [Backend Integration Guide](../../documents/api/BACKEND-INTEGRATION.md). It covers request examples, roles, offline retries, files, live events, and the client design and structure references.
+
 | Component | Used for |
 | --- | --- |
 | NestJS and TypeScript | REST API under `/api/v1` |

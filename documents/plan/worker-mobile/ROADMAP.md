@@ -6,6 +6,8 @@ Follow the [agent guide](../../../AGENTS.md), [warehouse requirements](../../Req
 
 ## How the agent should work
 
+Read the [Backend Integration Guide](../../api/BACKEND-INTEGRATION.md) and [design index](../../designs/README.md) before each integration or UI step. Inspect the matching mobile reference, record the chosen filename and API dependencies in the plan, and follow the approved screen, widget, and offline-layer layout.
+
 Follow the [repository workflow](../../../AGENTS.md#workflow-for-every-step). Keep the requested step number in [Worker Mobile Plan](PLAN.md) and [Worker Mobile Progress](../../progress/worker-mobile/PROGRESS.md). Record affected screens, local database and queue changes, server dependencies, and device checks in the plan before editing application code.
 
 Keep screen state and widgets beside their screens. Use the shared Dart API client and keep connection, storage, and retry logic in the repository and offline layers. Run the relevant device checks alongside Flutter analysis.

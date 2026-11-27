@@ -6,9 +6,11 @@ Follow the [agent guide](../../../AGENTS.md), [warehouse requirements](../../Req
 
 ## How the agent should work
 
+Read the [Backend Integration Guide](../../api/BACKEND-INTEGRATION.md) and [design index](../../designs/README.md) before each integration or UI step. Inspect the Office Web reference, record the chosen filename and API dependencies in the plan, and follow the approved feature layout. Check the index for missing designs before starting UI implementation.
+
 Follow the [repository workflow](../../../AGENTS.md#workflow-for-every-step). Keep the requested step number in [Office Web Plan](PLAN.md) and [Office Web Progress](../../progress/office-web/PROGRESS.md). Record affected screens, roles, and API dependencies in the plan before editing application code.
 
-Keep page components beside their pages and use the shared TypeScript API client. Check the OpenAPI contract before wiring a screen and verify the affected screens with synthetic data.
+Keep page components beside their pages and use the shared TypeScript API client. Confirm the request and response contract in the integration guide and server source before wiring a screen. Use the generated OpenAPI contract once it is implemented, and verify affected screens with synthetic data.
 
 ## First workflow
 
