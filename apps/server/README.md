@@ -81,6 +81,63 @@ node -e 'const r=require("node:readline").createInterface({input:process.stdin,o
 
 Return to the repository root for subsequent commands. Use disposable data when testing mutations. Phone sign-in uses the password credential. SMS delivery and a self-service registration flow are still pending.
 
+## macOS PostgreSQL troubleshooting
+
+If readiness returns `503` with `{"status":"error","database":"down"}`, check which database
+installation owns port 5432 before resetting a password. This project was set up locally on
+PostgreSQL 17 installed under `/Library/PostgreSQL/17`. Homebrew PostgreSQL 14 can start on the
+same port and have different roles and databases.
+
+```bash
+brew services list
+lsof -nP -iTCP:5432 -sTCP:LISTEN
+```
+
+Use the listener PID from `lsof` to identify its data directory.
+
+```bash
+# Replace LISTENER_PID with the PostgreSQL listener's numeric PID.
+lsof -a -p LISTENER_PID -d cwd
+```
+
+`/usr/local/var/postgresql@14` indicates the Homebrew installation. If your intended project
+database is in PostgreSQL 17 and PostgreSQL 14 is occupying the port, switch services as below.
+Stopping PostgreSQL 14 interrupts any application currently using that instance.
+
+```bash
+brew services stop postgresql@14
+sudo launchctl bootstrap system /Library/LaunchDaemons/postgresql-17.plist
+sudo launchctl kickstart -k system/postgresql-17
+/Library/PostgreSQL/17/bin/pg_isready -h 127.0.0.1 -p 5432
+```
+
+If `bootstrap` reports the service is already loaded, continue with `kickstart`. The readiness
+command should report `accepting connections`. Verify the project database with a password prompt.
+
+```bash
+/Library/PostgreSQL/17/bin/psql -X -h 127.0.0.1 -p 5432 -U postgres -d jahez_warehouse_db -W -c 'SELECT 1;'
+```
+
+This command checks the local administrator connection. The application's `DATABASE_URL` should
+use its provisioned runtime role, and `MIGRATION_DATABASE_URL` its migration role, as described
+above. If the administrator check succeeds but API readiness still fails, check the configured
+runtime role, database name, and credentials against the API terminal's PostgreSQL error.
+
+Stop the API with `Ctrl+C` in its terminal, restart from the repository root, then verify readiness
+from a second terminal.
+
+```bash
+pnpm --dir apps/server dev
+```
+
+```bash
+curl --fail http://127.0.0.1:3000/api/v1/health/ready
+```
+
+Success contains `"status":"ok"` and `"database":"up"`. `latencyMs` varies. Restart the worker
+too if it exited while PostgreSQL was unavailable. Switching these services preserves their data
+directories.
+
 ## Commands
 
 | Command from repository root | Purpose |

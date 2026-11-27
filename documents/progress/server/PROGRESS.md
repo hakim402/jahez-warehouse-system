@@ -4,6 +4,8 @@ Steps 1–10 are verified on the recorded local and disposable PostgreSQL checks
 
 ## Step 1 — Configuration and PostgreSQL Readiness
 
+**macOS connection recovery — 2026-11-27** — Diagnosed Homebrew PostgreSQL 14 occupying port 5432 while the configured `postgres` role belonged to the intended PostgreSQL 17 setup. After switching services and restarting the API, the user confirmed readiness returned `status=ok`, `database=up`, and `latencyMs=1`. Added service inspection, recovery commands, and runtime-credential checks to the server README.
+
 **Verified** — 2026-11-25. Commits `1c7d552` and `c06ecbc`.
 
 - Shipped shared API and worker configuration, the PostgreSQL pool, independent liveness and database readiness, and migration 0001 with a versioned ledger.

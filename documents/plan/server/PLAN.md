@@ -22,6 +22,8 @@ Use [Office Web's roadmap](../office-web/ROADMAP.md) and [Worker Mobile's roadma
 
 ## Step 1 — Configuration and PostgreSQL Readiness
 
+**Local setup documentation** — Add the verified macOS PostgreSQL 14/17 service-conflict recovery to the server README, including listener inspection, service switching, API restart, and readiness verification.
+
 **Review follow-up** — Queue startup no longer gates API liveness. Queue sends and worker consumption wait for initialization and retry a failed start.
 
 **Status** — Verified.
