@@ -5,7 +5,8 @@ import { Link } from 'react-router';
 import { RecordState } from '../../../../shared/ui/RecordState';
 import { useRecordFormat } from '../../../../shared/format-record';
 import { OrderStatusBadge } from '../../../orders/components/OrderStatusBadge';
-import { useWarehouseData, exactCount } from '../../../stock/warehouse-api';
+import { useWarehouseData } from '../../../stock/warehouse-api';
+import { formatStockCount, stockCountSign, sumStockCounts } from '../../../stock/stock-count';
 import { WarehouseGate } from '../../../stock/pages/WarehouseViews';
 import styles from './DashboardPage.module.css';
 
@@ -17,13 +18,13 @@ export function DashboardPage() {
   const data = useWarehouseData();
   const current = data.query.data;
   const language = i18n.resolvedLanguage || 'en';
-  const count = (value: string | number | null) => exactCount(value, language);
-  const cartons = current?.balances.reduce((sum, row) => sum + BigInt(row.cartons), 0n) ?? 0n;
+  const count = (value: string | number | null) => formatStockCount(value, language);
+  const cartons = sumStockCounts(current?.balances.map((row) => row.cartons) ?? []);
   const cards = [
     { label: 'readyForReceiving', value: current?.queue.filter((order) => order.status === 'ready').length ?? 0, icon: PackageCheck },
     { label: 'partly_received', value: current?.queue.filter((order) => order.status === 'partly_received').length ?? 0, icon: Clock3 },
     { label: 'openFindings', value: current?.findings.length ?? 0, icon: TriangleAlert },
-    { label: 'cartonsInStock', value: cartons.toString(), icon: Boxes },
+    { label: 'cartonsInStock', value: cartons, icon: Boxes },
   ];
   const deliveries = [...(current?.queue ?? [])].sort((a, b) =>
     (a.expectedDate || '9999').localeCompare(b.expectedDate || '9999')).slice(0, 3);
@@ -73,10 +74,11 @@ export function DashboardPage() {
                 const Icon = movement.kind === 'receipt' ? PackageCheck : movement.kind === 'dispatch' ? Truck : SlidersHorizontal;
                 const product = movement.product;
                 const name = language === 'ar' ? product.nameAr : language === 'zh-Hans' ? product.nameCn : product.nameEn;
+                const sign = stockCountSign(movement.cartons);
                 return <tr key={movement.id}>
                   <td><div className={styles.movement}><span className={styles.movementIcon} data-kind={movement.kind}><Icon size={16} aria-hidden="true" /></span><span><strong>{t(movement.kind === 'receipt' ? 'receiptConfirmed' : movement.kind === 'dispatch' ? 'dispatchConfirmed' : 'adjust')}</strong><small>{movement.receiptNo || movement.dispatchNo || movement.adjustmentNo || '—'}</small></span></div></td>
                   <td><bdi>{name || product.nameEn || product.nameCn || product.nameAr || '—'}</bdi></td>
-                  <td className={styles.delta} data-positive={BigInt(movement.cartons) > 0n}>{BigInt(movement.cartons) > 0n ? '+' : ''}{count(movement.cartons)}</td>
+                  <td className={styles.delta} data-positive={sign === 1}>{sign === 1 ? '+' : ''}{count(movement.cartons)}</td>
                   <td>{new Date(movement.createdAt).toLocaleString(language, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</td>
                 </tr>;
               })}</tbody></table></div> : <RecordState state="empty" />}

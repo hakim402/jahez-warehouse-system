@@ -2,7 +2,7 @@ import { useId } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { RecordState } from '../../../../shared/ui/RecordState';
-import { exactCount } from '../../../stock/warehouse-api';
+import { formatStockCount } from '../../../stock/stock-count';
 import { receiptSeries, useReceiptHistory } from './dashboard-data';
 import styles from './DashboardPage.module.css';
 
@@ -14,7 +14,7 @@ export function DashboardCharts({ warehouseId }: { warehouseId: string }) {
   const series = history.data ? receiptSeries(history.data) : undefined;
   const date = (value: string) => new Date(value + 'T00:00:00Z').toLocaleDateString(language, { month: 'short', day: 'numeric', timeZone: 'UTC' });
   const weekday = new Intl.DateTimeFormat(language, { weekday: 'short', timeZone: 'UTC' });
-  const error = history.isError || series?.tooLarge;
+  const error = history.isError || series?.tooLarge || series?.invalid;
   const state = () => error
     ? <RecordState state="error" action={() => { void history.refetch(); }} />
     : <RecordState state="loading" />;
@@ -23,8 +23,8 @@ export function DashboardCharts({ warehouseId }: { warehouseId: string }) {
       <div className={styles.panelHeader}><h2>{t('cartonsReceived')}</h2><span>{t('lastFourWeeks')}</span></div>
       {!series || error ? state() : <div className={styles.areaLayout}>
         <div className={styles.chartSummary}>
-          <strong>{exactCount(series.total.toString(), language)}</strong><span>{t('cartonsReceived').toLocaleLowerCase(language)}</span>
-          <small>{t('priorPeriod', { value: exactCount(series.prior.toString(), language) })}</small>
+          <strong>{formatStockCount(series.total, language)}</strong><span>{t('cartonsReceived').toLocaleLowerCase(language)}</span>
+          <small>{t('priorPeriod', { value: formatStockCount(series.prior, language) })}</small>
         </div>
         <div className={styles.areaChart}>
           <ResponsiveContainer width="100%" height={160}>

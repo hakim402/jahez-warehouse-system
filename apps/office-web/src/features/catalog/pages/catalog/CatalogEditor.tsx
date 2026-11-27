@@ -34,6 +34,7 @@ export function CatalogEditor({ editor, queryKey, onClose }: {
   const cache = useQueryClient();
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [failure, setFailure] = useState<string>();
+  const [failureDetails, setFailureDetails] = useState<string[]>([]);
   const mutation = useMutation({
     mutationFn: (record: Parameters<typeof saveCatalogRecord>[0]) => saveCatalogRecord(record, editor.record?.id),
     onSuccess: () => {
@@ -68,6 +69,7 @@ export function CatalogEditor({ editor, queryKey, onClose }: {
     }
     setErrors(formErrors);
     setFailure(undefined);
+    setFailureDetails([]);
     if (Object.keys(formErrors).length) {
       requestAnimationFrame(() => form.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus());
       return;
@@ -78,6 +80,7 @@ export function CatalogEditor({ editor, queryKey, onClose }: {
       setFailure(error instanceof ApiError && error.status === 403 ? 'restricted' :
         error instanceof ApiError && error.status === 409 ? 'conflict' :
           error instanceof ApiError && error.status === 400 ? 'validationFailed' : 'saveFailed');
+      if (error instanceof ApiError && [400, 409].includes(error.status)) setFailureDetails(error.validationMessages);
     }
   }
 
@@ -101,6 +104,7 @@ export function CatalogEditor({ editor, queryKey, onClose }: {
             </LabeledField>
           ))}
           {failure && <p className={'field-error ' + styles.fullField} role="alert">{t(failure)}</p>}
+          {failureDetails.length > 0 && <p className={'field-error ' + styles.fullField}>{failureDetails.join(' ')}</p>}
         </fieldset>
         <div className="office-dialog-actions">
           <button type="button" className="button" disabled={mutation.isPending} onClick={onClose}>{t('cancel')}</button>

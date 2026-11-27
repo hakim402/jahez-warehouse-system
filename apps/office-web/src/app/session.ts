@@ -102,8 +102,12 @@ async function refresh(session: OfficeSession) {
       publish(officeRole ? withExpiry(renewed) : null);
       if (!officeRole) void logOut(renewed.accessToken).catch(() => undefined);
     }
-  } catch {
-    if (snapshot.session === session) publish(null);
+  } catch (error) {
+    if (snapshot.session === session) {
+      const rejected = error instanceof ApiError && [400, 401, 403].includes(error.status);
+      // A transient refresh failure does not invalidate an access token that is still valid.
+      publish(!rejected && Date.now() < session.expiresAt ? session : null);
+    }
   } finally {
     if (pendingRefresh === activeRefresh) pendingRefresh = undefined;
   }
@@ -111,7 +115,12 @@ async function refresh(session: OfficeSession) {
 }
 
 export function restoreSession() {
-  return initialSession ? refresh(initialSession) : Promise.resolve(null);
+  if (!initialSession) return Promise.resolve(null);
+  if (initialSession.expiresAt - Date.now() > 5_000) {
+    publish(initialSession);
+    return Promise.resolve(initialSession);
+  }
+  return refresh(initialSession);
 }
 
 export async function signOut() {

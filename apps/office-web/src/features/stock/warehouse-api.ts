@@ -20,12 +20,6 @@ export type StockRow = {
 export type Movement = StockRow & { id: string; kind: string; createdAt: string; receiptId?: string; dispatchNo?: string; adjustmentNo?: string };
 type MovementPage = { warehouseId: string; movements: Movement[]; nextCursor: string | null };
 
-export function exactCount(value: string | number | null, language: string) {
-  if (value === null) return '—';
-  try { return new Intl.NumberFormat(language).format(BigInt(value)); }
-  catch { return String(value); }
-}
-
 export function useWarehouseData() {
   const scope = useOrderScope();
   const { session } = useSession();

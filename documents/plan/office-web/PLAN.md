@@ -26,9 +26,16 @@ The filenames below refer to `documents/designs/office-web/`. Use `reference-dro
 2. Share one accessible Radix filter select across catalog, orders, receiving, and inventory. Style its trigger, options, selected state, scrolling, and focus without native dropdown chrome. Retain existing filter values, clearing, translations, and API requests. Give dialog inputs the shared glass styling.
 3. Verify the Office Web build and synthetic browser filtering, keyboard selection, dialog focus, glass rendering, desktop/narrow layout, and Arabic RTL. Record results under Steps 1–3. No API, server, or mobile changes are required.
 
+### API error and session reliability fix — Verified (2026-11-28)
+
+1. Preserve validation message arrays, conflict shortages, review fields, and the safe error body in the shared Office Web request layer. Keep existing status-based handling and show server validation detail in the order and catalog editors without changing their layouts.
+2. Restore a still-valid tab session without an unnecessary refresh. Retain it after transient refresh failures only while its access token remains valid; clear it after confirmed authentication rejection or local expiry. Keep refresh serialization and idle sign-out unchanged.
+3. Use `01-sign-in.png`, `03-purchase-order-editor.png`, `reference-dialog.png`, and `reference-table-states.png` for the affected loading, validation, and error states. Depend on the existing authentication, order, and catalog contracts in sections 2–4 of the Backend Integration Guide; no Server or Worker Mobile contract changes.
+4. Verify structured 400/409 payloads, transient and rejected refresh behavior, valid-token reload, expired-token rejection, order/catalog validation display, desktop/narrow layouts, and Arabic RTL with synthetic data. Run Office Web typecheck and production build.
+
 **Local warehouse configuration fix** — Set the existing `VITE_DEFAULT_WAREHOUSE_ID` to Yiwu Warehouse in the private Office Web environment. Verify Majed's warehouse membership in PostgreSQL and the hook's configured lookup. Reload Vite so the configured warehouse replaces the unassigned state.
 
-**Status** Partially verified. The Office Web implementation passed the build, live proxy checks, and synthetic browser checks. Live account sign-in and switching among assigned warehouses remain open verification items.
+**Status** Partially verified; the API error and session reliability fix is verified. The Office Web implementation passed the build, live proxy checks, and synthetic browser checks. Live account sign-in and switching among assigned warehouses remain open verification items.
 
 **Goal** Give Jahez owners and traders a working, accessible sign-in and authenticated Office Web shell in English, Arabic RTL, and Simplified Chinese.
 
@@ -72,9 +79,15 @@ Dependencies are Server Step 3 for order and catalog contracts, Step 1 for accou
 1. Follow the single filter row in `07-receiving.png` and `reference-dropdown.png`. Correct the shared toolbar date input width so status and date remain side by side, with responsive wrapping only when necessary.
 2. Preserve existing date/status filtering and API dependencies. Verify the Office Web build and synthetic desktop/narrow filter alignment and functionality. Office Web CSS only.
 
+### Decimal stock rendering fix — Verified (2026-11-28)
+
+1. Add one exact decimal-safe stock-count formatter, sign check, and summation helper in the stock feature. Use it for dashboard totals, movement signs, receipt chart aggregation, and inventory carton/unit values.
+2. Preserve the current `06-dashboard-overview.png`, `07-receiving.png`, and `09-inventory.png` layouts, localized number formatting, table columns, and chart unavailable state. Depend on the existing stock and movement contracts; section 3 of the Backend Integration Guide permits decimal strings above JavaScript's safe integer range.
+3. Verify integer, fractional, negative, zero, malformed, and above-safe-integer stock values without render crashes or precision loss. Check dashboard, receiving, inventory, chart summaries, desktop/narrow layouts, and Arabic localization with synthetic data. Run Office Web typecheck and production build. No Server or Worker Mobile changes.
+
 **2026-11-28 refinement — Verified.** Apply Step 1 glass surfaces to dashboard cards and panels, and share its custom filters in receiving and inventory. Preserve existing warehouse requests.
 
-**Status** Partially verified. The build and synthetic browser checks passed, including receipt events and reconnect recovery. Receipt history, historical summary-card comparisons, and live Worker Mobile receiving verification remain open.
+**Status** Partially verified; the decimal stock rendering fix is verified. The build and synthetic browser checks passed, including receipt events and reconnect recovery. Receipt history, historical summary-card comparisons, and live Worker Mobile receiving verification remain open.
 
 1. Use `06-dashboard-overview.png`, `07-receiving.png`, and `09-inventory.png` for the dashboard, receiving queue and findings, and inventory tabs. Reuse shared table, filter, loading, and error controls with all three languages.
 2. Add account and warehouse scoped queries for `/orders/awaiting`, `/findings`, `/stock`, `/stock/movements`, and `/stock/age`. Preserve exact integer stock strings. Load movement pages through the server cursor.

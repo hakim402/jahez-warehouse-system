@@ -50,13 +50,15 @@ export default function OrderEditorPage() {
 }
 
 function serverFields(error: ApiError): DraftErrors {
-  const message = error.validationMessage ?? '';
-  if (/supplier id/i.test(message)) return { supplierId: 'invalidSelection' };
-  if (/customer id/i.test(message)) return { customerId: 'invalidSelection' };
-  if (/deposit/i.test(message)) return { deposit: 'invalidMoney' };
-  if (/order total/i.test(message)) return { total: 'totalTooLarge' };
-  if (/order line|product id|cartons|quantity|unit price|line amount/i.test(message)) return { lines: 'linesInvalid' };
-  return {};
+  const fields: DraftErrors = {};
+  for (const message of error.validationMessages) {
+    if (/supplier id/i.test(message)) fields.supplierId = 'invalidSelection';
+    else if (/customer id/i.test(message)) fields.customerId = 'invalidSelection';
+    else if (/deposit/i.test(message)) fields.deposit = 'invalidMoney';
+    else if (/order total/i.test(message)) fields.total = 'totalTooLarge';
+    else if (/order line|product id|cartons|quantity|unit price|line amount/i.test(message)) fields.lines = 'linesInvalid';
+  }
+  return fields;
 }
 
 function OrderEditor({ catalog, order, scope }: {
@@ -71,6 +73,7 @@ function OrderEditor({ catalog, order, scope }: {
   const [form, setForm] = useState(() => initialDraft(order));
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string>();
+  const [errorDetails, setErrorDetails] = useState<string[]>([]);
   const [remoteFields, setRemoteFields] = useState<DraftErrors>({});
   const [uncertain, setUncertain] = useState<Pick<DraftForm, 'supplierId' | 'customerId' | 'orderNo'>>();
   const [reviewing, setReviewing] = useState(false);
@@ -106,6 +109,7 @@ function OrderEditor({ catalog, order, scope }: {
     event.preventDefault();
     if (mutation.isPending || uncertain) return;
     setError(undefined);
+    setErrorDetails([]);
     setRemoteFields({});
     setSubmitted(true);
     if (!draft.input) {
@@ -126,9 +130,11 @@ function OrderEditor({ catalog, order, scope }: {
       } else if (failure instanceof ApiError && failure.status === 400) {
         setRemoteFields(serverFields(failure));
         setError('validationFailed');
+        setErrorDetails(failure.validationMessages);
       } else {
         setError(failure instanceof ApiError && failure.status === 403 ? 'restricted' :
           failure instanceof ApiError && failure.status === 409 ? 'conflict' : 'saveFailed');
+        if (failure instanceof ApiError && failure.status === 409) setErrorDetails(failure.validationMessages);
       }
     }
   }
@@ -155,6 +161,7 @@ function OrderEditor({ catalog, order, scope }: {
       <div className="workspace-heading"><h1>{t(order ? 'editDraft' : 'newPurchaseOrder')}</h1></div>
       {error && <div className={'surface ' + styles.notice} role="alert">
         <p className="field-error">{t(error)}</p>
+        {errorDetails.length > 0 && <p className="field-error">{errorDetails.join(' ')}</p>}
         {uncertain && <button type="button" className="button" onClick={() => setReviewing(true)}>{t('checkOrderList')}</button>}
       </div>}
       <form noValidate onSubmit={submit} aria-busy={mutation.isPending}>

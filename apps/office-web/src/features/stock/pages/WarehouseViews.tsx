@@ -9,7 +9,8 @@ import { RecordState } from '../../../shared/ui/RecordState';
 import { useRecordFormat } from '../../../shared/format-record';
 import { OrderWorkspaceState } from '../../orders/components/OrderWorkspaceState';
 import { OrderStatusBadge } from '../../orders/components/OrderStatusBadge';
-import { exactCount, useWarehouseData, type StockRow, type QueueOrder, type Finding } from '../warehouse-api';
+import { useWarehouseData, type StockRow, type QueueOrder, type Finding } from '../warehouse-api';
+import { formatStockCount } from '../stock-count';
 import styles from './WarehouseViews.module.css';
 
 type WarehouseData = ReturnType<typeof useWarehouseData>;
@@ -67,8 +68,8 @@ export function StockTable({ records, kind }: { records: StockRow[]; kind: 'bala
     { id: 'customer', header: t('customer'), cell: ({ row }) => <>{row.original.customerName || '—'}<bdi className="secondary-line">{row.original.customerMark}</bdi></> },
     { id: 'supplier', header: t('supplier'), cell: ({ row }) => row.original.supplierName || '—' },
     { id: 'brand', header: t('brand'), cell: ({ row }) => row.original.brand || '—' },
-    { id: 'cartons', header: t('cartons'), cell: ({ row }) => exactCount(row.original.cartons, format.language) },
-    { id: 'qty', header: t('units'), cell: ({ row }) => exactCount(row.original.qty, format.language) },
+    { id: 'cartons', header: t('cartons'), cell: ({ row }) => formatStockCount(row.original.cartons, format.language) },
+    { id: 'qty', header: t('units'), cell: ({ row }) => formatStockCount(row.original.qty, format.language) },
     { id: 'cbm', header: t('volume'), cell: ({ row }) => row.original.cbm === null ? '—' : new Intl.NumberFormat(format.language, { maximumFractionDigits: 3 }).format(row.original.cbm) },
   ];
   if (kind === 'age') columns.push({ id: 'age', header: t('daysInStorage'), cell: ({ row }) => <>{row.original.receiptNo}<span className="secondary-line">{row.original.daysInStorage}</span></> });

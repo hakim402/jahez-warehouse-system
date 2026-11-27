@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { authenticatedJson, useSession } from '../../../../app/session';
 import type { Movement } from '../../../stock/warehouse-api';
+import { compareStockCounts, sumStockCounts, type StockCountValue } from '../../../stock/stock-count';
 
 const day = 86_400_000;
 
@@ -36,8 +37,8 @@ export function receiptSeries(movements: Movement[], now = new Date()) {
   const end = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
   const currentStart = end - 27 * day;
   const previousStart = currentStart - 28 * day;
-  const current = Array<bigint>(28).fill(0n);
-  const previous = Array<bigint>(28).fill(0n);
+  const current = Array.from({ length: 28 }, () => [] as StockCountValue[]);
+  const previous = Array.from({ length: 28 }, () => [] as StockCountValue[]);
   const weekdays = Array.from({ length: 7 }, () => new Set<string>());
   for (const movement of movements) {
     if (movement.kind !== 'receipt') continue;
@@ -45,22 +46,30 @@ export function receiptSeries(movements: Movement[], now = new Date()) {
     const timestamp = Date.parse(movement.createdAt);
     if (timestamp < previousStart || timestamp >= end + day || !Number.isFinite(timestamp)) continue;
     const index = Math.floor((timestamp - previousStart) / day);
-    const cartons = BigInt(movement.cartons);
-    if (index < 28) previous[index] += cartons;
+    if (index < 28) previous[index].push(movement.cartons);
     else {
-      current[index - 28] += cartons;
+      current[index - 28].push(movement.cartons);
       const weekday = (new Date(timestamp).getUTCDay() + 6) % 7;
       if (movement.receiptId) weekdays[weekday].add(movement.receiptId);
     }
   }
-  const tooLarge = [...current, ...previous].some((value) => value > BigInt(Number.MAX_SAFE_INTEGER));
-  const total = current.reduce((sum, value) => sum + value, 0n);
-  const prior = previous.reduce((sum, value) => sum + value, 0n);
+  const currentTotals = current.map(sumStockCounts);
+  const previousTotals = previous.map(sumStockCounts);
+  const totals = [...currentTotals, ...previousTotals];
+  const invalid = totals.some((value) => value === null);
+  const tooLarge = totals.some((value) => {
+    const high = compareStockCounts(value, Number.MAX_SAFE_INTEGER);
+    const low = compareStockCounts(value, -Number.MAX_SAFE_INTEGER);
+    return high === null || low === null || high > 0 || low < 0;
+  });
   return {
-    total, prior, tooLarge,
-    days: current.map((value, index) => ({
+    total: sumStockCounts(currentTotals),
+    prior: sumStockCounts(previousTotals),
+    tooLarge,
+    invalid,
+    days: currentTotals.map((value, index) => ({
       date: new Date(currentStart + index * day).toISOString().slice(0, 10),
-      current: Number(value), previous: Number(previous[index]),
+      current: Number(value ?? 0), previous: Number(previousTotals[index] ?? 0),
     })),
     weekdays: weekdays.map((receipts, index) => ({ date: new Date(Date.UTC(2026, 0, 5 + index)), count: receipts.size })),
   };

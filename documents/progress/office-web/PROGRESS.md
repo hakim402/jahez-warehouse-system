@@ -8,6 +8,14 @@
 
 ## Step 1 — App shell, API connection, and sign-in
 
+### 2026-11-28 — Structured API errors and session restoration
+
+- Preserved validation message arrays, shortage and review-field details, HTTP status, and the safe error body in the shared Office Web request layer. The order and catalog editors now show all server validation messages while retaining their translated headlines, inline field errors, draft values, focus behavior, and approved layouts.
+- Restored a still-valid tab session without an unnecessary refresh. Refresh serialization and idle sign-out remain in place. A transient refresh failure retains the session only while the access token is valid; confirmed HTTP 400/401/403 rejection or local expiry clears it.
+- `pnpm --dir apps/office-web typecheck` and `pnpm --dir apps/office-web build` passed. Focused assertions passed for a structured HTTP 409 body, valid reload without refresh, transient-failure retention, HTTP 401 clearing, and expired-token clearing.
+- Isolated synthetic Chrome checks passed: valid reload made zero refresh calls; a controlled near-expiry transient failure made one refresh call and retained the session; rejected refresh made one call and returned to sign-in; an expired token made one refresh attempt and cleared after the transient failure because its access token was no longer valid. Order HTTP 400/409 and catalog HTTP 400 details rendered at desktop and narrow widths, including Arabic RTL, without page or dialog overflow. Reviewed `01-sign-in.png`, `03-purchase-order-editor.png`, `reference-dialog.png`, and `reference-table-states.png`.
+- This reliability fix is verified. Live Jahez account sign-in and assigned-warehouse switching remain open.
+
 ### 2026-11-28 — Minimal language selector
 
 - Removed the shared language trigger background and border on the header and sign-in page. Retained the globe, selected language, chevron, 44 px target, keyboard focus outline, and glass dropdown. Hover/open states use brand-colored text.
@@ -85,6 +93,13 @@
 - Still open: verify with an authorized Jahez account against the running API and confirm the same order is visible to an assigned worker on Worker Mobile. Complete those checks before marking Step 2 verified.
 
 ## Step 3 — Live receiving and stock dashboard
+
+### 2026-11-28 — Exact decimal stock rendering
+
+- Added one exact decimal parser, formatter, summation, sign, and comparison helper in the stock feature. Dashboard totals and movement signs, receipt aggregation and chart summaries, and inventory carton/unit values now handle decimal strings without `BigInt` conversion crashes or `Number` precision loss. Malformed values render an em dash, and invalid or above-safe-range chart data retains the existing unavailable state.
+- `pnpm --dir apps/office-web typecheck` and `pnpm --dir apps/office-web build` passed. Focused assertions passed for `1.5000 + 2.25 + 9007199254740993.125 = 9007199254740996.875`, exact large-value formatting, positive/negative/zero signs, exact comparison, and invalid-input handling.
+- Synthetic Chrome checks passed for dashboard total `3.75`, receipt total `3.75`, prior total `4.5`, movement signs `+2.5`, `-1.25`, and `+1.25`, inventory cartons `1.5` and `2.25`, and units `9,007,199,254,740,996.875` and `-0.125`. Desktop 1440 px, narrow 390 px, and Arabic RTL views had no page overflow. Screenshots were inspected against `06-dashboard-overview.png`, `07-receiving.png`, and `09-inventory.png`.
+- This decimal rendering fix is verified. Receipt history, historical summary-card comparisons, and live Worker Mobile receiving verification remain open.
 
 ### 2026-11-28 — Receiving filter alignment
 
