@@ -20,6 +20,7 @@ The filenames below refer to `documents/designs/office-web/`. Use `reference-dro
 4. Build protected navigation using the sidebar and top bar from `06-dashboard-overview.png`, with responsive navigation and account sign-out. Limit working routes to Step 1. Keep the backend's tenant and role in the session and support an optional configured Jahez tenant when a phone is ambiguous.
 5. Resolve an optional `VITE_DEFAULT_WAREHOUSE_ID` with the existing access-checked `GET /warehouses/:id`. Display the verified warehouse or the applicable unassigned or unavailable state. Configure `VITE_TENANT_ID` only when the deployment needs an explicit tenant for sign-in. Warehouse discovery and switching across assigned warehouses need a server contract and remain pending.
 6. Build Office Web and check the running local API proxy. Exercise sign-in, role gating, reload, refresh, account sign-out, and known-warehouse states with synthetic data. Check the supplied layouts, keyboard behavior, and language switching at desktop and narrow widths.
+7. Refine the sign-in card in `SignInPage.module.css` with a translucent tint and backdrop blur over `background.png`. Verified labels and controls at desktop and mobile widths.
 
 This step changes Office Web only. The server and Worker Mobile contracts stay as they are.
 

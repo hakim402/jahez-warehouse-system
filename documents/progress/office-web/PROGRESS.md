@@ -29,6 +29,10 @@
 - In an isolated Chrome fixture, verified protected routes, all three languages and persisted Arabic RTL, keyboard focus, password visibility, desktop and mobile layouts, bad credentials, worker denial, token refresh on 401 and reload, configured and inaccessible warehouses, missing configuration, manual sign-out, and idle sign-out. Sign-in submission and warehouse responses used synthetic data.
 - Still open: verify with a live Jahez account and agree the assigned-warehouse discovery API before implementing warehouse switching. Later feature pages and dashboard data remain in their roadmap steps.
 
+### 2026-11-27 — Frosted sign-in card
+
+- Added a translucent lavender tint, backdrop blur, and an inset highlight to the sign-in card. The Office Web build passed. Verified the effect and label readability in the running Chrome preview at 1440 × 900 and 390 × 844.
+
 ## Step 2 — Catalog and manual purchase orders
 
 - 2026-11-27: Installed `@tanstack/react-query` 5.108.4. A synthetic smoke check confirmed separate cache keys for two warehouses. Catalog and order integration remain pending.
