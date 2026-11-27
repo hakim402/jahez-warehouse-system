@@ -1,27 +1,46 @@
-import { lazy, useEffect } from 'react';
-import { QueryClientProvider } from '@tanstack/react-query';
-import { Direction } from 'radix-ui';
-import { useTranslation } from 'react-i18next';
-import { BrowserRouter, Navigate, Outlet, Route, Routes } from 'react-router';
-import { SignInPage } from '../features/auth/pages/sign-in/SignInPage';
-import { DashboardPage } from '../features/dashboard/pages/overview/DashboardPage';
-import { languages, officeLanguage } from './i18n';
-import { OfficeShell } from './OfficeShell';
-import { queryClient } from './query-client';
-import { useSession, watchIdleSession } from './session';
+import { lazy, useEffect } from "react";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { Direction } from "radix-ui";
+import { useTranslation } from "react-i18next";
+import { BrowserRouter, Navigate, Outlet, Route, Routes } from "react-router";
+import { SignInPage } from "../features/auth/pages/sign-in/SignInPage";
+import { DashboardPage } from "../features/dashboard/pages/overview/DashboardPage";
+import { languages, officeLanguage } from "./i18n";
+import { OfficeShell } from "./OfficeShell";
+import { queryClient } from "./query-client";
+import { useSession, watchIdleSession } from "./session";
 
-const ReceivingPage = lazy(() => import('../features/receiving/pages/ReceivingPage'));
-const InventoryPage = lazy(() => import('../features/stock/pages/WarehouseViews').then((module) => ({ default: module.InventoryPage })));
+const ReceivingPage = lazy(
+  () => import("../features/receiving/pages/ReceivingPage"),
+);
+const InventoryPage = lazy(() =>
+  import("../features/stock/pages/WarehouseViews").then((module) => ({
+    default: module.InventoryPage,
+  })),
+);
 
-const OrderListPage = lazy(() => import('../features/orders/pages/order-list/OrderListPage'));
-const OrderDetailPage = lazy(() => import('../features/orders/pages/order-detail/OrderDetailPage'));
-const OrderEditorPage = lazy(() => import('../features/orders/pages/order-editor/OrderEditorPage'));
-const CatalogPage = lazy(() => import('../features/catalog/pages/catalog/CatalogPage'));
+const OrderListPage = lazy(
+  () => import("../features/orders/pages/order-list/OrderListPage"),
+);
+const OrderDetailPage = lazy(
+  () => import("../features/orders/pages/order-detail/OrderDetailPage"),
+);
+const OrderEditorPage = lazy(
+  () => import("../features/orders/pages/order-editor/OrderEditorPage"),
+);
+const CatalogPage = lazy(
+  () => import("../features/catalog/pages/catalog/CatalogPage"),
+);
 
 function RequireSession() {
   const { t } = useTranslation();
   const { restoring, session } = useSession();
-  if (restoring) return <main className="session-status" role="status">{t('loadingSession')}</main>;
+  if (restoring)
+    return (
+      <main className="session-status" role="status">
+        {t("loadingSession")}
+      </main>
+    );
   return session ? <Outlet /> : <Navigate to="/sign-in" replace />;
 }
 
@@ -29,11 +48,16 @@ export function App() {
   const { i18n } = useTranslation();
   const { restoring, session } = useSession();
   const activeSessionId = restoring ? undefined : session?.sessionId;
-  useEffect(() => activeSessionId ? watchIdleSession() : undefined, [activeSessionId]);
+  useEffect(
+    () => (activeSessionId ? watchIdleSession() : undefined),
+    [activeSessionId],
+  );
 
   return (
     <QueryClientProvider client={queryClient}>
-      <Direction.Provider dir={languages[officeLanguage(i18n.resolvedLanguage)].direction}>
+      <Direction.Provider
+        dir={languages[officeLanguage(i18n.resolvedLanguage)].direction}
+      >
         <BrowserRouter>
           <Routes>
             <Route path="/sign-in" element={<SignInPage />} />
@@ -43,7 +67,10 @@ export function App() {
                 <Route path="orders" element={<OrderListPage />} />
                 <Route path="orders/new" element={<OrderEditorPage />} />
                 <Route path="orders/:orderId" element={<OrderDetailPage />} />
-                <Route path="orders/:orderId/edit" element={<OrderEditorPage />} />
+                <Route
+                  path="orders/:orderId/edit"
+                  element={<OrderEditorPage />}
+                />
                 <Route path="receiving" element={<ReceivingPage />} />
                 <Route path="inventory" element={<InventoryPage />} />
                 <Route path="catalog" element={<CatalogPage />} />

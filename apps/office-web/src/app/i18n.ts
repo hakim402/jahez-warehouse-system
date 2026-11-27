@@ -1,25 +1,25 @@
-import i18n from 'i18next';
-import { initReactI18next } from 'react-i18next';
-import { arabic, chinese, english } from './translations';
-import { recordCopy } from './records-copy';
+import i18n from "i18next";
+import { initReactI18next } from "react-i18next";
+import { arabic, chinese, english } from "./translations";
+import { recordCopy } from "./records-copy";
 
 export const languages = {
-  en: { label: 'English', direction: 'ltr' },
-  ar: { label: 'العربية', direction: 'rtl' },
-  'zh-Hans': { label: '简体中文', direction: 'ltr' },
+  en: { label: "English", direction: "ltr" },
+  ar: { label: "العربية", direction: "rtl" },
+  "zh-Hans": { label: "简体中文", direction: "ltr" },
 } as const;
 export type Language = keyof typeof languages;
-const preferenceKey = 'jahez.office.language';
+const preferenceKey = "jahez.office.language";
 
 export function officeLanguage(value: string | undefined): Language {
-  return value === 'ar' || value === 'zh-Hans' ? value : 'en';
+  return value === "ar" || value === "zh-Hans" ? value : "en";
 }
 
 function savedLanguage() {
   try {
     return officeLanguage(localStorage.getItem(preferenceKey) ?? undefined);
   } catch {
-    return 'en';
+    return "en";
   }
 }
 
@@ -38,15 +38,15 @@ export async function initLanguage() {
   const language = savedLanguage();
   await i18n.use(initReactI18next).init({
     lng: language,
-    fallbackLng: 'en',
+    fallbackLng: "en",
     supportedLngs: Object.keys(languages),
     resources: {
       en: { translation: { ...english, ...recordCopy(0) } },
       ar: { translation: { ...arabic, ...recordCopy(1) } },
-      'zh-Hans': { translation: { ...chinese, ...recordCopy(2) } },
+      "zh-Hans": { translation: { ...chinese, ...recordCopy(2) } },
     },
     interpolation: { escapeValue: false },
   });
   applyLanguage(language);
-  i18n.on('languageChanged', applyLanguage);
+  i18n.on("languageChanged", applyLanguage);
 }

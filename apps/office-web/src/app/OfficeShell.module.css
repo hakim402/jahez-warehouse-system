@@ -5,7 +5,8 @@
   background-attachment: fixed;
 }
 
-.sidebar, .drawer {
+.sidebar,
+.drawer {
   display: flex;
   flex-direction: column;
   background: var(--glass-surface);
@@ -45,8 +46,14 @@
   border-radius: var(--radius-control);
 }
 
-.profileTrigger { color: var(--jahez-muted); }
-.profileTrigger:hover, .profileTrigger[data-state="open"] { background: transparent; color: var(--jahez-brand-deep); }
+.profileTrigger {
+  color: var(--jahez-muted);
+}
+.profileTrigger:hover,
+.profileTrigger[data-state="open"] {
+  background: transparent;
+  color: var(--jahez-brand-deep);
+}
 
 .navigation {
   display: flex;
@@ -85,9 +92,15 @@
   font-weight: 700;
 }
 
-.navItem[aria-disabled="true"] { color: var(--jahez-muted); }
-.settings { margin-block-start: auto; }
-.workspace { min-inline-size: 0; }
+.navItem[aria-disabled="true"] {
+  color: var(--jahez-muted);
+}
+.settings {
+  margin-block-start: auto;
+}
+.workspace {
+  min-inline-size: 0;
+}
 
 .topbar {
   display: flex;
@@ -121,7 +134,9 @@
   padding: var(--space-7);
 }
 
-.topbar .mobileTrigger { display: none; }
+.topbar .mobileTrigger {
+  display: none;
+}
 
 .overlay {
   position: fixed;
@@ -140,7 +155,9 @@
   background: var(--glass-surface);
 }
 
-.drawer .brand { padding-inline-end: 56px; }
+.drawer .brand {
+  padding-inline-end: 56px;
+}
 
 .closeDrawer {
   position: absolute;
@@ -149,14 +166,29 @@
 }
 
 @media (max-width: 820px) {
-  .shell { grid-template-columns: minmax(0, 1fr); }
-  .sidebar { display: none; }
-  .topbar .mobileTrigger { display: inline-flex; }
-  .topbar { padding-inline: var(--space-3); }
-  .content { padding: var(--space-6) var(--space-4); }
+  .shell {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .sidebar {
+    display: none;
+  }
+  .topbar .mobileTrigger {
+    display: inline-flex;
+  }
+  .topbar {
+    padding-inline: var(--space-3);
+  }
+  .content {
+    padding: var(--space-6) var(--space-4);
+  }
 }
 
 @media (max-width: 380px) {
-  .topbar { flex-wrap: wrap; gap: var(--space-1); }
-  .accountControls { margin-inline-start: auto; }
+  .topbar {
+    flex-wrap: wrap;
+    gap: var(--space-1);
+  }
+  .accountControls {
+    margin-inline-start: auto;
+  }
 }
