@@ -309,3 +309,7 @@ html[dir="rtl"] .rtl-icon { transform: scaleX(-1); }
   .table-toolbar select { max-inline-size: min(100%, 170px); }
   .list-tabs, .table-toolbar, .table-footer, .records-table :is(th, td) { padding-inline: var(--space-3); }
 }
+
+.live-status { font-size: 12px; color: var(--jahez-muted); }
+.live-status[data-connected="true"] { color: var(--jahez-success); }
+@media (max-width: 820px) { .live-status { display: none; } }

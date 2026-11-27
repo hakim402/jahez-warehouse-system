@@ -10,6 +10,9 @@ import { OfficeShell } from './OfficeShell';
 import { queryClient } from './query-client';
 import { useSession, watchIdleSession } from './session';
 
+const ReceivingPage = lazy(() => import('../features/receiving/pages/ReceivingPage'));
+const InventoryPage = lazy(() => import('../features/stock/pages/WarehouseViews').then((module) => ({ default: module.InventoryPage })));
+
 const OrderListPage = lazy(() => import('../features/orders/pages/order-list/OrderListPage'));
 const OrderDetailPage = lazy(() => import('../features/orders/pages/order-detail/OrderDetailPage'));
 const OrderEditorPage = lazy(() => import('../features/orders/pages/order-editor/OrderEditorPage'));
@@ -41,6 +44,8 @@ export function App() {
                 <Route path="orders/new" element={<OrderEditorPage />} />
                 <Route path="orders/:orderId" element={<OrderDetailPage />} />
                 <Route path="orders/:orderId/edit" element={<OrderEditorPage />} />
+                <Route path="receiving" element={<ReceivingPage />} />
+                <Route path="inventory" element={<InventoryPage />} />
                 <Route path="catalog" element={<CatalogPage />} />
               </Route>
               <Route path="*" element={<Navigate to="/" replace />} />

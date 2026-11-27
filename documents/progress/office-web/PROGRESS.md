@@ -58,6 +58,13 @@
 
 ## Step 3 — Live receiving and stock dashboard
 
+### 2026-11-27 — Receiving, inventory, and live dashboard
+
+- Implemented current dashboard counts, expected deliveries, open findings, receiving search and date/status filters, and inventory balances, movement pages, and stock age. Reviewed the dashboard, receiving, and inventory references. Reused shared tables and state controls with translated labels.
+- Added warehouse-scoped Socket.IO subscriptions with refreshed credentials, REST refresh after events and subscription, reconnect recovery, and periodic refresh. Exact stock integer strings are formatted through BigInt.
+- The Office Web production build passed. A headless Chrome fixture verified exact stock counts above JavaScript's safe integer range, dashboard and receiving views, inventory tabs, cursor loading, Arabic RTL, and a narrow viewport. A synthetic receipt event updated stock, and a transport interruption recovered changed stock after reconnect.
+- Remaining gaps are the API for receipt history and historical dashboard comparisons, plus an end-to-end partial receipt from Worker Mobile against the live Jahez account. Receipt detail evidence and finding resolution remain in Step 4. Step 3 is partially verified.
+
 - 2026-11-27: Installed `socket.io-client` 4.8.4. A synthetic smoke check confirmed client initialization with the connection disabled. Live events and reconnect still need end-to-end verification.
 - 2026-11-27: Installed `recharts` 3.11.1 and its `react-is` 19.3.1 peer, matching React 19.3.1. Verified a chart bar rendered in the browser fixture. Dashboard chart design and data integration remain pending.
 

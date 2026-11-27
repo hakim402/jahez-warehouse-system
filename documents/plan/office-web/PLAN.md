@@ -43,9 +43,13 @@ Dependencies are Server Step 3 for order and catalog contracts, Step 1 for accou
 
 ## Step 3 — Live receiving and stock dashboard
 
-Show order progress, receipts, discrepancies, stock balances, movements, and stock age. Verify that a synced receipt updates the dashboard and that the view catches up after reconnecting.
+**Status** Partially verified. The build and synthetic browser checks passed, including receipt events and reconnect recovery. Receipt history, historical chart contracts, and live Worker Mobile receiving verification remain open.
 
-Use `06-dashboard-overview.png`, `07-receiving.png`, `08-receipt-details.png`, and `09-inventory.png`. Confirm the source of dashboard trend metrics and the API for receipt history. The server currently exposes receipt details, stock reads, and warehouse events.
+1. Use `06-dashboard-overview.png`, `07-receiving.png`, and `09-inventory.png` for the dashboard, receiving queue and findings, and inventory tabs. Reuse shared table, filter, loading, and error controls with all three languages.
+2. Add account and warehouse scoped queries for `/orders/awaiting`, `/findings`, `/stock`, `/stock/movements`, and `/stock/age`. Preserve exact integer stock strings. Load movement pages through the server cursor.
+3. Subscribe to warehouse Socket.IO events with the current access token. Refresh REST views on events, subscription and reconnect. Recreate the connection when credentials or warehouse change, recover unauthorized connections through the session manager, and poll while disconnected.
+4. Show current queue counts, open findings, exact cartons in stock, expected deliveries, and recent stock activity on the dashboard. Receipt history and historical comparison charts require server contracts. Receipt evidence and finding resolution belong to Step 4.
+5. Verify the production build and exercise synthetic receiving, inventory, and reconnect flows. Check desktop and narrow layouts, Arabic RTL, missing warehouse access, and error recovery. Record live Worker Mobile checks separately.
 
 ## Step 4 — Findings, evidence, and dispatch views
 

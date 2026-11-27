@@ -13,8 +13,8 @@ const navigationGroups: NavigationItem[][] = [
   [
     { label: 'dashboard', icon: LayoutDashboard, to: '/' },
     { label: 'purchaseOrders', icon: ClipboardList, to: '/orders' },
-    { label: 'receiving', icon: PackageCheck },
-    { label: 'inventory', icon: Boxes },
+    { label: 'receiving', icon: PackageCheck, to: '/receiving' },
+    { label: 'inventory', icon: Boxes, to: '/inventory' },
     { label: 'dispatch', icon: Truck },
   ],
   [

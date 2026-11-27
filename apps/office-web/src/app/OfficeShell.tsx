@@ -7,6 +7,7 @@ import { LanguageMenu } from '../shared/ui/LanguageMenu';
 import { RecordState } from '../shared/ui/RecordState';
 import { OfficeNavigation } from './OfficeNavigation';
 import { signOut, useSession } from './session';
+import { useWarehouseLive } from './use-warehouse-live';
 import { useActiveWarehouse } from './use-active-warehouse';
 import styles from './OfficeShell.module.css';
 
@@ -14,6 +15,7 @@ export function OfficeShell() {
   const { t } = useTranslation();
   const { session } = useSession();
   const warehouse = useActiveWarehouse();
+  const live = useWarehouseLive(warehouse.warehouse?.id);
   const [drawerOpen, setDrawerOpen] = useState(false);
   if (!session) return null;
 
@@ -49,6 +51,7 @@ export function OfficeShell() {
           <div className={styles.warehouse} aria-live="polite">
             {warehouse.warehouse ? <bdi>{warehouse.warehouse.name}</bdi> : t(warehouse.title)}
           </div>
+          <span className="live-status" data-connected={live} role="status">{t(live ? 'liveUpdates' : 'periodicUpdates')}</span>
           <div className={styles.accountControls}>
             <LanguageMenu />
             <DropdownMenu.Root>
