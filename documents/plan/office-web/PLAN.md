@@ -10,6 +10,8 @@ The filenames below refer to `documents/designs/office-web/`. Use `reference-dro
 
 ## Step 1 — App shell, API connection, and sign-in
 
+**Local warehouse configuration fix** — Set the existing `VITE_DEFAULT_WAREHOUSE_ID` to Yiwu Warehouse in the private Office Web environment. Verify Majed's warehouse membership in PostgreSQL and the hook's configured lookup. Reload Vite so the configured warehouse replaces the unassigned state.
+
 **Status** Partially verified. The Office Web implementation passed the build, live proxy checks, and synthetic browser checks. Live account sign-in and switching among assigned warehouses remain open verification items.
 
 **Goal** Give Jahez owners and traders a working, accessible sign-in and authenticated Office Web shell in English, Arabic RTL, and Simplified Chinese.

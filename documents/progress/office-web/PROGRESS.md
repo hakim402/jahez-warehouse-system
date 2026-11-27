@@ -8,6 +8,11 @@
 
 ## Step 1 — App shell, API connection, and sign-in
 
+### 2026-11-27 — Local active warehouse configured
+
+- Diagnosed the unassigned dashboard state as a missing `VITE_DEFAULT_WAREHOUSE_ID`. Set the private local Office Web environment to the existing Yiwu Warehouse ID. Confirmed Majed's owner membership in PostgreSQL.
+- Office Web typecheck and production build passed. Reload the running Vite app after its environment restart to verify the dashboard label with the existing signed-in account. The local environment stays ignored by Git; deployment configuration must supply its own authorized warehouse ID.
+
 ### 2026-11-27 — Dependency setup verified
 
 - Installed `react-router` 7.18.7, `i18next` 27.2.9, and `react-i18next` 18.0.3. React Router 7 supports the current Node.js 22.16 runtime.
