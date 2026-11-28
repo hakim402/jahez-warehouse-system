@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'worker_order.dart';
+
 class ApiFailure implements Exception {
   const ApiFailure([this.status, this.code]);
 
@@ -73,6 +75,12 @@ class Warehouse {
   final String id;
   final String tenantId;
   final String name;
+
+  Map<String, String> toJson() => {
+    'id': id,
+    'tenantId': tenantId,
+    'name': name,
+  };
 }
 
 class WorkerApi {
@@ -89,7 +97,7 @@ class WorkerApi {
     required String deviceId,
     required String tenantId,
   }) async => Credentials.fromJson(
-    await _request(
+    await _request<Map<String, Object?>>(
       'POST',
       '/auth/login',
       body: {
@@ -103,7 +111,7 @@ class WorkerApi {
 
   Future<Credentials> refresh(String refreshToken) async =>
       Credentials.fromJson(
-        await _request(
+        await _request<Map<String, Object?>>(
           'POST',
           '/auth/refresh',
           body: {'refreshToken': refreshToken},
@@ -112,18 +120,38 @@ class WorkerApi {
 
   Future<Warehouse> getWarehouse(String id, String accessToken) async =>
       Warehouse.fromJson(
-        await _request('GET', '/warehouses/$id', accessToken: accessToken),
+        await _request<Map<String, Object?>>(
+          'GET',
+          '/warehouses/$id',
+          accessToken: accessToken,
+        ),
       );
+
+  Future<List<WorkerOrder>> getReceivingQueue(
+    String warehouseId,
+    String accessToken,
+  ) async {
+    final rows = await _request<List<Object?>>(
+      'GET',
+      '/orders/awaiting',
+      accessToken: accessToken,
+      query: {'warehouseId': warehouseId},
+    );
+    return rows
+        .map((row) => WorkerOrder.fromJson(row as Map<String, Object?>))
+        .toList();
+  }
 
   Future<void> signOut(String accessToken) async {
     await _request('POST', '/auth/logout', accessToken: accessToken);
   }
 
-  Future<Map<String, Object?>> _request(
+  Future<T> _request<T>(
     String method,
     String path, {
     String? accessToken,
     Map<String, String>? body,
+    Map<String, String>? query,
   }) async {
     final base = _baseUrl;
     if (base == null) throw StateError('Missing API configuration');
@@ -135,7 +163,7 @@ class WorkerApi {
       return await (() async {
         final outgoing = await client.openUrl(
           method,
-          base.replace(path: '${base.path}$path'),
+          base.replace(path: '${base.path}$path', queryParameters: query),
         );
         request = outgoing;
         if (timedOut) {
@@ -165,7 +193,7 @@ class WorkerApi {
               text.contains('tenantId is required for this phone');
           throw ApiFailure(status, companyRequired ? 'companyRequired' : null);
         }
-        return jsonDecode(text) as Map<String, Object?>;
+        return jsonDecode(text) as T;
       })().timeout(_timeout);
     } on TimeoutException {
       timedOut = true;

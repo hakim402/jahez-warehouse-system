@@ -1,9 +1,11 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 import '../../api/worker_api.dart';
+import '../../api/worker_order.dart';
 import '../worker_config.dart';
 import 'session_store.dart';
 
@@ -28,6 +30,7 @@ enum SessionIssue {
   unavailable,
   unexpected,
   storage,
+  privateData,
   serverSignOut,
 }
 
@@ -36,6 +39,7 @@ class SessionController extends ChangeNotifier {
     required this.config,
     required this._api,
     required this._store,
+    this._purgePrivateData,
     this.idleLimit = const Duration(minutes: 15),
     DateTime Function()? clock,
   }) : _clock = clock ?? DateTime.now;
@@ -45,6 +49,7 @@ class SessionController extends ChangeNotifier {
   final SessionStore _store;
   final Duration idleLimit;
   final DateTime Function() _clock;
+  final Future<void> Function()? _purgePrivateData;
 
   SessionPhase _phase = SessionPhase.starting;
   SessionIssue? _issue;
@@ -54,17 +59,36 @@ class SessionController extends ChangeNotifier {
   DateTime? _lastSnapshot;
   Timer? _idleTimer;
   Future<Credentials>? _refreshing;
+  String? _verifyingSession;
   bool _disposed = false;
+  bool _retryStartup = false;
 
   SessionPhase get phase => _phase;
   SessionIssue? get issue => _issue;
   Warehouse? get warehouse => _warehouse;
+  String? get receivingScope {
+    final credentials = _credentials;
+    if (_phase != SessionPhase.ready || credentials == null) return null;
+    return jsonEncode([
+      config.sessionScope,
+      credentials.tenantId,
+      credentials.userId,
+      config.warehouseId,
+      credentials.sessionId,
+    ]);
+  }
 
   Future<void> start() async {
+    _retryStartup = false;
     try {
       final stored = await _store.read();
       if (_disposed) return;
       if (stored == null) {
+        // A previous process may have ended after clearing credentials and before deleting drafts.
+        if (!await _purgeLocalData()) {
+          _blockStartup(SessionIssue.privateData);
+          return;
+        }
         _show(
           SessionPhase.signedOut,
           config.apiUri == null ? SessionIssue.configuration : null,
@@ -78,6 +102,11 @@ class SessionController extends ChangeNotifier {
         return;
       }
       _credentials = stored.credentials;
+      final warehouse = stored.warehouse;
+      if (warehouse != null &&
+          _matchesWarehouse(warehouse, stored.credentials)) {
+        _warehouse = warehouse;
+      }
       _lastActivity = stored.lastActivity;
       if (_remainingIdle <= Duration.zero) {
         await _end(SessionPhase.expired, revoke: true);
@@ -86,8 +115,13 @@ class SessionController extends ChangeNotifier {
       _scheduleIdle();
       await _verifyWarehouse();
     } on PlatformException {
-      _show(SessionPhase.storageBlocked, SessionIssue.storage);
+      _blockStartup(SessionIssue.storage);
     }
+  }
+
+  void _blockStartup(SessionIssue issue) {
+    _retryStartup = true;
+    _show(SessionPhase.storageBlocked, issue);
   }
 
   Future<void> signIn(String phone, String password) async {
@@ -138,16 +172,25 @@ class SessionController extends ChangeNotifier {
       credentials.role == 'worker' &&
       (config.tenantId.isEmpty || credentials.tenantId == config.tenantId);
 
+  bool _matchesWarehouse(Warehouse warehouse, Credentials credentials) =>
+      warehouse.id == config.warehouseId &&
+      warehouse.tenantId == credentials.tenantId;
+
   Future<void> _verifyWarehouse() async {
     final credentials = _credentials;
-    if (credentials == null || _phase == SessionPhase.checking) return;
+    if (credentials == null || _verifyingSession == credentials.sessionId) {
+      return;
+    }
     final sessionId = credentials.sessionId;
-    _show(SessionPhase.checking);
+    _verifyingSession = sessionId;
+    if (_phase != SessionPhase.ready) _show(SessionPhase.checking);
     try {
-      final result = await _authorizedWarehouse(credentials);
+      final result = await _authorized(
+        credentials,
+        (token) => _api.getWarehouse(config.warehouseId, token),
+      );
       if (!_isCurrent(sessionId)) return;
-      if (result.tenantId != credentials.tenantId ||
-          result.id != config.warehouseId) {
+      if (!_matchesWarehouse(result, credentials)) {
         await _end(
           SessionPhase.signedOut,
           issue: SessionIssue.warehouse,
@@ -155,9 +198,9 @@ class SessionController extends ChangeNotifier {
         );
         return;
       }
+      _warehouse = result;
       await _saveSession();
       if (!_isCurrent(sessionId)) return;
-      _warehouse = result;
       _show(SessionPhase.ready);
     } on ApiFailure catch (failure) {
       if (!_isCurrent(sessionId)) return;
@@ -171,6 +214,10 @@ class SessionController extends ChangeNotifier {
             revoke: true,
           );
         default:
+          if (failure.unavailable && _warehouse != null) {
+            _show(SessionPhase.ready);
+            return;
+          }
           _show(
             SessionPhase.blocked,
             failure.unavailable
@@ -190,17 +237,49 @@ class SessionController extends ChangeNotifier {
       if (_isCurrent(sessionId)) {
         _show(SessionPhase.blocked, SessionIssue.unexpected);
       }
+    } finally {
+      if (_verifyingSession == sessionId) _verifyingSession = null;
     }
   }
 
-  Future<Warehouse> _authorizedWarehouse(Credentials credentials) async {
+  Future<List<WorkerOrder>> fetchReceivingQueue(String scope) async {
+    final credentials = _credentials;
+    if (receivingScope != scope || credentials == null) {
+      throw const ApiFailure(401);
+    }
     try {
-      return await _api.getWarehouse(
-        config.warehouseId,
-        credentials.accessToken,
+      return await _authorized(
+        credentials,
+        (token) => _api.getReceivingQueue(config.warehouseId, token),
       );
     } on ApiFailure catch (failure) {
+      if (_isCurrent(credentials.sessionId)) {
+        if (failure.status == 401) {
+          await _end(SessionPhase.expired);
+        } else if (failure.status == 403) {
+          await _end(
+            SessionPhase.signedOut,
+            issue: SessionIssue.warehouse,
+            revoke: true,
+          );
+        }
+      }
+      rethrow;
+    }
+  }
+
+  Future<T> _authorized<T>(
+    Credentials credentials,
+    Future<T> Function(String) fetch,
+  ) async {
+    try {
+      return await fetch(credentials.accessToken);
+    } on ApiFailure catch (failure) {
       if (failure.status != 401 || !_isCurrent(credentials.sessionId)) rethrow;
+    }
+    final current = _credentials!;
+    if (current.accessToken != credentials.accessToken) {
+      return fetch(current.accessToken);
     }
     final refreshed = await _refresh(credentials);
     if (!_isCurrent(credentials.sessionId)) throw const ApiFailure(401);
@@ -208,7 +287,7 @@ class SessionController extends ChangeNotifier {
     // Store the new pair before retrying the request. The old refresh token is now invalid.
     await _saveSession();
     if (!_isCurrent(credentials.sessionId)) throw const ApiFailure(401);
-    return _api.getWarehouse(config.warehouseId, refreshed.accessToken);
+    return fetch(refreshed.accessToken);
   }
 
   Future<Credentials> _refresh(Credentials credentials) async {
@@ -236,7 +315,13 @@ class SessionController extends ChangeNotifier {
 
   Future<void> retry() async {
     if (_phase == SessionPhase.blocked) await _verifyWarehouse();
-    if (_phase == SessionPhase.storageBlocked) await signOut();
+    if (_phase != SessionPhase.storageBlocked) return;
+    if (_retryStartup) {
+      _show(SessionPhase.starting);
+      await start();
+    } else {
+      await signOut();
+    }
   }
 
   void dismissExpired() {
@@ -260,20 +345,32 @@ class SessionController extends ChangeNotifier {
     _idleTimer?.cancel();
     _show(SessionPhase.signingOut);
 
-    var cleared = true;
+    SessionIssue? cleanupIssue;
     try {
       await _store.clear();
     } on PlatformException {
-      cleared = false;
+      cleanupIssue = SessionIssue.storage;
+    }
+    if (cleanupIssue == null && !await _purgeLocalData()) {
+      cleanupIssue = SessionIssue.privateData;
     }
     if (revoke && credentials != null) {
       final revoked = await _revoke(credentials, refresh);
       if (!revoked) issue ??= SessionIssue.serverSignOut;
     }
     _show(
-      cleared ? destination : SessionPhase.storageBlocked,
-      cleared ? issue : SessionIssue.storage,
+      cleanupIssue == null ? destination : SessionPhase.storageBlocked,
+      cleanupIssue ?? issue,
     );
+  }
+
+  Future<bool> _purgeLocalData() async {
+    try {
+      await _purgePrivateData?.call().timeout(const Duration(seconds: 12));
+      return true;
+    } catch (_) {
+      return false;
+    }
   }
 
   Future<bool> _revoke(
@@ -354,7 +451,12 @@ class SessionController extends ChangeNotifier {
   Future<void> _saveSession() {
     _lastSnapshot = _clock();
     return _store.save(
-      StoredSession(config.sessionScope, _credentials!, _lastActivity!),
+      StoredSession(
+        config.sessionScope,
+        _credentials!,
+        _lastActivity!,
+        warehouse: _warehouse,
+      ),
     );
   }
 

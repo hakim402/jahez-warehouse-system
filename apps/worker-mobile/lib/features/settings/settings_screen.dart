@@ -11,14 +11,23 @@ class SettingsScreen extends StatelessWidget {
     required this.locale,
     required this.onLocaleChanged,
     required this.onSignOut,
+    required this.countDrafts,
   });
 
   final String warehouseName;
   final Locale locale;
   final ValueChanged<Locale> onLocaleChanged;
   final VoidCallback onSignOut;
+  final Future<int> Function() countDrafts;
 
   Future<void> _confirmSignOut(BuildContext context) async {
+    int? drafts;
+    try {
+      drafts = await countDrafts().timeout(const Duration(seconds: 3));
+    } catch (_) {
+      // Sign-out still runs the purge if the count cannot be read.
+    }
+    if (!context.mounted) return;
     final strings = WorkerStrings.of(context);
     final confirmed = await showModalBottomSheet<bool>(
       context: context,
@@ -37,7 +46,11 @@ class SettingsScreen extends StatelessWidget {
                 style: Theme.of(context).textTheme.titleLarge,
               ),
               const SizedBox(height: 8),
-              Text(strings.signOutMessage),
+              Text(switch (drafts) {
+                null => strings.discardDraftsUnknown,
+                0 => strings.signOutMessage,
+                final count => strings.discardDrafts(count),
+              }),
               const SizedBox(height: 20),
               FilledButton(
                 onPressed: () => Navigator.pop(context, true),

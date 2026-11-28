@@ -5,6 +5,9 @@ import 'package:flutter/services.dart';
 
 import '../api/worker_api.dart';
 import '../l10n/generated/worker_strings.dart';
+import '../offline/open_worker_database.dart';
+import '../offline/receiving_store.dart';
+import '../offline/worker_database.dart';
 import 'session/session_controller.dart';
 import 'session/session_screen.dart';
 import 'session/session_store.dart';
@@ -14,10 +17,16 @@ import 'worker_shell.dart';
 import 'worker_theme.dart';
 
 class WorkerApp extends StatefulWidget {
-  const WorkerApp({super.key, this.config = const WorkerConfig(), this.api});
+  const WorkerApp({
+    super.key,
+    this.config = const WorkerConfig(),
+    this.api,
+    this.receivingStore,
+  });
 
   final WorkerConfig config;
   final WorkerApi? api;
+  final ReceivingStore? receivingStore;
 
   @override
   State<WorkerApp> createState() => _WorkerAppState();
@@ -27,10 +36,14 @@ class _WorkerAppState extends State<WorkerApp> with WidgetsBindingObserver {
   final _store = SessionStore();
   final _navigator = GlobalKey<NavigatorState>();
   late final WorkerApi _api = widget.api ?? WorkerApi(widget.config.apiUri);
+  late final ReceivingStore _receiving =
+      widget.receivingStore ??
+      ReceivingStore(WorkerDatabase(openWorkerDatabase()));
   late final SessionController _session = SessionController(
     config: widget.config,
     api: _api,
     store: _store,
+    purgePrivateData: _receiving.purge,
   );
   Locale _locale = const Locale('en');
   bool _backgrounded = false;
@@ -41,8 +54,12 @@ class _WorkerAppState extends State<WorkerApp> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _session.addListener(_closeSessionDialogs);
-    unawaited(_restoreLanguage());
-    unawaited(_session.start());
+    unawaited(_start());
+  }
+
+  Future<void> _start() async {
+    await _session.start();
+    if (mounted) await _restoreLanguage();
   }
 
   void _closeSessionDialogs() {
@@ -92,6 +109,7 @@ class _WorkerAppState extends State<WorkerApp> with WidgetsBindingObserver {
     WidgetsBinding.instance.removeObserver(this);
     _session.dispose();
     if (widget.api == null) _api.close();
+    if (widget.receivingStore == null) unawaited(_receiving.close());
     super.dispose();
   }
 
@@ -128,6 +146,7 @@ class _WorkerAppState extends State<WorkerApp> with WidgetsBindingObserver {
           ),
           SessionPhase.ready => WorkerShell(
             session: _session,
+            receivingStore: _receiving,
             locale: _locale,
             onLocaleChanged: _changeLanguage,
           ),

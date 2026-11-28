@@ -4,10 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:worker_mobile/api/worker_api.dart';
+import 'package:worker_mobile/api/worker_order.dart';
 import 'package:worker_mobile/app/session/session_controller.dart';
 import 'package:worker_mobile/app/session/session_store.dart';
 import 'package:worker_mobile/app/worker_app.dart';
 import 'package:worker_mobile/app/worker_config.dart';
+import 'package:worker_mobile/offline/receiving_store.dart';
+
+import 'fixtures/receiving_order.dart';
 
 const _config = WorkerConfig(apiBaseUrl: 'https://test.invalid/api/v1');
 
@@ -56,19 +60,19 @@ void main() {
   );
 
   test(
-    'recovers from a temporary outage, then clears a revoked session',
+    'keeps a verified warehouse during an outage and clears a revoked session',
     () async {
       await session.start();
       await session.signIn('fixture-worker', 'fixture-password');
       api.unavailable = true;
       await session.resumed();
-      expect(session.phase, SessionPhase.blocked);
-      expect(session.issue, SessionIssue.unavailable);
+      expect(session.phase, SessionPhase.ready);
+      expect(session.warehouse?.name, 'Test Warehouse');
       expect(await store.read(), isNotNull);
 
       api.unavailable = false;
       api.revoked = true;
-      await session.retry();
+      await session.resumed();
       expect(session.phase, SessionPhase.expired);
       expect(await store.read(), isNull);
       expect(session.warehouse, isNull);
@@ -93,10 +97,11 @@ void main() {
   testWidgets('shows recovery when the device secure store stops responding', (
     tester,
   ) async {
+    final plugin = _StalledStorage();
     final stalled = SessionController(
       config: _config,
       api: api,
-      store: SessionStore(_StalledStorage()),
+      store: SessionStore(plugin),
     );
     addTearDown(stalled.dispose);
     final restoring = stalled.start();
@@ -106,6 +111,11 @@ void main() {
     expect(stalled.phase, SessionPhase.storageBlocked);
     expect(stalled.issue, SessionIssue.storage);
     expect(api.warehouseChecks, 0);
+
+    plugin.available = true;
+    await stalled.retry();
+    expect(stalled.phase, SessionPhase.signedOut);
+    expect(plugin.reads, 2);
   });
 
   test(
@@ -184,7 +194,10 @@ void main() {
       (tester) async {
         await tester.binding.setSurfaceSize(size);
         addTearDown(() => tester.binding.setSurfaceSize(null));
-        await tester.pumpWidget(WorkerApp(config: _config, api: api));
+        final receivingStore = _WidgetReceivingStore();
+        await tester.pumpWidget(
+          WorkerApp(config: _config, api: api, receivingStore: receivingStore),
+        );
         await tester.pumpAndSettle();
 
         await tester.tap(find.text('العربية'));
@@ -204,6 +217,25 @@ void main() {
         await tester.pumpAndSettle();
         expect(find.text('Test Warehouse'), findsOneWidget);
 
+        await tester.tap(find.text('الاستلام'));
+        await tester.pumpAndSettle();
+        api.queueOffline = true;
+        await tester.tap(find.byTooltip('حاول مجددًا'));
+        await tester.pumpAndSettle();
+        expect(
+          find.text('تُعرض الطلبات المحفوظة على هذا الجهاز.'),
+          findsOneWidget,
+        );
+        await tester.tap(find.text('Synthetic Supplier'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.byTooltip('إضافة كرتون واحد'));
+        await tester.pumpAndSettle();
+        expect(receivingStore.drafts.values.single.cartons, {'line-one': 5});
+        await tester.tap(find.widgetWithText(FilledButton, 'تم'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.byType(BackButton));
+        await tester.pumpAndSettle();
+
         await tester.tap(find.text('الإعدادات'));
         await tester.pumpAndSettle();
         await tester.tap(find.text('简体中文'));
@@ -216,13 +248,17 @@ void main() {
 
         await tester.tap(find.widgetWithText(OutlinedButton, '退出登录'));
         await tester.pumpAndSettle();
+        expect(find.text('退出登录会删除此设备上的 1 份草稿。'), findsOneWidget);
         await tester.tap(find.widgetWithText(FilledButton, '退出登录'));
         await tester.pumpAndSettle();
         expect(find.byType(TextFormField), findsNWidgets(2));
         expect(api.signOutCount, 1);
+        expect(receivingStore.drafts, isEmpty);
 
         await tester.pumpWidget(const SizedBox.shrink());
-        await tester.pumpWidget(WorkerApp(config: _config, api: api));
+        await tester.pumpWidget(
+          WorkerApp(config: _config, api: api, receivingStore: receivingStore),
+        );
         await tester.pumpAndSettle();
         expect(find.text('手机号码'), findsOneWidget);
         expect(tester.takeException(), isNull);
@@ -232,7 +268,54 @@ void main() {
   }
 }
 
+class _WidgetReceivingStore implements ReceivingStore {
+  List<WorkerOrder> orders = [];
+  final drafts = <String, ReceiptDraft>{};
+
+  @override
+  Future<void> close() async {}
+
+  @override
+  Future<int> countDrafts(String scope) async => drafts.length;
+
+  @override
+  Future<void> purge() async {
+    orders = [];
+    drafts.clear();
+  }
+
+  @override
+  Future<CachedReceiving> read(String scope) async =>
+      CachedReceiving(orders, Map.of(drafts));
+
+  @override
+  Future<void> replaceQueue(
+    String scope,
+    List<WorkerOrder> orders,
+    bool Function() active,
+  ) async {
+    if (active()) this.orders = orders;
+  }
+
+  @override
+  Future<ReceiptDraft?> saveCartons(
+    String scope,
+    WorkerOrder order,
+    WorkerOrderLine line,
+    int cartons,
+    bool Function() active,
+  ) async {
+    if (!active()) return null;
+    final draft = ReceiptDraft('draft', order, {line.id: cartons});
+    drafts[order.id] = draft;
+    return draft;
+  }
+}
+
 class _StalledStorage extends FlutterSecureStorage {
+  bool available = false;
+  int reads = 0;
+
   @override
   Future<String?> read({
     required String key,
@@ -242,7 +325,10 @@ class _StalledStorage extends FlutterSecureStorage {
     WebOptions? webOptions,
     AppleOptions? mOptions,
     WindowsOptions? wOptions,
-  }) => Completer<String?>().future;
+  }) {
+    reads++;
+    return available ? Future.value(null) : Completer<String?>().future;
+  }
 }
 
 class _TestApi extends WorkerApi {
@@ -250,6 +336,7 @@ class _TestApi extends WorkerApi {
 
   bool expired = false;
   bool unavailable = false;
+  bool queueOffline = false;
   bool revoked = false;
   bool warehouseDenied = false;
   String role = 'worker';
@@ -303,6 +390,15 @@ class _TestApi extends WorkerApi {
       'tenantId': 'fixture-tenant',
       'name': 'Test Warehouse',
     });
+  }
+
+  @override
+  Future<List<WorkerOrder>> getReceivingQueue(
+    String warehouseId,
+    String accessToken,
+  ) async {
+    if (queueOffline) throw const ApiFailure();
+    return [fixtureOrder()];
   }
 
   @override

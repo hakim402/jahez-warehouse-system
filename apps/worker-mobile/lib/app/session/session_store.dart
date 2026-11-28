@@ -8,13 +8,21 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../api/worker_api.dart';
 
 class StoredSession {
-  const StoredSession(this.scope, this.credentials, this.lastActivity);
+  const StoredSession(
+    this.scope,
+    this.credentials,
+    this.lastActivity, {
+    this.warehouse,
+  });
 
   StoredSession.fromJson(Map<String, Object?> json)
     : scope = json['scope'] as String,
       credentials = Credentials.fromJson(
         json['credentials'] as Map<String, Object?>,
       ),
+      warehouse = json['warehouse'] == null
+          ? null
+          : Warehouse.fromJson(json['warehouse'] as Map<String, Object?>),
       lastActivity = DateTime.fromMillisecondsSinceEpoch(
         json['lastActivity'] as int,
         isUtc: true,
@@ -23,11 +31,13 @@ class StoredSession {
   final String scope;
   final Credentials credentials;
   final DateTime lastActivity;
+  final Warehouse? warehouse;
 
   Map<String, Object?> toJson() => {
     'scope': scope,
     'credentials': credentials.toJson(),
     'lastActivity': lastActivity.millisecondsSinceEpoch,
+    'warehouse': warehouse?.toJson(),
   };
 }
 

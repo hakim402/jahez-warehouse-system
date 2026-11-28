@@ -27,6 +27,18 @@ Server Steps 1–2 provide phone/password sign-in and reads of known assigned wa
 
 `flutter run -d <device-id>` from `apps/worker-mobile` uses the live international API and the Yiwu warehouse published by Office Web. For another HTTPS deployment, pass public settings with `--dart-define-from-file=.env` using the app’s environment example. A live worker account must already have membership in the configured warehouse.
 
+## Step 2 — Offline order queue and receipt drafts
+
+**Implemented.** Step 1 was pushed as `d697a33`. The Step 2 SQLite and synthetic UI checks passed. The device check remains open.
+
+1. Fetch the worker-safe `GET /orders/awaiting?warehouseId=…` response through the existing authenticated API client. Deserialize only the queue and receipt fields the worker needs. Use the signed-in tenant, worker, and server-verified warehouse to scope storage and requests.
+2. In `apps/worker-mobile/lib/offline`, add Drift tables and the initial SQLite schema for cached orders and local receipt drafts. Replace the cached queue only after a successful, valid response. Give each draft a stable UUID, preserve local edits and the order snapshot across offline restarts, and retain drafts when their orders leave the refreshed queue.
+3. Build the receiving queue and the carton draft editor in `apps/worker-mobile/lib/features/receiving`. Use the queue and Check goods panels of `03-receiving-flow.png`, the Receiving entry from `02-home.png`, and sign-out guidance from `08-settings-and-session.png` and `13-session-recovery-and-sign-out.png`. Use one focus at a time on iPhone and show the queue alongside a selected draft where iPad width allows. Receipt confirmation and submission belong to later steps.
+4. Let a worker resume a previously verified warehouse session offline within the existing 15-minute idle policy. First sign-in requires server verification. Reject a known revoked session. Surface the local draft count before explicit sign-out, and purge private queue and draft data before a different worker can use the device. Define the policy for confirmed outbox work when that feature is added.
+5. Verify price and cost fields are excluded, order cache and draft IDs survive offline relaunch, failed refresh leaves existing drafts intact, and sign-out purges private data before a different account signs in. Run Flutter analysis and exercise the workflow on iPhone and iPad with synthetic data. Use the live queue only with an assigned test worker. Android verification stays in Step 8.
+
+Server Steps 2–3 provide warehouse authorization and the receiving queue. Step 2 requires no server changes or new server migrations.
+
 ## Dependencies and verification
 
 Use the order and sync contracts in the [server plan](../server/PLAN.md). Verify that a draft survives an offline app restart, a receipt syncs once after reconnecting, and a failed photo upload can retry separately.

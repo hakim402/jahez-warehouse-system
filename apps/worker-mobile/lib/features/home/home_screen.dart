@@ -4,9 +4,14 @@ import '../../app/worker_theme.dart';
 import '../../l10n/generated/worker_strings.dart';
 
 class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key, required this.warehouseName});
+  const HomeScreen({
+    super.key,
+    required this.warehouseName,
+    required this.onReceiving,
+  });
 
   final String warehouseName;
+  final VoidCallback onReceiving;
 
   @override
   Widget build(BuildContext context) {
@@ -32,8 +37,9 @@ class HomeScreen extends StatelessWidget {
                   child: _WorkflowCard(
                     icon: Icons.move_to_inbox_outlined,
                     title: strings.receiving,
-                    subtitle: strings.comingSoon,
+                    subtitle: strings.ordersWaiting,
                     primary: true,
+                    onTap: onReceiving,
                   ),
                 ),
                 SizedBox(
@@ -74,46 +80,54 @@ class _WorkflowCard extends StatelessWidget {
     required this.title,
     required this.subtitle,
     this.primary = false,
+    this.onTap,
   });
 
   final IconData icon;
   final String title;
   final String subtitle;
   final bool primary;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final titleColor = primary ? Colors.white : JahezColors.ink;
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: primary ? JahezColors.deep : JahezColors.lavender,
+    return Material(
+      color: primary ? JahezColors.deep : JahezColors.lavender,
+      shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
+        side: BorderSide(
           color: primary ? JahezColors.deep : JahezColors.border,
         ),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(
-            icon,
-            color: primary ? Colors.white : JahezColors.deep,
-            size: 28,
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(
+                icon,
+                color: primary ? Colors.white : JahezColors.deep,
+                size: 28,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                title,
+                style: theme.textTheme.titleMedium?.copyWith(color: titleColor),
+              ),
+              Text(
+                subtitle,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: primary ? Colors.white : JahezColors.muted,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 12),
-          Text(
-            title,
-            style: theme.textTheme.titleMedium?.copyWith(color: titleColor),
-          ),
-          Text(
-            subtitle,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: primary ? Colors.white : JahezColors.muted,
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }

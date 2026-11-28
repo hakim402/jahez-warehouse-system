@@ -14,6 +14,7 @@ String? sessionIssueText(WorkerStrings strings, SessionIssue? issue) =>
       SessionIssue.unavailable => strings.serviceUnavailable,
       SessionIssue.unexpected => strings.unexpectedResponse,
       SessionIssue.storage => strings.storageError,
+      SessionIssue.privateData => strings.draftStorageError,
       SessionIssue.serverSignOut => strings.signOutLocalOnly,
       null => null,
     };

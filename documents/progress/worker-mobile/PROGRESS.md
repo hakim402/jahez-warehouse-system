@@ -24,4 +24,17 @@
 - Confirmed that the deployed Office Web includes **Settings → Users & access → Add user**. A Jahez owner can create a Worker, assign Yiwu Warehouse (YIWU), and then enter that account directly in the mobile app. The live readiness check returned HTTP 200 and the protected user-management, warehouse-assignment, and receiving-queue routes returned HTTP 401 without a session.
 - Restarted the iPad mini on iOS 26.5 and verified the final Step 1 build. It reached sign-in, then showed the authenticated Yiwu Warehouse home. Settings and the shared-device sign-out prompt worked. A fresh app process restored the live session and returned to Yiwu Warehouse. Expiry, revocation, and completed sign-out remain covered by the synthetic tests.
 
+## Step 2 — Offline order queue and receipt drafts
+
+### 2026-11-28
+
+- Saved the Step 2 plan with the checked worker queue response, Drift and SQLite scope, phone and tablet mockups, draft persistence, and sign-out cleanup checks.
+- The iPad check passed, and the verified Step 1 update was pushed as `d697a33`. Step 2 implementation began after that push.
+- Added the localized receiving queue and carton draft editor. The phone uses a separate editor screen and iPad can show the queue and editor side by side. Orders and drafts are saved through Drift in the app’s private SQLite database. A draft keeps its original UUID and order snapshot when the order leaves the queue.
+- Added offline access for a previously verified warehouse under the existing idle policy. The first sign-in still verifies membership online. Explicit sign-out reports the count of unconfirmed drafts before deleting them. Ending the session clears the order cache and drafts before another worker can use the device.
+- Flutter analysis passed, and the iOS simulator build bundled SQLite successfully. A direct Dart run against a temporary SQLite file verified reopening, scope isolation, exclusion of synthetic price fields, draft UUID stability, failed queue replacement, and purge. The macOS Flutter test executable closed before loading the SQLite test.
+- Nine synthetic Flutter tests passed. The 320 and 820 logical pixel layouts exercised an unavailable queue refresh, a carton edit using cached data, the draft-count sign-out prompt, and sign-out cleanup. The live iOS simulator check of the Step 2 receiving queue remains open.
+- The first Step 2 iPad launch surfaced a storage startup error. Retry now rechecks startup storage without clearing a saved session, and the app reports draft database cleanup failures separately from secure session storage errors. Flutter analysis, the nine synthetic tests, and the iOS rebuild passed with this change.
+- Both the iPhone 17 and iPad mini created the native SQLite database. Read-only schema checks confirmed version 1 and the cached-order and receipt-draft tables on each simulator. The live receiving workflow remains pending on both simulators.
+
 [Worker mobile plan](../../plan/worker-mobile/PLAN.md)

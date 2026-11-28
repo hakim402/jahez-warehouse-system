@@ -1,19 +1,24 @@
 import 'package:flutter/material.dart';
 
 import '../features/home/home_screen.dart';
+import '../features/receiving/receiving_repository.dart';
+import '../features/receiving/screens/receiving_queue_screen.dart';
 import '../features/settings/settings_screen.dart';
 import '../l10n/generated/worker_strings.dart';
+import '../offline/receiving_store.dart';
 import 'session/session_controller.dart';
 
 class WorkerShell extends StatefulWidget {
   const WorkerShell({
     super.key,
     required this.session,
+    required this.receivingStore,
     required this.locale,
     required this.onLocaleChanged,
   });
 
   final SessionController session;
+  final ReceivingStore receivingStore;
   final Locale locale;
   final ValueChanged<Locale> onLocaleChanged;
 
@@ -49,13 +54,37 @@ class _WorkerShellState extends State<WorkerShell> {
                 ),
                 const SizedBox(height: 8),
                 if (_section == 0)
-                  HomeScreen(warehouseName: warehouse.name)
+                  HomeScreen(
+                    warehouseName: warehouse.name,
+                    onReceiving: () {
+                      final scope = session.receivingScope;
+                      if (scope == null) return;
+                      Navigator.of(context).push<void>(
+                        MaterialPageRoute(
+                          builder: (context) => ReceivingQueueScreen(
+                            repository: ReceivingRepository(
+                              session,
+                              widget.receivingStore,
+                              scope,
+                            ),
+                            warehouseName: warehouse.name,
+                          ),
+                        ),
+                      );
+                    },
+                  )
                 else
                   SettingsScreen(
                     warehouseName: warehouse.name,
                     locale: widget.locale,
                     onLocaleChanged: widget.onLocaleChanged,
                     onSignOut: session.signOut,
+                    countDrafts: () {
+                      final scope = session.receivingScope;
+                      return scope == null
+                          ? Future.value(0)
+                          : widget.receivingStore.countDrafts(scope);
+                    },
                   ),
               ],
             ),
