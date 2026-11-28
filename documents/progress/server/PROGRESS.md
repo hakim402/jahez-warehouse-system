@@ -20,6 +20,13 @@ Steps 1–10 are verified on the recorded local and disposable PostgreSQL checks
 
 ## Step 2 — Identity, Tenancy, and Audit
 
+### 2026-11-28 — Local sign-in recovery after core settings update
+
+- User reported inability to sign in. Read-only checks found the configured local database was at migration 0009, lacked `users.active` required by the updated authentication service, and the API was no longer listening on port 3000. PostgreSQL connectivity itself worked; Office Web remained running on 5173.
+- Recorded the recovery plan before changes. Applied existing forward migrations 0010_export_jobs, 0011_invoice_imports and 0012_user_access_settings through the configured migration role, then started the local API with `pnpm --dir apps/server dev`. This supersedes the earlier implementation handoff's local migration-pending state. No passwords, account assignments or production deployment were changed.
+- Verified the ledger is at 0012, the active-user column exists, and the restricted-runtime auth lookup succeeds. Both direct port 3000 and Office Web proxy port 5173 returned readiness 200/database up; synthetic nonexistent-user login returned expected 401 Invalid phone or password through both paths. Watch compilation reported zero errors. Actual sign-in with the user's existing credentials remains pending user confirmation; credentials were neither requested nor used.
+
+
 ### 2026-11-28 — Core Office Web settings implemented and synthetically verified
 
 - After user mockup approval, updated the Step 2/Office Web Step 5 plans before implementation. Added SettingsModule with owner-only `/users`, `/users/:id`, password-reset and warehouse/tolerance settings routes. AuthGuard and OwnerGuard run before HTTP body validation; the service rechecks the acting active owner in the tenant transaction. User detail supports explicit conflict reload without scanning the directory.
