@@ -52,6 +52,15 @@ export function sumStockCounts(values: readonly StockCountValue[]): string | nul
   return decimalString({ units: total, scale });
 }
 
+export function subtractStockCounts(left: StockCountValue, right: StockCountValue): string | null {
+  const a = parseStockCount(left);
+  const b = parseStockCount(right);
+  if (!a || !b) return null;
+  const scale = Math.max(a.scale, b.scale);
+  const units = a.units * 10n ** BigInt(scale - a.scale) - b.units * 10n ** BigInt(scale - b.scale);
+  return decimalString({ units, scale });
+}
+
 export function stockCountSign(value: StockCountValue): number | null {
   const exact = parseStockCount(value);
   if (!exact) return null;
@@ -66,4 +75,20 @@ export function compareStockCounts(left: StockCountValue, right: StockCountValue
   const aUnits = a.units * 10n ** BigInt(scale - a.scale);
   const bUnits = b.units * 10n ** BigInt(scale - b.scale);
   return aUnits === bUnits ? 0 : aUnits > bUnits ? 1 : -1;
+}
+
+export function shareStockCount(value: StockCountValue, taken: StockCountValue, total: StockCountValue, scale: number): string | null {
+  const amount = parseStockCount(value);
+  const portion = parseStockCount(taken);
+  const whole = parseStockCount(total);
+  if (!amount || !portion || !whole || amount.units <= 0n || portion.units <= 0n || whole.units <= 0n) return null;
+  if (!Number.isInteger(scale) || scale < 0 || scale > 6) return null;
+  const commonScale = Math.max(amount.scale, portion.scale, whole.scale);
+  const amountUnits = amount.units * 10n ** BigInt(commonScale - amount.scale);
+  const portionUnits = portion.units * 10n ** BigInt(commonScale - portion.scale);
+  const wholeUnits = whole.units * 10n ** BigInt(commonScale - whole.scale);
+  const numerator = amountUnits * portionUnits * 10n ** BigInt(scale);
+  const denominator = wholeUnits * 10n ** BigInt(commonScale);
+  const units = (numerator + denominator / 2n) / denominator;
+  return decimalString({ units, scale });
 }

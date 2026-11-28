@@ -1,0 +1,12 @@
+.gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: var(--space-3); }
+.photo { inline-size: 100%; aspect-ratio: 4 / 3; padding: 0; overflow: hidden; border: 1px solid var(--jahez-border); border-radius: var(--radius-control); background: var(--jahez-lavender); cursor: zoom-in; }
+.photo img { inline-size: 100%; block-size: 100%; object-fit: cover; transition: transform 180ms ease-out; }
+.photo:hover img { transform: scale(1.03); }
+.placeholder, .loading, .error, .file { min-block-size: 100px; padding: var(--space-4); border: 1px dashed var(--jahez-control-border); border-radius: var(--radius-control); background: var(--glass-input); color: var(--jahez-muted); }
+.placeholder, .loading { display: grid; place-content: center; justify-items: center; gap: var(--space-2); text-align: center; font-size: 13px; }
+.error { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--space-3); color: var(--jahez-danger); }
+.error .button { min-block-size: 44px; }
+.empty { color: var(--jahez-muted); font-size: 14px; }
+.file { display: flex; align-items: center; gap: var(--space-2); text-decoration: none; overflow-wrap: anywhere; }
+.viewer { display: block; max-inline-size: 100%; max-block-size: 68dvh; margin-inline: auto; border-radius: var(--radius-control); }
+@media (prefers-reduced-motion: reduce) { .photo img { transition: none; } .photo:hover img { transform: none; } }

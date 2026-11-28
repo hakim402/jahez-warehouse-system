@@ -6,9 +6,13 @@ import { DataTable, type RecordColumn } from '../../../shared/ui/DataTable';
 import { ListTabs, SearchField } from '../../../shared/ui/ListControls';
 import { FilterSelect } from '../../../shared/ui/FilterSelect';
 import { RecordState } from '../../../shared/ui/RecordState';
+import { StatusBadge } from '../../../shared/ui/StatusBadge';
 import { useRecordFormat } from '../../../shared/format-record';
 import { OrderWorkspaceState } from '../../orders/components/OrderWorkspaceState';
 import { OrderStatusBadge } from '../../orders/components/OrderStatusBadge';
+import { FindingReviewDialog } from '../../receiving/components/FindingReviewDialog';
+import { StockAdjustmentDialog } from '../components/StockAdjustmentDialog';
+import { useOrderScope } from '../../orders/order-api';
 import { useWarehouseData, type StockRow, type QueueOrder, type Finding } from '../warehouse-api';
 import { formatStockCount } from '../stock-count';
 import styles from './WarehouseViews.module.css';
@@ -45,20 +49,32 @@ export function QueueTable({ records, compact = false }: { records: QueueOrder[]
 
 export function FindingsTable({ records }: { records: Finding[] }) {
   const { t } = useTranslation();
+  const format = useRecordFormat();
+  const scope = useOrderScope();
+  const [review, setReview] = useState<Finding | null>(null);
   const columns: RecordColumn<Finding>[] = [
-    { id: 'type', header: t('discrepancies'), cell: ({ row }) => t(row.original.type, { defaultValue: row.original.type }) },
-    { id: 'receipt', header: t('receipt'), cell: ({ row }) => <bdi>{row.original.receiptId}</bdi> },
-    { id: 'expected', header: t('expected'), cell: ({ row }) => row.original.expected ?? '—' },
-    { id: 'actual', header: t('actual'), cell: ({ row }) => row.original.actual ?? '—' },
+    { id: 'type', header: t('discrepancyType'), cell: ({ row }) => t(row.original.type, { defaultValue: row.original.type }) },
+    { id: 'receipt', header: t('receipt'), cell: ({ row }) => <Link className="record-link" to={'/receipts/' + row.original.receiptId}>{t('viewReceipt')}</Link> },
+    { id: 'expected', header: t('expected'), cell: ({ row }) => formatStockCount(row.original.expected, format.language) },
+    { id: 'actual', header: t('actual'), cell: ({ row }) => formatStockCount(row.original.actual, format.language) },
+    { id: 'status', header: t('status'), cell: ({ row }) => <StatusBadge status={row.original.status} /> },
+    { id: 'actions', header: t('actions'), cell: ({ row }) => row.original.status === 'open'
+      ? <button type="button" className="button" onClick={() => setReview(row.original)}>{t('review')}</button>
+      : <span className="muted-text">{row.original.note || '—'}</span> },
   ];
-  return records.length ? <DataTable records={records} columns={columns} label={t('discrepancies')} /> : <RecordState state="empty" />;
+  return <>{records.length ? <DataTable records={records} columns={columns} label={t('discrepancies')} /> : <RecordState state="empty" />}
+    {review && <FindingReviewDialog finding={review} scope={scope} onClose={() => setReview(null)} />}</>;
 }
 
 
 export function StockTable({ records, kind }: { records: StockRow[]; kind: 'balances' | 'movements' | 'age' }) {
   const { t } = useTranslation();
   const format = useRecordFormat();
-  const rows = records.map((row, index) => ({ ...row, id: String(index) }));
+  const scope = useOrderScope();
+  const [adjusting, setAdjusting] = useState<StockRow | null>(null);
+  const rows = records.map((row) => ({ ...row, id: row.id ?? JSON.stringify([
+    kind, row.customerId, row.supplierId, row.brand, row.productId, row.receiptId, row.receiptNo, row.createdAt,
+  ]) }));
   const columns: RecordColumn<StockRow & { id: string }>[] = [
     { id: 'product', header: t('product'), cell: ({ row }) => {
       const product = row.original.product;
@@ -73,8 +89,19 @@ export function StockTable({ records, kind }: { records: StockRow[]; kind: 'bala
     { id: 'cbm', header: t('volume'), cell: ({ row }) => row.original.cbm === null ? '—' : new Intl.NumberFormat(format.language, { maximumFractionDigits: 3 }).format(row.original.cbm) },
   ];
   if (kind === 'age') columns.push({ id: 'age', header: t('daysInStorage'), cell: ({ row }) => <>{row.original.receiptNo}<span className="secondary-line">{row.original.daysInStorage}</span></> });
-  if (kind === 'movements') columns.unshift({ id: 'movement', header: t('movement'), cell: ({ row }) => <>{t(row.original.kind ?? 'movement')}<span className="secondary-line">{row.original.createdAt ? new Date(row.original.createdAt).toLocaleString(format.language) : '—'}</span></> });
-  return rows.length ? <DataTable records={rows} columns={columns} label={t(kind === 'balances' ? 'inventory' : kind)} /> : <RecordState state="empty" />;
+  if (kind === 'movements') {
+    columns.unshift({ id: 'movement', header: t('movement'), cell: ({ row }) => <>{t(row.original.kind ?? 'movement')}<span className="secondary-line">{format.dateTime(row.original.createdAt ?? null)}</span></> });
+    columns.push({ id: 'reference', header: t('reference'), cell: ({ row }) => {
+      const movement = row.original;
+      if (movement.adjustmentNo || movement.adjustmentReason) return <><bdi>{movement.adjustmentNo}</bdi><span className="secondary-line">{movement.adjustmentReason}</span></>;
+      if (movement.receiptId) return <Link className="record-link" to={'/receipts/' + movement.receiptId}>{movement.receiptNo || t('viewReceipt')}</Link>;
+      if (movement.dispatchId) return <Link className="record-link" to={'/dispatch/' + movement.dispatchId}>{movement.dispatchNo || t('dispatchDetails')}</Link>;
+      return '—';
+    } });
+  }
+  if (kind === 'balances') columns.push({ id: 'actions', header: t('actions'), cell: ({ row }) => <button type="button" className="button" onClick={() => setAdjusting(row.original)}>{t('adjust')}</button> });
+  return <>{rows.length ? <DataTable records={rows} columns={columns} label={t(kind === 'balances' ? 'inventory' : kind)} /> : <RecordState state="empty" />}
+    {adjusting && <StockAdjustmentDialog stock={adjusting} scope={scope} onClose={() => setAdjusting(null)} />}</>;
 }
 
 export function InventoryPage() {

@@ -1,0 +1,61 @@
+.toolbar :global(.record-search) {
+  flex: 1 1 300px;
+  max-inline-size: 420px;
+}
+
+.toolbar :global(.workspace-actions) {
+  margin-inline-start: auto;
+}
+
+.tableWrap {
+  min-inline-size: 0;
+  max-inline-size: 100%;
+}
+
+.tableWrap :global(.records-table) {
+  min-inline-size: 960px;
+}
+
+.dispatchCode,
+.timestamp {
+  white-space: nowrap;
+}
+
+.timestamp,
+.numeric {
+  font-variant-numeric: tabular-nums;
+}
+
+.numeric {
+  display: block;
+  text-align: end;
+  white-space: nowrap;
+}
+
+.limitNote {
+  padding: var(--space-3) var(--space-5) var(--space-4);
+  color: var(--jahez-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+@media (max-width: 720px) {
+  .toolbar :global(.record-search) {
+    flex-basis: 100%;
+    max-inline-size: none;
+  }
+
+  .toolbar :global(.workspace-actions) {
+    inline-size: 100%;
+    margin-inline-start: 0;
+  }
+
+  .toolbar :global(.filter-select) {
+    flex: 1 1 150px;
+    min-inline-size: 0;
+  }
+
+  .tableWrap :global(.records-table) {
+    min-inline-size: 900px;
+  }
+}

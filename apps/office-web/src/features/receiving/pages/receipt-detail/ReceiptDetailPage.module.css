@@ -1,0 +1,21 @@
+.receiptDetail { min-inline-size: 0; }
+.title { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-3); }
+.metadata { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-4) var(--space-6); margin: 0 0 var(--space-5); padding: var(--space-5) var(--space-6); border: 1px solid var(--jahez-border); border-radius: var(--radius-card); background: var(--glass-surface); }
+.metadata dt { margin-block-end: var(--space-1); color: var(--jahez-muted); font-size: 13px; }
+.metadata dd { margin: 0; font-weight: 600; overflow-wrap: anywhere; }
+.summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-4); margin-block-end: var(--space-4); }
+.summary > div { padding: var(--space-5) var(--space-6); }
+.summary span { display: block; margin-block-end: var(--space-2); color: var(--jahez-muted); font-size: 13px; }
+.summary strong { font-size: clamp(1.5rem, 3vw, 2rem); font-variant-numeric: tabular-nums; }
+.section { margin-block-start: var(--space-4); padding: var(--space-5) var(--space-6); }
+.section h2 { margin-block-end: var(--space-4); font-size: 1.125rem; }
+.findingList { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); }
+.finding { padding: var(--space-4); border: 1px solid var(--jahez-border); border-radius: var(--radius-control); background: var(--glass-input); }
+.finding > div { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }
+.finding p { margin-block-start: var(--space-2); color: var(--jahez-muted); font-size: 14px; white-space: pre-wrap; }
+.difference { font-variant-numeric: tabular-nums; font-weight: 700; }
+.measurement { display: inline-flex; align-items: center; gap: var(--space-2); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.difference[data-sign="-1"] { color: var(--jahez-danger); }
+.difference[data-sign="1"] { color: var(--jahez-success); }
+@media (max-width: 820px) { .metadata { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 560px) { .metadata, .summary, .findingList { grid-template-columns: minmax(0, 1fr); } .metadata, .section { padding: var(--space-4); } }

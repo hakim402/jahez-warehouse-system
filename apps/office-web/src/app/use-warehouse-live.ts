@@ -20,9 +20,18 @@ export function useWarehouseLive(warehouseId: string | undefined) {
       if (disposed) return;
       void cache.invalidateQueries({
         predicate: (query) =>
-          ["warehouse-data", "dashboard-history", "orders", "order"].includes(
-            String(query.queryKey[0]),
-          ),
+          [
+            "warehouse-data",
+            "dashboard-history",
+            "orders",
+            "order",
+            "findings",
+            "receipt",
+            "receipt-files",
+            "dispatch",
+            "dispatch-detail",
+            "stock-lots",
+          ].includes(String(query.queryKey[0])),
       });
     };
     const events = [

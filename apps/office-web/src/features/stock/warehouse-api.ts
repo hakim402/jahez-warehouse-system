@@ -1,23 +1,40 @@
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { authenticatedJson, useSession } from '../../app/session';
+import type { Finding } from '../receiving/receiving-api';
 import { useOrderScope } from '../orders/order-api';
+
+export type { Finding } from '../receiving/receiving-api';
 
 export type QueueOrder = {
   id: string; orderNo: string; status: 'ready' | 'partly_received'; expectedDate: string | null;
   supplier: { name: string; nameCn: string | null }; customer: { name: string; shippingMark: string | null };
   expectedCartons: number; remainingCartons: number;
 };
-export type Finding = {
-  id: string; warehouseId: string; receiptId: string; type: string; expected: number | null;
-  actual: number | null; status: string;
-};
 export type StockRow = {
-  supplierName: string | null; customerName: string | null; customerMark: string | null; brand: string | null;
+  id?: string;
+  warehouseId?: string;
+  supplierId: string | null; supplierName: string | null;
+  customerId: string | null; customerName: string | null; customerMark: string | null;
+  brand: string | null; productId: string | null;
   product: { nameEn: string | null; nameAr: string | null; nameCn: string | null; modelNo?: string | null };
   cartons: string | number; qty: string | number | null; cbm: number | null;
-  receiptId?: string; receiptNo?: string; daysInStorage?: number; createdAt?: string; kind?: string;
+  receiptId?: string | null; receiptNo?: string | null; daysInStorage?: number; createdAt?: string; kind?: string;
+  dispatchId?: string | null; dispatchNo?: string | null;
+  adjustmentId?: string | null; adjustmentNo?: string | null; adjustmentReason?: string | null;
 };
-export type Movement = StockRow & { id: string; kind: string; createdAt: string; receiptId?: string; dispatchNo?: string; adjustmentNo?: string };
+export type Movement = StockRow & {
+  id: string;
+  kind: string;
+  createdAt: string;
+  receiptLineId: string | null;
+  dispatchId: string | null;
+  dispatchNo: string | null;
+  adjustmentId: string | null;
+  adjustmentNo: string | null;
+  adjustmentReason: string | null;
+  receivedAt: string | null;
+  createdBy: string;
+};
 type MovementPage = { warehouseId: string; movements: Movement[]; nextCursor: string | null };
 
 export function useWarehouseData() {

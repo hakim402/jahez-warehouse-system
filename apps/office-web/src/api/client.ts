@@ -36,6 +36,9 @@ export class ApiError extends Error {
   readonly validationMessages: string[];
   readonly shortages: ApiShortage[];
   readonly fields: string[];
+  readonly available: number | null;
+  readonly requested: number | null;
+  readonly shortage: number | null;
 
   constructor(readonly status: number, readonly details: ApiErrorDetails = {}) {
     const messages = validationMessages(details);
@@ -44,6 +47,9 @@ export class ApiError extends Error {
     this.validationMessages = messages;
     this.shortages = shortages(details);
     this.fields = reviewFields(details);
+    this.available = finiteNumber(details.available);
+    this.requested = finiteNumber(details.requested);
+    this.shortage = finiteNumber(details.shortage);
   }
 
   get validationMessage(): string | undefined {
@@ -53,13 +59,14 @@ export class ApiError extends Error {
 
 export type RequestOptions = Omit<RequestInit, 'body' | 'headers'> & {
   json?: unknown;
+  form?: FormData;
   token?: string;
 };
 
-export async function requestJson<T>(
+async function requestResponse(
   path: string,
-  { json, token, signal, ...options }: RequestOptions = {},
-): Promise<T> {
+  { json, form, token, signal, ...options }: RequestOptions = {},
+): Promise<Response> {
   const headers = new Headers({ Accept: 'application/json' });
   if (json !== undefined) headers.set('Content-Type', 'application/json');
   if (token) headers.set('Authorization', 'Bearer ' + token);
@@ -67,8 +74,9 @@ export async function requestJson<T>(
   const timeout = AbortSignal.timeout(15_000);
   const response = await fetch(apiBase + path, {
     ...options,
+    method: options.method ?? (form !== undefined || json !== undefined ? 'POST' : undefined),
     headers,
-    body: json === undefined ? undefined : JSON.stringify(json),
+    body: form ?? (json === undefined ? undefined : JSON.stringify(json)),
     signal: signal ? AbortSignal.any([signal, timeout]) : timeout,
     cache: 'no-store',
   });
@@ -76,5 +84,19 @@ export async function requestJson<T>(
     const body: unknown = await response.json().catch(() => null);
     throw new ApiError(response.status, isRecord(body) ? body : {});
   }
+  return response;
+}
+
+export async function requestJson<T>(path: string, options: RequestOptions = {}): Promise<T> {
+  const response = await requestResponse(path, options);
   return response.json() as Promise<T>;
+}
+
+export async function requestBlob(path: string, options: RequestOptions = {}): Promise<Blob> {
+  const response = await requestResponse(path, options);
+  return response.blob();
+}
+
+function finiteNumber(value: unknown): number | null {
+  return typeof value === 'number' && Number.isFinite(value) ? value : null;
 }

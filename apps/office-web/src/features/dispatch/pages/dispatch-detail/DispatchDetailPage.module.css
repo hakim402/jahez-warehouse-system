@@ -1,0 +1,327 @@
+.dispatchDetail {
+  min-inline-size: 0;
+}
+
+.backLink {
+  margin-block-end: var(--space-3);
+}
+
+.confirmedBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid rgb(8 127 91 / 18%);
+  border-radius: var(--radius-pill);
+  background: rgb(8 127 91 / 9%);
+  color: var(--jahez-success);
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.printButton {
+  flex: none;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 260px);
+  align-items: start;
+  gap: var(--space-4);
+}
+
+.main {
+  display: grid;
+  min-inline-size: 0;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-4);
+}
+
+.detailsPanel,
+.totalsPanel {
+  padding: var(--space-5) var(--space-6);
+}
+
+.detailsPanel h2,
+.totalsPanel h2 {
+  margin-block-end: var(--space-4);
+  font-size: 1.125rem;
+}
+
+.detailsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-5) var(--space-7);
+  margin: 0;
+}
+
+.detailsGrid dt {
+  margin-block-end: var(--space-1);
+  color: var(--jahez-muted);
+  font-size: 13px;
+}
+
+.detailsGrid dd {
+  margin: 0;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.secondaryValue {
+  display: block;
+  margin-block-start: 2px;
+  color: var(--jahez-muted);
+  font-size: 12px;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.tableScroll {
+  max-inline-size: 100%;
+  overflow-x: auto;
+}
+
+.tableScroll:focus-visible {
+  outline-offset: -3px;
+}
+
+.packingTable {
+  min-inline-size: 820px;
+}
+
+.receiptsTable {
+  min-inline-size: 680px;
+}
+
+.packingTable :global(th:first-child, td:first-child),
+.receiptsTable :global(th:first-child, td:first-child) {
+  padding-inline-start: var(--space-6);
+}
+
+.packingTable :global(th:last-child, td:last-child),
+.receiptsTable :global(th:last-child, td:last-child) {
+  padding-inline-end: var(--space-6);
+}
+
+.timestamp,
+.numeric {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.numeric {
+  display: block;
+  text-align: end;
+}
+
+.totals {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  font-size: 14px;
+}
+
+.totals div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding-block: var(--space-3);
+  border-block-end: 1px solid var(--jahez-border);
+}
+
+.totals div:last-child {
+  border-block-end: 0;
+}
+
+.totals dt {
+  color: var(--jahez-muted);
+}
+
+.totals dd {
+  margin: 0;
+  font-weight: 700;
+  text-align: end;
+}
+
+@media (max-width: 1050px) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 720px) {
+  .dispatchDetail :global(.workspace-heading) {
+    align-items: stretch;
+  }
+
+  .printButton {
+    inline-size: 100%;
+  }
+
+  .detailsPanel,
+  .totalsPanel {
+    padding: var(--space-4);
+  }
+
+  .detailsGrid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-4);
+  }
+
+  .packingTable :global(th:first-child, td:first-child),
+  .receiptsTable :global(th:first-child, td:first-child) {
+    padding-inline-start: var(--space-3);
+  }
+
+  .packingTable :global(th:last-child, td:last-child),
+  .receiptsTable :global(th:last-child, td:last-child) {
+    padding-inline-end: var(--space-3);
+  }
+}
+
+@media print {
+  @page {
+    size: A4 landscape;
+    margin: 12mm;
+  }
+
+  :global(html):has(.dispatchDetail),
+  :global(body):has(.dispatchDetail) {
+    background: #fff !important;
+  }
+
+  :global(.office-background):has(.dispatchDetail) {
+    display: block !important;
+    background: #fff !important;
+  }
+
+  :global(.office-background):has(.dispatchDetail) > aside,
+  :global(.office-background):has(.dispatchDetail) > a,
+  :global(.office-background):has(.dispatchDetail) > div > header {
+    display: none !important;
+  }
+
+  :global(#office-content):has(.dispatchDetail) {
+    padding: 0 !important;
+    outline: none !important;
+  }
+
+  .dispatchDetail {
+    color: #000;
+    font-size: 10pt;
+  }
+
+  .dispatchDetail :global(.workspace-heading) {
+    margin-block-end: 10px;
+  }
+
+  .dispatchDetail :global(.workspace-heading h1) {
+    font-size: 20pt;
+  }
+
+  .backLink,
+  .printButton {
+    display: none !important;
+  }
+
+  .confirmedBadge {
+    border-color: #999;
+    background: #fff;
+    color: #000;
+  }
+
+  .layout,
+  .main {
+    display: block !important;
+  }
+
+  .main > section + section,
+  .totalsPanel {
+    margin-block-start: 10px;
+  }
+
+  .detailsPanel,
+  .totalsPanel {
+    border: 1px solid #bbb !important;
+    border-radius: 0 !important;
+    background: #fff !important;
+    box-shadow: none !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    break-inside: avoid;
+  }
+
+  .dispatchDetail section h2 {
+    break-after: avoid;
+  }
+
+  .dispatchDetail section:not(.detailsPanel) {
+    border: 1px solid #bbb !important;
+    border-radius: 0 !important;
+    background: #fff !important;
+    box-shadow: none !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+
+  .tableScroll {
+    max-inline-size: none !important;
+    overflow: visible !important;
+  }
+
+  .packingTable,
+  .receiptsTable {
+    min-inline-size: 0 !important;
+    inline-size: 100%;
+    font-size: 9pt;
+  }
+
+  .dispatchDetail :global(.records-table thead) {
+    display: table-header-group;
+  }
+
+  .dispatchDetail :global(.records-table tr) {
+    break-inside: avoid;
+  }
+
+  .dispatchDetail :global(.records-table th),
+  .dispatchDetail :global(.records-table td) {
+    padding: 5px 6px !important;
+    border-color: #ccc !important;
+  }
+
+  .dispatchDetail :global(.records-table th) {
+    background: #f2f2f2 !important;
+    color: #000 !important;
+  }
+
+  .secondaryValue {
+    color: #333;
+    font-size: 8pt;
+  }
+
+  .totals {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--space-3);
+  }
+
+  .totals div {
+    display: grid;
+    gap: 2px;
+    padding: 0;
+    border: 0;
+  }
+
+  .totals dt,
+  .totals dd {
+    color: #000;
+  }
+
+  .totals dd {
+    font-size: 12pt;
+    text-align: start;
+  }
+}

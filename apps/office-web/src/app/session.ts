@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from 'react';
 import { isOfficeRole, logIn, logOut, refreshAuth, type AuthSession } from '../api/auth';
-import { ApiError, requestJson, type RequestOptions } from '../api/client';
+import { ApiError, requestBlob, requestJson, type RequestOptions } from '../api/client';
 import { queryClient } from './query-client';
 
 const storageKey = 'jahez.office.session';
@@ -168,9 +168,12 @@ export function watchIdleSession() {
   };
 }
 
-export async function authenticatedJson<T>(
+type AuthenticatedOptions = Omit<RequestOptions, 'token'>;
+
+async function authenticatedRequest<T>(
   path: string,
-  options: Omit<RequestOptions, 'token'> = {},
+  options: AuthenticatedOptions,
+  send: (path: string, options: RequestOptions) => Promise<T>,
 ): Promise<T> {
   const current = snapshot.session;
   if (!current) throw new ApiError(401);
@@ -181,7 +184,7 @@ export async function authenticatedJson<T>(
   if (!session) throw new ApiError(401);
 
   try {
-    return await requestJson<T>(path, { ...options, token: session.accessToken });
+    return await send(path, { ...options, token: session.accessToken });
   } catch (error) {
     if (!(error instanceof ApiError) || error.status !== 401 || options.signal?.aborted) throw error;
     if (needsRefresh) {
@@ -192,7 +195,7 @@ export async function authenticatedJson<T>(
     options.signal?.throwIfAborted();
     if (!renewed) throw error;
     try {
-      return await requestJson<T>(path, { ...options, token: renewed.accessToken });
+      return await send(path, { ...options, token: renewed.accessToken });
     } catch (retryError) {
       if (retryError instanceof ApiError && retryError.status === 401 && snapshot.session === renewed) {
         publish(null);
@@ -200,4 +203,16 @@ export async function authenticatedJson<T>(
       throw retryError;
     }
   }
+}
+
+export function authenticatedJson<T>(path: string, options: AuthenticatedOptions = {}): Promise<T> {
+  return authenticatedRequest(path, options, requestJson<T>);
+}
+
+export function authenticatedForm<T>(path: string, form: FormData, options: AuthenticatedOptions = {}): Promise<T> {
+  return authenticatedRequest(path, { ...options, form }, requestJson<T>);
+}
+
+export function authenticatedBlob(path: string, options: AuthenticatedOptions = {}): Promise<Blob> {
+  return authenticatedRequest(path, options, requestBlob);
 }

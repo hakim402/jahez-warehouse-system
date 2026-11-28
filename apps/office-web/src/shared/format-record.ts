@@ -9,6 +9,9 @@ export function useRecordFormat() {
     const date = new Intl.DateTimeFormat(language, {
       dateStyle: 'medium', timeZone: 'UTC', calendar: 'gregory',
     });
+    const dateTime = new Intl.DateTimeFormat(language, {
+      dateStyle: 'medium', timeStyle: 'short', calendar: 'gregory',
+    });
     const number = new Intl.NumberFormat(language);
     const amount = new Intl.NumberFormat(language, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     const unitPrice = new Intl.NumberFormat(language, { minimumFractionDigits: 2, maximumFractionDigits: 4 });
@@ -16,6 +19,7 @@ export function useRecordFormat() {
     return {
       language,
       date: (value: string | null) => value ? date.format(new Date(value + 'T00:00:00Z')) : '—',
+      dateTime: (value: string | null) => value && !Number.isNaN(new Date(value).getTime()) ? dateTime.format(new Date(value)) : '—',
       quantity: (value: number | null) => value === null ? '—' : number.format(value),
       amount: (value: number | null) => value === null ? '—' : amount.format(value),
       unitPrice: (value: number | null) => value === null ? '—' : unitPrice.format(value),

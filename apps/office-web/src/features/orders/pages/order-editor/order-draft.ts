@@ -1,3 +1,4 @@
+import { normalizeNumericInput } from '../../../../shared/number-input';
 import type { DraftInput, FullOrder } from '../../order-api';
 
 const maximumQuantity = 2_147_483_647;
@@ -65,18 +66,14 @@ export function initialDraft(order?: FullOrder): DraftForm {
   };
 }
 
-function normalizedNumber(value: string) {
-  return value.trim().replace(/[٠-٩۰-۹]/g, (digit) => String(digit.charCodeAt(0) & 15)).replace('٫', '.');
-}
-
 function wholeQuantity(value: string) {
-  const normalized = normalizedNumber(value);
+  const normalized = normalizeNumericInput(value);
   const quantity = Number(normalized);
   return /^\d+$/.test(normalized) && quantity > 0 && quantity <= maximumQuantity ? quantity : null;
 }
 
 function moneyUnits(value: string, scale: 2 | 4): bigint | null | undefined {
-  const normalized = normalizedNumber(value);
+  const normalized = normalizeNumericInput(value);
   if (!normalized) return null;
   if (!/^\d+(?:\.\d+)?$/.test(normalized)) return undefined;
   const [whole, fraction = ''] = normalized.split('.');

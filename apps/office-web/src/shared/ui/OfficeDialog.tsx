@@ -3,26 +3,28 @@ import { Dialog } from 'radix-ui';
 import { useRef, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
-export function OfficeDialog({ title, children, onClose, busy = false }: {
+export function OfficeDialog({ title, children, onClose, busy = false, closeDisabled = false, wide = false }: {
   title: string;
   children: ReactNode;
   onClose: () => void;
   busy?: boolean;
+  closeDisabled?: boolean;
+  wide?: boolean;
 }) {
   const { t } = useTranslation();
   const trigger = useRef(document.activeElement instanceof HTMLElement ? document.activeElement : null);
   return (
-    <Dialog.Root open onOpenChange={(open) => { if (!open && !busy) onClose(); }}>
+    <Dialog.Root open onOpenChange={(open) => { if (!open && !busy && !closeDisabled) onClose(); }}>
       <Dialog.Portal>
         <Dialog.Overlay className="office-dialog-overlay" />
-        <Dialog.Content className="office-dialog" aria-describedby={undefined} aria-busy={busy}
+        <Dialog.Content className="office-dialog" data-wide={wide ? 'true' : undefined} aria-describedby={undefined} aria-busy={busy}
           onCloseAutoFocus={(event) => {
             event.preventDefault();
             trigger.current?.focus();
           }}>
           <div className="office-dialog-heading">
             <Dialog.Title>{title}</Dialog.Title>
-            <Dialog.Close aria-label={t('close')} className="icon-button" disabled={busy}>
+            <Dialog.Close aria-label={t('close')} className="icon-button" disabled={busy || closeDisabled}>
               <X size={18} aria-hidden="true" />
             </Dialog.Close>
           </div>

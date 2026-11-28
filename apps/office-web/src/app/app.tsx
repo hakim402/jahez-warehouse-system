@@ -13,6 +13,15 @@ import { useSession, watchIdleSession } from "./session";
 const ReceivingPage = lazy(
   () => import("../features/receiving/pages/ReceivingPage"),
 );
+const ReceiptDetailPage = lazy(
+  () => import("../features/receiving/pages/receipt-detail/ReceiptDetailPage"),
+);
+const DispatchHistoryPage = lazy(
+  () => import("../features/dispatch/pages/dispatch-history/DispatchHistoryPage"),
+);
+const DispatchDetailPage = lazy(
+  () => import("../features/dispatch/pages/dispatch-detail/DispatchDetailPage"),
+);
 const InventoryPage = lazy(() =>
   import("../features/stock/pages/WarehouseViews").then((module) => ({
     default: module.InventoryPage,
@@ -72,7 +81,10 @@ export function App() {
                   element={<OrderEditorPage />}
                 />
                 <Route path="receiving" element={<ReceivingPage />} />
+                <Route path="receipts/:receiptId" element={<ReceiptDetailPage />} />
                 <Route path="inventory" element={<InventoryPage />} />
+                <Route path="dispatch" element={<DispatchHistoryPage />} />
+                <Route path="dispatch/:dispatchId" element={<DispatchDetailPage />} />
                 <Route path="catalog" element={<CatalogPage />} />
               </Route>
               <Route path="*" element={<Navigate to="/" replace />} />

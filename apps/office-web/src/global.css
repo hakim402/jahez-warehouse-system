@@ -344,6 +344,28 @@ select.text-input {
   color: var(--jahez-white);
   border-color: transparent;
 }
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border-radius: var(--radius-pill);
+  padding: 4px 9px;
+  background: #ede9f1;
+  color: #51465f;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.status-badge::before { content: ''; inline-size: 6px; block-size: 6px; border-radius: 50%; background: currentColor; }
+.status-badge[data-status="open"],
+.status-badge[data-status="partly_received"],
+.status-badge[data-status="damaged"] { background: #fff2dc; color: #784700; }
+.status-badge[data-status="resolved"],
+.status-badge[data-status="confirmed"],
+.status-badge[data-status="received"],
+.status-badge[data-status="ok"] { background: #e4f5ee; color: #086149; }
+.status-badge[data-status="cancelled"] { background: #fceaf0; color: var(--jahez-danger); }
+
 .muted-text {
   color: var(--jahez-muted);
   font-size: 14px;
@@ -629,6 +651,10 @@ html[dir="rtl"] .rtl-icon {
   -webkit-backdrop-filter: blur(24px) saturate(130%);
   backdrop-filter: blur(24px) saturate(130%);
   box-shadow: 0 16px 44px rgb(23 19 43 / 24%);
+}
+
+.office-dialog[data-wide="true"] {
+  inline-size: min(880px, calc(100% - 32px));
 }
 
 .office-dialog-heading,

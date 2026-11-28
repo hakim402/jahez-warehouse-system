@@ -98,9 +98,82 @@ Dependencies are Server Step 3 for order and catalog contracts, Step 1 for accou
 
 ## Step 4 — Findings, evidence, and dispatch views
 
-Show ordered and received values together, let traders resolve findings, and display private evidence. Add dispatch history, packing details, and authorized stock adjustments.
+**Status** Verified (2026-11-28).
 
-Use `08-receipt-details.png` and `09-inventory.png` for the finding and adjustment entry points, and `10-dispatch-history.png` and `11-dispatch-details.png` for dispatch. Confirm the missing form details for finding resolution and stock adjustment before building them. Use the findings, private files, dispatch, and stock adjustment APIs.
+**Goal** Show ordered and received values together, let traders review private evidence and resolve findings, and display dispatch packing details and authorized stock adjustments with traceable movement history.
+
+**Confirmed forms**
+
+- Finding resolution uses a review dialog: read-only discrepancy and receipt details, available photo evidence, a required resolution note, Cancel, and Resolve finding actions.
+- Stock adjustment uses an advanced lot-aware form: existing stock group selection, Increase or Decrease, cartons, optional units and CBM with matching signs, optional receipt-lot selection, required reason, one required photo, and an optional note.
+
+**Implementation tasks**
+
+1. Extend the shared Office Web request/session layer for authenticated multipart uploads and private binary downloads while preserving the existing serialized refresh, one-401 retry, abort behavior, and safe structured errors. Add typed adjustment shortage details for HTTP 409 responses.
+2. Add focused receiving, files, dispatch, and stock feature APIs and account/warehouse-scoped query keys. Extend stock, movement, and finding types with the identifiers and receipt evidence needed by Step 4. Reuse `useOrderScope`, `authenticatedJson`, `DataTable`, `OfficeDialog`, `LabeledField`, `RecordState`, and the stock-count helpers.
+3. Build the finding review workflow in `features/receiving`: show open and resolved findings, receipt navigation, discrepancy context, private receipt/line evidence, and a required-note resolution mutation. Preserve filters, all three languages, dialog focus, busy-state protection, validation feedback, and post-resolution live refresh.
+4. Add `/receipts/:receiptId` from `08-receipt-details.png`. Compose `GET /receipts/:id` with `GET /orders/:id`, match receipt lines to ordered lines, show ordered versus received cartons and measurements, findings, condition, receipt details, and separately reported photo availability. Fetch evidence through `/files` and authenticated `/files/:id/content`, using temporary object URLs and cleanup.
+5. Enable the Dispatch navigation item and add `/dispatch` and `/dispatch/:dispatchId` from `10-dispatch-history.png` and `11-dispatch-details.png`. Implement customer/date/search filtering and shared table pagination for the server's capped dispatch list. Show packing lines, source-receipt allocations, shipment totals, and a print-specific packing-list layout with browser printing.
+6. Add the confirmed advanced adjustment dialog to inventory. Select an existing balance group and optional receipt lot, derive remaining lots from movement history where stock age lacks `receiptLineId`, validate signed integer cartons/units and signed finite CBM, upload one `adjustment_photo`, then submit a stable `clientOperationId`. Show available/requested/shortage conflicts and retain recoverable edits. Refresh balances, movements, age, and focused lot data after success.
+7. Surface adjustment history in stock movements with stable row IDs, adjustment numbers/reasons, and receipt/dispatch links where available. Reuse exact decimal rendering and comparison helpers rather than converting large stock strings to JavaScript numbers.
+8. Extend warehouse live-event invalidation to focused finding, receipt, evidence, dispatch, adjustment, and lot query keys. Add English, Arabic RTL, and Simplified Chinese copy plus feature-adjacent CSS Modules using the shared Jahez glass and brand tokens.
+9. Verify the affected workflows with synthetic data, update Office Web progress with actual results and remaining integration gaps, and commit/push the focused Office Web update without deploying.
+
+**Final review remediation (2026-11-28)**
+
+1. Retain each receipt lot's original received cartons, units, and CBM, derive the signed lot-adjustment units/CBM with exact proportional arithmetic, display the automatic values read-only, and validate the derived values before submission.
+2. Enforce exact customer, supplier, brand, and product equality, including null dimensions, while deriving receipt lots from movement history; show the brand in lot choices so same-product groups remain distinguishable.
+3. Match receipt lines to ordered lines only when the product identity agrees. Keep wrong-product lines as unmatched receipt rows rendered with their actual product and brand.
+4. Add ordered-versus-received carton size, volume, and weight to the receipt comparison shown in `08-receipt-details.png`, preserving exact values and narrow internal table scrolling.
+5. Treat adjustment timeout, abort, and network failures after submission as an unknown result. Keep the uploaded photo, payload, and client-operation ID stable for a same-operation retry, prevent dismissal while the result is unknown, and allow cancellation only for known upload failures or confirmed server responses. Infer `POST` for JSON and multipart bodies in the shared request layer so evidence uploads use the server contract.
+6. Scope resolved-findings query errors to resolved/all views so a failed optional resolved request never hides the open findings table.
+7. Normalize Arabic-Indic and Persian digits plus the Arabic decimal separator before adjustment numeric validation, reusing the existing order-editor normalization behavior.
+
+**Affected Office Web modules and screens**
+
+- `src/api/client.ts` and `src/app/session.ts` for multipart, binary, and conflict handling.
+- `src/app/app.tsx`, `OfficeNavigation.tsx`, and `use-warehouse-live.ts` for routes and live invalidation.
+- `src/features/receiving/` for finding review, receipt detail, and evidence.
+- `src/features/stock/` for typed warehouse data, movement history, lot derivation, and the adjustment dialog.
+- `src/features/dispatch/` for dispatch history, detail, and print layout.
+- Shared UI, formatting, records copy, translations, and global/feature styles only where reused by these screens.
+
+**Design references**
+
+- `documents/designs/office-web/07-receiving.png`
+- `documents/designs/office-web/08-receipt-details.png`
+- `documents/designs/office-web/09-inventory.png`
+- `documents/designs/office-web/10-dispatch-history.png`
+- `documents/designs/office-web/11-dispatch-details.png`
+- `reference-dialog.png`, `reference-dropdown.png`, and `reference-table-states.png`
+- The Jahez brand kit and existing shared glass controls take precedence over generic style recommendations.
+
+**API dependencies**
+
+- `GET /findings?status=open|resolved` and `PATCH /findings/:id`.
+- `GET /receipts/:id` and `GET /orders/:id`.
+- `GET /files?warehouseId=...&entityType=...&entityId=...`, `GET /files/:id/content`, and multipart `POST /files?warehouseId=...`.
+- `GET /dispatches?warehouseId=...&customerId=...` and `GET /dispatches/:id`.
+- `GET /stock`, `/stock/movements`, `/stock/age`, and `POST /stock/adjustments` in the active warehouse.
+- Existing Socket.IO events `finding.resolved`, `receipt.confirmed`, `dispatch.confirmed`, and `adjustment.recorded`.
+
+**Known contract constraints**
+
+- There is no receipt-list/history endpoint, so receipt detail is reachable from findings and receipt-linked movements; a complete receipt-history index remains a future Server dependency.
+- There is no adjustment-list/detail endpoint, so adjustment history comes from `kind = "adjust"` stock movements and does not include the adjustment note or photo metadata.
+- Stock-age rows omit `receiptLineId`; optional lot selection and remaining-lot checks must use movement history.
+- Dispatch listing is capped at 200 records with no server date filter or pagination, so filtering and pagination remain client-side.
+- Dispatch Excel export belongs to Step 6.
+- No Server or Worker Mobile changes, migrations, new endpoints, or deployment actions are part of this step.
+
+**Acceptance checks**
+
+1. Resolve a synthetic finding only with a nonblank note, show receipt evidence and discrepancy details first, retain dialog edits after a failed request, and refresh the finding after success.
+2. Open receipt detail from a finding and verify ordered/received comparison, partial and unmatched lines, finding context, evidence availability, private image viewing, loading/empty/error states, and object-URL cleanup.
+3. Open a synthetic partial dispatch, verify search/customer/date filtering, pagination, packing lines, source receipts, allocation quantities, client-calculated units, totals, narrow layout, and print output.
+4. Submit positive and negative group and lot adjustments with a required synthetic photo and stable operation ID. Verify optional units/CBM sign rules, required reason/photo, overdraw conflict details, replay-safe retry behavior, and updated balances/movements/age.
+5. Confirm adjustment history remains visible with exact decimal values and live-event refresh updates focused receipt, finding, dispatch, and stock queries.
+6. Run `pnpm --dir apps/office-web typecheck` and `pnpm --dir apps/office-web build`, then exercise desktop, narrow, English, Arabic RTL, keyboard/focus, reduced-motion, loading, empty, no-results, and error states with synthetic or redacted data. Record live-account and live Worker Mobile checks separately.
 
 ## Step 5 — Expenses and owner settings
 

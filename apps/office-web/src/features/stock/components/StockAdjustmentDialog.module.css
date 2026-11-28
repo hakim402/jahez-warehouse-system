@@ -1,0 +1,158 @@
+.fields {
+  display: grid;
+  gap: var(--space-4);
+  min-inline-size: 0;
+}
+.stockSummary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  border: 1px solid var(--jahez-border);
+  border-radius: var(--radius-control);
+  background: var(--glass-input);
+}
+.stockSummary > div {
+  display: grid;
+  gap: var(--space-1);
+  min-inline-size: 160px;
+}
+.stockSummary > div span {
+  color: var(--jahez-muted);
+  font-size: 13px;
+}
+.stockSummary dl {
+  display: flex;
+  gap: var(--space-5);
+  margin: 0;
+}
+.stockSummary dl div {
+  display: grid;
+  gap: var(--space-1);
+}
+.stockSummary dt {
+  color: var(--jahez-muted);
+  font-size: 12px;
+}
+.stockSummary dd {
+  margin: 0;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.direction {
+  display: flex;
+  gap: var(--space-3);
+  padding: 0;
+  border: 0;
+  margin: 0;
+}
+.direction legend {
+  margin-block-end: var(--space-2);
+  font-size: 14px;
+  font-weight: 600;
+}
+.direction label {
+  position: relative;
+  flex: 1;
+  cursor: pointer;
+}
+.direction input {
+  position: absolute;
+  opacity: 0;
+  inset: 0;
+  cursor: pointer;
+}
+.direction span {
+  display: grid;
+  place-items: center;
+  min-block-size: 46px;
+  border: 1px solid var(--jahez-control-border);
+  border-radius: var(--radius-control);
+  background: var(--glass-input);
+  font-weight: 700;
+}
+.direction input:checked + span {
+  border-color: var(--jahez-brand-deep);
+  background: var(--jahez-lavender);
+  color: var(--jahez-brand-deep);
+}
+.direction input:focus-visible + span {
+  outline: 2px solid var(--jahez-brand-deep);
+  outline-offset: 3px;
+}
+.quantityGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+.helper {
+  margin-block-start: calc(var(--space-3) * -1);
+  color: var(--jahez-muted);
+  font-size: 13px;
+}
+.photoField {
+  display: grid;
+  gap: var(--space-3);
+}
+.photoField input[type="file"] {
+  inline-size: 100%;
+  min-block-size: 50px;
+  padding: var(--space-2);
+  border: 1px dashed var(--jahez-control-border);
+  border-radius: var(--radius-control);
+  background: var(--glass-input);
+}
+.photoField input[type="file"]::file-selector-button {
+  min-block-size: 36px;
+  margin-inline-end: var(--space-3);
+  padding-inline: var(--space-3);
+  border: 1px solid var(--jahez-control-border);
+  border-radius: 8px;
+  background: var(--jahez-white);
+  cursor: pointer;
+}
+.photoEmpty {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--jahez-muted);
+  font-size: 13px;
+}
+.photoPreview {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  color: var(--jahez-muted);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+.photoPreview img {
+  inline-size: 64px;
+  block-size: 64px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+.lotSummary {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-control);
+  background: var(--jahez-lavender);
+  font-size: 13px;
+}
+.lotSummary span {
+  color: var(--jahez-muted);
+}
+@media (max-width: 620px) {
+  .quantityGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .stockSummary dl {
+    inline-size: 100%;
+    justify-content: space-between;
+  }
+}
