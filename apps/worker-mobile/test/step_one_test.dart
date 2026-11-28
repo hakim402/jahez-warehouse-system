@@ -231,8 +231,10 @@ void main() {
         await tester.tap(find.byTooltip('إضافة كرتون واحد'));
         await tester.pumpAndSettle();
         expect(receivingStore.drafts.values.single.cartons, {'line-one': 5});
-        await tester.tap(find.widgetWithText(FilledButton, 'تم'));
-        await tester.pumpAndSettle();
+        if (size.width < 700) {
+          await tester.tap(find.byType(BackButton));
+          await tester.pumpAndSettle();
+        }
         await tester.tap(find.byType(BackButton));
         await tester.pumpAndSettle();
 
@@ -285,7 +287,7 @@ class _WidgetReceivingStore implements ReceivingStore {
   }
 
   @override
-  Future<CachedReceiving> read(String scope) async =>
+  Future<CachedReceiving> read(String scope, {String? ownerScope}) async =>
       CachedReceiving(orders, Map.of(drafts));
 
   @override
@@ -303,13 +305,38 @@ class _WidgetReceivingStore implements ReceivingStore {
     WorkerOrder order,
     WorkerOrderLine line,
     int cartons,
-    bool Function() active,
-  ) async {
+    bool Function() active, {
+    String? ownerScope,
+  }) async {
     if (!active()) return null;
     final draft = ReceiptDraft('draft', order, {line.id: cartons});
     drafts[order.id] = draft;
     return draft;
   }
+
+  @override
+  Future<ReceiptDraft?> saveDetails(
+    String scope,
+    String ownerScope,
+    WorkerOrder order,
+    WorkerOrderLine line,
+    ReceiptLineDetails details,
+    bool Function() active,
+  ) async => drafts[order.id] = ReceiptDraft(
+    'draft',
+    order,
+    drafts[order.id]?.cartons ?? const {},
+    details: {line.id: details},
+  );
+
+  @override
+  Future<LocalReceipt?> confirm(
+    String scope,
+    String ownerScope,
+    String warehouseId,
+    WorkerOrder order,
+    bool Function() active,
+  ) async => throw UnimplementedError();
 }
 
 class _StalledStorage extends FlutterSecureStorage {

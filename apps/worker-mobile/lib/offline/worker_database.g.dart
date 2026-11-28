@@ -376,6 +376,17 @@ class $ReceiptDraftsTable extends ReceiptDrafts
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _lineDetailsMeta = const VerificationMeta(
+    'lineDetails',
+  );
+  @override
+  late final GeneratedColumn<String> lineDetails = GeneratedColumn<String>(
+    'line_details',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     scope,
@@ -383,6 +394,7 @@ class $ReceiptDraftsTable extends ReceiptDrafts
     draftId,
     snapshot,
     cartonEdits,
+    lineDetails,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -439,6 +451,15 @@ class $ReceiptDraftsTable extends ReceiptDrafts
     } else if (isInserting) {
       context.missing(_cartonEditsMeta);
     }
+    if (data.containsKey('line_details')) {
+      context.handle(
+        _lineDetailsMeta,
+        lineDetails.isAcceptableOrUnknown(
+          data['line_details']!,
+          _lineDetailsMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -468,6 +489,10 @@ class $ReceiptDraftsTable extends ReceiptDrafts
         DriftSqlType.string,
         data['${effectivePrefix}carton_edits'],
       )!,
+      lineDetails: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}line_details'],
+      ),
     );
   }
 
@@ -483,12 +508,14 @@ class ReceiptDraftRow extends DataClass implements Insertable<ReceiptDraftRow> {
   final String draftId;
   final String snapshot;
   final String cartonEdits;
+  final String? lineDetails;
   const ReceiptDraftRow({
     required this.scope,
     required this.orderId,
     required this.draftId,
     required this.snapshot,
     required this.cartonEdits,
+    this.lineDetails,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -498,6 +525,9 @@ class ReceiptDraftRow extends DataClass implements Insertable<ReceiptDraftRow> {
     map['draft_id'] = Variable<String>(draftId);
     map['snapshot'] = Variable<String>(snapshot);
     map['carton_edits'] = Variable<String>(cartonEdits);
+    if (!nullToAbsent || lineDetails != null) {
+      map['line_details'] = Variable<String>(lineDetails);
+    }
     return map;
   }
 
@@ -508,6 +538,9 @@ class ReceiptDraftRow extends DataClass implements Insertable<ReceiptDraftRow> {
       draftId: Value(draftId),
       snapshot: Value(snapshot),
       cartonEdits: Value(cartonEdits),
+      lineDetails: lineDetails == null && nullToAbsent
+          ? const Value.absent()
+          : Value(lineDetails),
     );
   }
 
@@ -522,6 +555,7 @@ class ReceiptDraftRow extends DataClass implements Insertable<ReceiptDraftRow> {
       draftId: serializer.fromJson<String>(json['draftId']),
       snapshot: serializer.fromJson<String>(json['snapshot']),
       cartonEdits: serializer.fromJson<String>(json['cartonEdits']),
+      lineDetails: serializer.fromJson<String?>(json['lineDetails']),
     );
   }
   @override
@@ -533,6 +567,7 @@ class ReceiptDraftRow extends DataClass implements Insertable<ReceiptDraftRow> {
       'draftId': serializer.toJson<String>(draftId),
       'snapshot': serializer.toJson<String>(snapshot),
       'cartonEdits': serializer.toJson<String>(cartonEdits),
+      'lineDetails': serializer.toJson<String?>(lineDetails),
     };
   }
 
@@ -542,12 +577,14 @@ class ReceiptDraftRow extends DataClass implements Insertable<ReceiptDraftRow> {
     String? draftId,
     String? snapshot,
     String? cartonEdits,
+    Value<String?> lineDetails = const Value.absent(),
   }) => ReceiptDraftRow(
     scope: scope ?? this.scope,
     orderId: orderId ?? this.orderId,
     draftId: draftId ?? this.draftId,
     snapshot: snapshot ?? this.snapshot,
     cartonEdits: cartonEdits ?? this.cartonEdits,
+    lineDetails: lineDetails.present ? lineDetails.value : this.lineDetails,
   );
   ReceiptDraftRow copyWithCompanion(ReceiptDraftsCompanion data) {
     return ReceiptDraftRow(
@@ -558,6 +595,9 @@ class ReceiptDraftRow extends DataClass implements Insertable<ReceiptDraftRow> {
       cartonEdits: data.cartonEdits.present
           ? data.cartonEdits.value
           : this.cartonEdits,
+      lineDetails: data.lineDetails.present
+          ? data.lineDetails.value
+          : this.lineDetails,
     );
   }
 
@@ -568,14 +608,15 @@ class ReceiptDraftRow extends DataClass implements Insertable<ReceiptDraftRow> {
           ..write('orderId: $orderId, ')
           ..write('draftId: $draftId, ')
           ..write('snapshot: $snapshot, ')
-          ..write('cartonEdits: $cartonEdits')
+          ..write('cartonEdits: $cartonEdits, ')
+          ..write('lineDetails: $lineDetails')
           ..write(')'))
         .toString();
   }
 
   @override
   int get hashCode =>
-      Object.hash(scope, orderId, draftId, snapshot, cartonEdits);
+      Object.hash(scope, orderId, draftId, snapshot, cartonEdits, lineDetails);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -584,7 +625,8 @@ class ReceiptDraftRow extends DataClass implements Insertable<ReceiptDraftRow> {
           other.orderId == this.orderId &&
           other.draftId == this.draftId &&
           other.snapshot == this.snapshot &&
-          other.cartonEdits == this.cartonEdits);
+          other.cartonEdits == this.cartonEdits &&
+          other.lineDetails == this.lineDetails);
 }
 
 class ReceiptDraftsCompanion extends UpdateCompanion<ReceiptDraftRow> {
@@ -593,6 +635,7 @@ class ReceiptDraftsCompanion extends UpdateCompanion<ReceiptDraftRow> {
   final Value<String> draftId;
   final Value<String> snapshot;
   final Value<String> cartonEdits;
+  final Value<String?> lineDetails;
   final Value<int> rowid;
   const ReceiptDraftsCompanion({
     this.scope = const Value.absent(),
@@ -600,6 +643,7 @@ class ReceiptDraftsCompanion extends UpdateCompanion<ReceiptDraftRow> {
     this.draftId = const Value.absent(),
     this.snapshot = const Value.absent(),
     this.cartonEdits = const Value.absent(),
+    this.lineDetails = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   ReceiptDraftsCompanion.insert({
@@ -608,6 +652,7 @@ class ReceiptDraftsCompanion extends UpdateCompanion<ReceiptDraftRow> {
     required String draftId,
     required String snapshot,
     required String cartonEdits,
+    this.lineDetails = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : scope = Value(scope),
        orderId = Value(orderId),
@@ -620,6 +665,7 @@ class ReceiptDraftsCompanion extends UpdateCompanion<ReceiptDraftRow> {
     Expression<String>? draftId,
     Expression<String>? snapshot,
     Expression<String>? cartonEdits,
+    Expression<String>? lineDetails,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -628,6 +674,7 @@ class ReceiptDraftsCompanion extends UpdateCompanion<ReceiptDraftRow> {
       if (draftId != null) 'draft_id': draftId,
       if (snapshot != null) 'snapshot': snapshot,
       if (cartonEdits != null) 'carton_edits': cartonEdits,
+      if (lineDetails != null) 'line_details': lineDetails,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -638,6 +685,7 @@ class ReceiptDraftsCompanion extends UpdateCompanion<ReceiptDraftRow> {
     Value<String>? draftId,
     Value<String>? snapshot,
     Value<String>? cartonEdits,
+    Value<String?>? lineDetails,
     Value<int>? rowid,
   }) {
     return ReceiptDraftsCompanion(
@@ -646,6 +694,7 @@ class ReceiptDraftsCompanion extends UpdateCompanion<ReceiptDraftRow> {
       draftId: draftId ?? this.draftId,
       snapshot: snapshot ?? this.snapshot,
       cartonEdits: cartonEdits ?? this.cartonEdits,
+      lineDetails: lineDetails ?? this.lineDetails,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -668,6 +717,9 @@ class ReceiptDraftsCompanion extends UpdateCompanion<ReceiptDraftRow> {
     if (cartonEdits.present) {
       map['carton_edits'] = Variable<String>(cartonEdits.value);
     }
+    if (lineDetails.present) {
+      map['line_details'] = Variable<String>(lineDetails.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -682,6 +734,383 @@ class ReceiptDraftsCompanion extends UpdateCompanion<ReceiptDraftRow> {
           ..write('draftId: $draftId, ')
           ..write('snapshot: $snapshot, ')
           ..write('cartonEdits: $cartonEdits, ')
+          ..write('lineDetails: $lineDetails, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $LocalReceiptsTable extends LocalReceipts
+    with TableInfo<$LocalReceiptsTable, LocalReceiptRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $LocalReceiptsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _ownerScopeMeta = const VerificationMeta(
+    'ownerScope',
+  );
+  @override
+  late final GeneratedColumn<String> ownerScope = GeneratedColumn<String>(
+    'owner_scope',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _orderIdMeta = const VerificationMeta(
+    'orderId',
+  );
+  @override
+  late final GeneratedColumn<String> orderId = GeneratedColumn<String>(
+    'order_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _operationIdMeta = const VerificationMeta(
+    'operationId',
+  );
+  @override
+  late final GeneratedColumn<String> operationId = GeneratedColumn<String>(
+    'operation_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways('UNIQUE'),
+  );
+  static const VerificationMeta _snapshotMeta = const VerificationMeta(
+    'snapshot',
+  );
+  @override
+  late final GeneratedColumn<String> snapshot = GeneratedColumn<String>(
+    'snapshot',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _payloadMeta = const VerificationMeta(
+    'payload',
+  );
+  @override
+  late final GeneratedColumn<String> payload = GeneratedColumn<String>(
+    'payload',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    ownerScope,
+    orderId,
+    operationId,
+    snapshot,
+    payload,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'local_receipts';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<LocalReceiptRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('owner_scope')) {
+      context.handle(
+        _ownerScopeMeta,
+        ownerScope.isAcceptableOrUnknown(data['owner_scope']!, _ownerScopeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_ownerScopeMeta);
+    }
+    if (data.containsKey('order_id')) {
+      context.handle(
+        _orderIdMeta,
+        orderId.isAcceptableOrUnknown(data['order_id']!, _orderIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_orderIdMeta);
+    }
+    if (data.containsKey('operation_id')) {
+      context.handle(
+        _operationIdMeta,
+        operationId.isAcceptableOrUnknown(
+          data['operation_id']!,
+          _operationIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_operationIdMeta);
+    }
+    if (data.containsKey('snapshot')) {
+      context.handle(
+        _snapshotMeta,
+        snapshot.isAcceptableOrUnknown(data['snapshot']!, _snapshotMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_snapshotMeta);
+    }
+    if (data.containsKey('payload')) {
+      context.handle(
+        _payloadMeta,
+        payload.isAcceptableOrUnknown(data['payload']!, _payloadMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_payloadMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {ownerScope, orderId};
+  @override
+  LocalReceiptRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return LocalReceiptRow(
+      ownerScope: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}owner_scope'],
+      )!,
+      orderId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}order_id'],
+      )!,
+      operationId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}operation_id'],
+      )!,
+      snapshot: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}snapshot'],
+      )!,
+      payload: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}payload'],
+      )!,
+    );
+  }
+
+  @override
+  $LocalReceiptsTable createAlias(String alias) {
+    return $LocalReceiptsTable(attachedDatabase, alias);
+  }
+}
+
+class LocalReceiptRow extends DataClass implements Insertable<LocalReceiptRow> {
+  final String ownerScope;
+  final String orderId;
+  final String operationId;
+  final String snapshot;
+  final String payload;
+  const LocalReceiptRow({
+    required this.ownerScope,
+    required this.orderId,
+    required this.operationId,
+    required this.snapshot,
+    required this.payload,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['owner_scope'] = Variable<String>(ownerScope);
+    map['order_id'] = Variable<String>(orderId);
+    map['operation_id'] = Variable<String>(operationId);
+    map['snapshot'] = Variable<String>(snapshot);
+    map['payload'] = Variable<String>(payload);
+    return map;
+  }
+
+  LocalReceiptsCompanion toCompanion(bool nullToAbsent) {
+    return LocalReceiptsCompanion(
+      ownerScope: Value(ownerScope),
+      orderId: Value(orderId),
+      operationId: Value(operationId),
+      snapshot: Value(snapshot),
+      payload: Value(payload),
+    );
+  }
+
+  factory LocalReceiptRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return LocalReceiptRow(
+      ownerScope: serializer.fromJson<String>(json['ownerScope']),
+      orderId: serializer.fromJson<String>(json['orderId']),
+      operationId: serializer.fromJson<String>(json['operationId']),
+      snapshot: serializer.fromJson<String>(json['snapshot']),
+      payload: serializer.fromJson<String>(json['payload']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'ownerScope': serializer.toJson<String>(ownerScope),
+      'orderId': serializer.toJson<String>(orderId),
+      'operationId': serializer.toJson<String>(operationId),
+      'snapshot': serializer.toJson<String>(snapshot),
+      'payload': serializer.toJson<String>(payload),
+    };
+  }
+
+  LocalReceiptRow copyWith({
+    String? ownerScope,
+    String? orderId,
+    String? operationId,
+    String? snapshot,
+    String? payload,
+  }) => LocalReceiptRow(
+    ownerScope: ownerScope ?? this.ownerScope,
+    orderId: orderId ?? this.orderId,
+    operationId: operationId ?? this.operationId,
+    snapshot: snapshot ?? this.snapshot,
+    payload: payload ?? this.payload,
+  );
+  LocalReceiptRow copyWithCompanion(LocalReceiptsCompanion data) {
+    return LocalReceiptRow(
+      ownerScope: data.ownerScope.present
+          ? data.ownerScope.value
+          : this.ownerScope,
+      orderId: data.orderId.present ? data.orderId.value : this.orderId,
+      operationId: data.operationId.present
+          ? data.operationId.value
+          : this.operationId,
+      snapshot: data.snapshot.present ? data.snapshot.value : this.snapshot,
+      payload: data.payload.present ? data.payload.value : this.payload,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('LocalReceiptRow(')
+          ..write('ownerScope: $ownerScope, ')
+          ..write('orderId: $orderId, ')
+          ..write('operationId: $operationId, ')
+          ..write('snapshot: $snapshot, ')
+          ..write('payload: $payload')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(ownerScope, orderId, operationId, snapshot, payload);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is LocalReceiptRow &&
+          other.ownerScope == this.ownerScope &&
+          other.orderId == this.orderId &&
+          other.operationId == this.operationId &&
+          other.snapshot == this.snapshot &&
+          other.payload == this.payload);
+}
+
+class LocalReceiptsCompanion extends UpdateCompanion<LocalReceiptRow> {
+  final Value<String> ownerScope;
+  final Value<String> orderId;
+  final Value<String> operationId;
+  final Value<String> snapshot;
+  final Value<String> payload;
+  final Value<int> rowid;
+  const LocalReceiptsCompanion({
+    this.ownerScope = const Value.absent(),
+    this.orderId = const Value.absent(),
+    this.operationId = const Value.absent(),
+    this.snapshot = const Value.absent(),
+    this.payload = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  LocalReceiptsCompanion.insert({
+    required String ownerScope,
+    required String orderId,
+    required String operationId,
+    required String snapshot,
+    required String payload,
+    this.rowid = const Value.absent(),
+  }) : ownerScope = Value(ownerScope),
+       orderId = Value(orderId),
+       operationId = Value(operationId),
+       snapshot = Value(snapshot),
+       payload = Value(payload);
+  static Insertable<LocalReceiptRow> custom({
+    Expression<String>? ownerScope,
+    Expression<String>? orderId,
+    Expression<String>? operationId,
+    Expression<String>? snapshot,
+    Expression<String>? payload,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (ownerScope != null) 'owner_scope': ownerScope,
+      if (orderId != null) 'order_id': orderId,
+      if (operationId != null) 'operation_id': operationId,
+      if (snapshot != null) 'snapshot': snapshot,
+      if (payload != null) 'payload': payload,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  LocalReceiptsCompanion copyWith({
+    Value<String>? ownerScope,
+    Value<String>? orderId,
+    Value<String>? operationId,
+    Value<String>? snapshot,
+    Value<String>? payload,
+    Value<int>? rowid,
+  }) {
+    return LocalReceiptsCompanion(
+      ownerScope: ownerScope ?? this.ownerScope,
+      orderId: orderId ?? this.orderId,
+      operationId: operationId ?? this.operationId,
+      snapshot: snapshot ?? this.snapshot,
+      payload: payload ?? this.payload,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (ownerScope.present) {
+      map['owner_scope'] = Variable<String>(ownerScope.value);
+    }
+    if (orderId.present) {
+      map['order_id'] = Variable<String>(orderId.value);
+    }
+    if (operationId.present) {
+      map['operation_id'] = Variable<String>(operationId.value);
+    }
+    if (snapshot.present) {
+      map['snapshot'] = Variable<String>(snapshot.value);
+    }
+    if (payload.present) {
+      map['payload'] = Variable<String>(payload.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('LocalReceiptsCompanion(')
+          ..write('ownerScope: $ownerScope, ')
+          ..write('orderId: $orderId, ')
+          ..write('operationId: $operationId, ')
+          ..write('snapshot: $snapshot, ')
+          ..write('payload: $payload, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -693,6 +1122,7 @@ abstract class _$WorkerDatabase extends GeneratedDatabase {
   $WorkerDatabaseManager get managers => $WorkerDatabaseManager(this);
   late final $CachedOrdersTable cachedOrders = $CachedOrdersTable(this);
   late final $ReceiptDraftsTable receiptDrafts = $ReceiptDraftsTable(this);
+  late final $LocalReceiptsTable localReceipts = $LocalReceiptsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -700,6 +1130,7 @@ abstract class _$WorkerDatabase extends GeneratedDatabase {
   List<DatabaseSchemaEntity> get allSchemaEntities => [
     cachedOrders,
     receiptDrafts,
+    localReceipts,
   ];
 }
 
@@ -904,6 +1335,7 @@ typedef $$ReceiptDraftsTableCreateCompanionBuilder =
       required String draftId,
       required String snapshot,
       required String cartonEdits,
+      Value<String?> lineDetails,
       Value<int> rowid,
     });
 typedef $$ReceiptDraftsTableUpdateCompanionBuilder =
@@ -913,6 +1345,7 @@ typedef $$ReceiptDraftsTableUpdateCompanionBuilder =
       Value<String> draftId,
       Value<String> snapshot,
       Value<String> cartonEdits,
+      Value<String?> lineDetails,
       Value<int> rowid,
     });
 
@@ -947,6 +1380,11 @@ class $$ReceiptDraftsTableFilterComposer
 
   ColumnFilters<String> get cartonEdits => $composableBuilder(
     column: $table.cartonEdits,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get lineDetails => $composableBuilder(
+    column: $table.lineDetails,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -984,6 +1422,11 @@ class $$ReceiptDraftsTableOrderingComposer
     column: $table.cartonEdits,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get lineDetails => $composableBuilder(
+    column: $table.lineDetails,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$ReceiptDraftsTableAnnotationComposer
@@ -1009,6 +1452,11 @@ class $$ReceiptDraftsTableAnnotationComposer
 
   GeneratedColumn<String> get cartonEdits => $composableBuilder(
     column: $table.cartonEdits,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get lineDetails => $composableBuilder(
+    column: $table.lineDetails,
     builder: (column) => column,
   );
 }
@@ -1055,6 +1503,7 @@ class $$ReceiptDraftsTableTableManager
                 Value<String> draftId = const Value.absent(),
                 Value<String> snapshot = const Value.absent(),
                 Value<String> cartonEdits = const Value.absent(),
+                Value<String?> lineDetails = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ReceiptDraftsCompanion(
                 scope: scope,
@@ -1062,6 +1511,7 @@ class $$ReceiptDraftsTableTableManager
                 draftId: draftId,
                 snapshot: snapshot,
                 cartonEdits: cartonEdits,
+                lineDetails: lineDetails,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -1071,6 +1521,7 @@ class $$ReceiptDraftsTableTableManager
                 required String draftId,
                 required String snapshot,
                 required String cartonEdits,
+                Value<String?> lineDetails = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ReceiptDraftsCompanion.insert(
                 scope: scope,
@@ -1078,6 +1529,7 @@ class $$ReceiptDraftsTableTableManager
                 draftId: draftId,
                 snapshot: snapshot,
                 cartonEdits: cartonEdits,
+                lineDetails: lineDetails,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
@@ -1114,6 +1566,225 @@ typedef $$ReceiptDraftsTableProcessedTableManager =
       ReceiptDraftRow,
       PrefetchHooks Function()
     >;
+typedef $$LocalReceiptsTableCreateCompanionBuilder =
+    LocalReceiptsCompanion Function({
+      required String ownerScope,
+      required String orderId,
+      required String operationId,
+      required String snapshot,
+      required String payload,
+      Value<int> rowid,
+    });
+typedef $$LocalReceiptsTableUpdateCompanionBuilder =
+    LocalReceiptsCompanion Function({
+      Value<String> ownerScope,
+      Value<String> orderId,
+      Value<String> operationId,
+      Value<String> snapshot,
+      Value<String> payload,
+      Value<int> rowid,
+    });
+
+class $$LocalReceiptsTableFilterComposer
+    extends Composer<_$WorkerDatabase, $LocalReceiptsTable> {
+  $$LocalReceiptsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get ownerScope => $composableBuilder(
+    column: $table.ownerScope,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get orderId => $composableBuilder(
+    column: $table.orderId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get operationId => $composableBuilder(
+    column: $table.operationId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get snapshot => $composableBuilder(
+    column: $table.snapshot,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get payload => $composableBuilder(
+    column: $table.payload,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$LocalReceiptsTableOrderingComposer
+    extends Composer<_$WorkerDatabase, $LocalReceiptsTable> {
+  $$LocalReceiptsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get ownerScope => $composableBuilder(
+    column: $table.ownerScope,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get orderId => $composableBuilder(
+    column: $table.orderId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get operationId => $composableBuilder(
+    column: $table.operationId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get snapshot => $composableBuilder(
+    column: $table.snapshot,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get payload => $composableBuilder(
+    column: $table.payload,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$LocalReceiptsTableAnnotationComposer
+    extends Composer<_$WorkerDatabase, $LocalReceiptsTable> {
+  $$LocalReceiptsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get ownerScope => $composableBuilder(
+    column: $table.ownerScope,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get orderId =>
+      $composableBuilder(column: $table.orderId, builder: (column) => column);
+
+  GeneratedColumn<String> get operationId => $composableBuilder(
+    column: $table.operationId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get snapshot =>
+      $composableBuilder(column: $table.snapshot, builder: (column) => column);
+
+  GeneratedColumn<String> get payload =>
+      $composableBuilder(column: $table.payload, builder: (column) => column);
+}
+
+class $$LocalReceiptsTableTableManager
+    extends
+        RootTableManager<
+          _$WorkerDatabase,
+          $LocalReceiptsTable,
+          LocalReceiptRow,
+          $$LocalReceiptsTableFilterComposer,
+          $$LocalReceiptsTableOrderingComposer,
+          $$LocalReceiptsTableAnnotationComposer,
+          $$LocalReceiptsTableCreateCompanionBuilder,
+          $$LocalReceiptsTableUpdateCompanionBuilder,
+          (
+            LocalReceiptRow,
+            BaseReferences<
+              _$WorkerDatabase,
+              $LocalReceiptsTable,
+              LocalReceiptRow
+            >,
+          ),
+          LocalReceiptRow,
+          PrefetchHooks Function()
+        > {
+  $$LocalReceiptsTableTableManager(
+    _$WorkerDatabase db,
+    $LocalReceiptsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$LocalReceiptsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$LocalReceiptsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$LocalReceiptsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> ownerScope = const Value.absent(),
+                Value<String> orderId = const Value.absent(),
+                Value<String> operationId = const Value.absent(),
+                Value<String> snapshot = const Value.absent(),
+                Value<String> payload = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => LocalReceiptsCompanion(
+                ownerScope: ownerScope,
+                orderId: orderId,
+                operationId: operationId,
+                snapshot: snapshot,
+                payload: payload,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String ownerScope,
+                required String orderId,
+                required String operationId,
+                required String snapshot,
+                required String payload,
+                Value<int> rowid = const Value.absent(),
+              }) => LocalReceiptsCompanion.insert(
+                ownerScope: ownerScope,
+                orderId: orderId,
+                operationId: operationId,
+                snapshot: snapshot,
+                payload: payload,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$LocalReceiptsTable, LocalReceiptRow>(table),
+                  BaseReferences<
+                    _$WorkerDatabase,
+                    $LocalReceiptsTable,
+                    LocalReceiptRow
+                  >(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$LocalReceiptsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$WorkerDatabase,
+      $LocalReceiptsTable,
+      LocalReceiptRow,
+      $$LocalReceiptsTableFilterComposer,
+      $$LocalReceiptsTableOrderingComposer,
+      $$LocalReceiptsTableAnnotationComposer,
+      $$LocalReceiptsTableCreateCompanionBuilder,
+      $$LocalReceiptsTableUpdateCompanionBuilder,
+      (
+        LocalReceiptRow,
+        BaseReferences<_$WorkerDatabase, $LocalReceiptsTable, LocalReceiptRow>,
+      ),
+      LocalReceiptRow,
+      PrefetchHooks Function()
+    >;
 
 class $WorkerDatabaseManager {
   final _$WorkerDatabase _db;
@@ -1122,4 +1793,6 @@ class $WorkerDatabaseManager {
       $$CachedOrdersTableTableManager(_db, _db.cachedOrders);
   $$ReceiptDraftsTableTableManager get receiptDrafts =>
       $$ReceiptDraftsTableTableManager(_db, _db.receiptDrafts);
+  $$LocalReceiptsTableTableManager get localReceipts =>
+      $$LocalReceiptsTableTableManager(_db, _db.localReceipts);
 }

@@ -1,13 +1,101 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:sqlite3/sqlite3.dart';
 import 'package:worker_mobile/offline/receiving_store.dart';
 import 'package:worker_mobile/offline/worker_database.dart';
 
 import 'fixtures/receiving_order.dart';
 
 void main() {
+  test(
+    'migrates a version 1 draft and confirms it once for its owner',
+    () async {
+      final directory = await Directory.systemTemp.createTemp(
+        'jahez-receipt-v1',
+      );
+      addTearDown(() => directory.delete(recursive: true));
+      final file = File.fromUri(directory.uri.resolve('worker.sqlite'));
+      final order = fixtureOrder();
+      const draftId = '36ddb82b-45ec-47da-8e40-88629c180cc9';
+      final v1 = sqlite3.open(file.path);
+      v1.execute('''
+      CREATE TABLE cached_orders (
+        scope TEXT NOT NULL, order_id TEXT NOT NULL, snapshot TEXT NOT NULL,
+        position INTEGER NOT NULL, PRIMARY KEY (scope, order_id)
+      );
+      CREATE TABLE receipt_drafts (
+        scope TEXT NOT NULL, order_id TEXT NOT NULL, draft_id TEXT NOT NULL UNIQUE,
+        snapshot TEXT NOT NULL, carton_edits TEXT NOT NULL,
+        PRIMARY KEY (scope, order_id)
+      );
+      PRAGMA user_version = 1;
+    ''');
+      v1.execute('INSERT INTO receipt_drafts VALUES (?, ?, ?, ?, ?)', [
+        'worker-session-1',
+        order.id,
+        draftId,
+        jsonEncode(order.toJson()),
+        '{"line-one":2}',
+      ]);
+      v1.close();
+
+      var store = ReceivingStore(WorkerDatabase(NativeDatabase(file)));
+      final migrated = (await store.read('worker-session-1')).drafts[order.id]!;
+      expect(migrated.id, draftId);
+      expect(migrated.cartons, {'line-one': 2});
+      expect(migrated.details, isEmpty);
+      await store.saveDetails(
+        'worker-session-1',
+        'worker-a',
+        order,
+        order.lines.single,
+        const ReceiptLineDetails(
+          damaged: true,
+          measurements: ReceiptMeasurements(
+            lengthCm: 60,
+            widthCm: 45,
+            heightCm: 9,
+            weightKg: 12.5,
+          ),
+        ),
+        () => true,
+      );
+      final confirmations = await Future.wait([
+        for (var attempt = 0; attempt < 2; attempt++)
+          store.confirm(
+            'worker-session-1',
+            'worker-a',
+            'yiwu',
+            order,
+            () => true,
+          ),
+      ]);
+      final saved = confirmations.first!;
+      expect(saved.operationId, draftId);
+      expect(confirmations.last?.payload, saved.payload);
+      expect(saved.delivery.single.missing, 2);
+      expect(saved.delivery.single.details.measurements.cbm(2), 0.0486);
+      expect((await store.read('worker-session-1')).drafts, isEmpty);
+      await store.purge();
+      await store.close();
+
+      store = ReceivingStore(WorkerDatabase(NativeDatabase(file)));
+      addTearDown(store.close);
+      final recovered = await store.read(
+        'worker-session-2',
+        ownerScope: 'worker-a',
+      );
+      expect(recovered.receipts[order.id]?.payload, saved.payload);
+      expect(
+        (await store.read('worker-b-session', ownerScope: 'worker-b')).receipts,
+        isEmpty,
+      );
+    },
+  );
+
   test(
     'cache and draft survive reopening, isolate scopes and purge on sign-out',
     () async {

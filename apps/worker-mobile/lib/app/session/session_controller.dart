@@ -68,14 +68,26 @@ class SessionController extends ChangeNotifier {
   Warehouse? get warehouse => _warehouse;
   String? get receivingScope {
     final credentials = _credentials;
+    final owner = _receivingOwner;
+    return owner == null
+        ? null
+        : jsonEncode([...owner, credentials!.sessionId]);
+  }
+
+  String? get receivingOwnerScope {
+    final owner = _receivingOwner;
+    return owner == null ? null : jsonEncode(owner);
+  }
+
+  List<String>? get _receivingOwner {
+    final credentials = _credentials;
     if (_phase != SessionPhase.ready || credentials == null) return null;
-    return jsonEncode([
+    return [
       config.sessionScope,
       credentials.tenantId,
       credentials.userId,
       config.warehouseId,
-      credentials.sessionId,
-    ]);
+    ];
   }
 
   Future<void> start() async {

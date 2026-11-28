@@ -8,6 +8,7 @@ import '../../../l10n/generated/worker_strings.dart';
 import '../../../offline/receiving_store.dart';
 import '../receiving_repository.dart';
 import 'receipt/receipt_draft_screen.dart';
+import 'receipt/receipt_summary.dart';
 
 class ReceivingQueueScreen extends StatefulWidget {
   const ReceivingQueueScreen({
@@ -78,7 +79,7 @@ class _ReceivingQueueScreenState extends State<ReceivingQueueScreen> {
       await Navigator.of(context).push<void>(
         MaterialPageRoute(
           builder: (context) => Scaffold(
-            appBar: AppBar(title: Text(WorkerStrings.of(context).checkGoods)),
+            appBar: AppBar(title: Text(WorkerStrings.of(context).receiving)),
             body: SafeArea(
               child: _editor(order, () => Navigator.of(context).pop()),
             ),
@@ -89,22 +90,31 @@ class _ReceivingQueueScreenState extends State<ReceivingQueueScreen> {
     }
   }
 
-  ReceiptDraftScreen _editor(WorkerOrder order, VoidCallback onDone) =>
-      ReceiptDraftScreen(
-        key: ValueKey(order.id),
-        order: order,
-        draft: _data.drafts[order.id],
-        onDone: onDone,
-        onSave: (line, cartons) async {
-          final draft = await widget.repository.saveCartons(
-            order,
-            line,
-            cartons,
-          );
-          if (mounted && draft != null) await _read();
-          return draft;
-        },
-      );
+  ReceiptDraftScreen _editor(
+    WorkerOrder order,
+    VoidCallback onDone,
+  ) => ReceiptDraftScreen(
+    key: ValueKey(order.id),
+    order: order,
+    draft: _data.drafts[order.id],
+    confirmed: _data.receipts[order.id],
+    onDone: onDone,
+    onSave: (line, cartons) async {
+      final draft = await widget.repository.saveCartons(order, line, cartons);
+      if (mounted && draft != null) await _read();
+      return draft;
+    },
+    onSaveDetails: (line, details) async {
+      final draft = await widget.repository.saveDetails(order, line, details);
+      if (mounted && draft != null) await _read();
+      return draft;
+    },
+    onConfirm: () async {
+      final receipt = await widget.repository.confirm(order);
+      if (mounted && receipt != null) await _read();
+      return receipt;
+    },
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -159,6 +169,9 @@ class _ReceivingQueueScreenState extends State<ReceivingQueueScreen> {
     for (final draft in _data.drafts.values) {
       byId.putIfAbsent(draft.order.id, () => draft.order);
     }
+    for (final receipt in _data.receipts.values) {
+      byId.putIfAbsent(receipt.order.id, () => receipt.order);
+    }
     final shown = byId.values.where((order) {
       return (_filter == null || _filter == order.status) &&
           [
@@ -174,6 +187,8 @@ class _ReceivingQueueScreenState extends State<ReceivingQueueScreen> {
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       children: [
+        const ReceivingStage(1),
+        const SizedBox(height: 12),
         Text(
           widget.warehouseName,
           style: Theme.of(context).textTheme.titleMedium,
@@ -243,7 +258,9 @@ class _ReceivingQueueScreenState extends State<ReceivingQueueScreen> {
                   Text(
                     '${strings.remainingCartons(order.remainingCartons)} · ${strings.expectedCartons(order.expectedCartons)}',
                   ),
-                  if (_data.drafts.containsKey(order.id))
+                  if (_data.receipts.containsKey(order.id))
+                    Text(strings.receiptWaitingForSync)
+                  else if (_data.drafts.containsKey(order.id))
                     Text(strings.savedDraft),
                 ],
               ),

@@ -39,6 +39,18 @@ Server Steps 1–2 provide phone/password sign-in and reads of known assigned wa
 
 Server Steps 2–3 provide warehouse authorization and the receiving queue. Step 2 requires no server changes or new server migrations.
 
+## Step 3 — Three-step receiving
+
+**Verified for iOS.** Both simulators loaded the live Yiwu test order, corrected the receipt after review, and retained an offline-confirmed partial receipt through an app restart. Android device verification stays in Step 8.
+
+Let a Yiwu worker select an assigned order, check each line, review the delivery, and confirm it locally during an outage.
+
+1. Update the receiving queue and receipt screens in `apps/worker-mobile/lib/features/receiving`. Use the three stages from `03-receiving-flow.png`, the size, weight, and damage panels in `10-receiving-item-details.png`, and the locally saved state in `11-receipt-confirmation-states.png`. Keep a separate receipt screen on phones and the side-by-side layout on tablets. Localize the controls in English, Arabic, and Simplified Chinese.
+2. Keep outstanding cartons prefilled and editable, including zero for a line that did not arrive. Save each line’s carton dimensions in cm, total weight in kg, and damage flag. Calculate CBM from measured dimensions and received cartons. Accept supported decimal inputs, show missing and extra cartons per line, and let workers return to the lines to correct them before confirming. The worker queue exposes expected aggregate CBM and weight, with no carton dimensions to prefill. The server owns tolerance findings and replacement-product validation.
+3. Migrate the private Drift database from version 1 to 2 in `apps/worker-mobile/lib/offline`. Preserve existing carton drafts, UUIDs, and order snapshots. Confirm by atomically moving the draft into a durable receipt for the original API, tenant, worker and warehouse scope. Store its stable operation ID, confirmation time, summary snapshot, and receipt lines in the published shape. Keep a locally confirmed receipt readable from Receiving, make repeat confirmation idempotent, and require its eventual sync before starting another receipt for that order on the device. Keep confirmed receipts scoped to their original worker through sign-out and idle expiry. Continue purging cached orders and unconfirmed drafts.
+4. Use `GET /orders/awaiting` against the live API for assigned orders. Validate the local record against the Server Steps 3–4 `POST /receipts/confirm` contract. Transport, reconciliation, and stock updates belong to Worker Mobile Step 4. Photo capture belongs to Step 5, and delivery-note intake belongs to Step 7. No server or Office Web changes are required.
+5. Run Flutter analysis, focused UI and SQLite checks, and an iOS debug simulator build. With the live Yiwu test order on iPhone and iPad, correct cartons after review, enter measurements, flag damage, and locally confirm a partial receipt during a simulated outage. Reopen it after restarting and compare its persisted summary and measurements. Check that the version 1 draft and worker isolation are preserved. Android device verification stays in Step 8.
+
 ## Dependencies and verification
 
 Use the order and sync contracts in the [server plan](../server/PLAN.md). Verify that a draft survives an offline app restart, a receipt syncs once after reconnecting, and a failed photo upload can retry separately.

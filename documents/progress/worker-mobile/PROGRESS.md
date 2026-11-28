@@ -43,4 +43,17 @@
 - Restored the original live build on both simulators. A read-only scan found no price, cost, or other checked commercial fields in either simulator’s order or draft snapshots.
 - Ready for Step 3, three-step receiving. Android device verification remains in Step 8.
 
+## Step 3 — Three-step receiving
+
+### 2026-11-28
+
+- Added carton correction, line measurements, calculated CBM, damage flags, and review with per-line missing and extra counts. Applied the receiving flow, item details, and local confirmation mockups with English, Arabic, and Simplified Chinese labels.
+- Added the Drift version 2 migration and a local receipt record. Confirmation preserves the draft UUID as the operation ID, records the reviewed receipt payload atomically, and keeps it readable by the original worker after session expiry. Step 4 will handle receipt submission and reconciliation.
+- Flutter analysis, ten Chrome-run Flutter checks, and the iOS debug build passed. The native Flutter test executable was missing from the SDK. Both SQLite checks passed using the same tests and database code in a temporary Dart package, including version 1 migration, repeat confirmation, persistence, and worker isolation.
+- Signed into the live Yiwu warehouse on iPhone 17 and iPad mini and opened the confirmed test order. The phone used a separate Check goods screen. The iPad showed it alongside the live queue and displayed the review stage.
+- In the app-only outage build, both simulators showed the cached-order notice. On each, review returned to Check goods for a correction from six cartons to five. A carton measuring 60 × 45 × 9 cm produced a 0.1215 CBM preview for five cartons, and the form accepted 12.5 kg total weight and a damage flag. Review showed one missing carton before local confirmation.
+- Both simulators showed the saved receipt, temporary reference, and waiting-for-sync state. After an offline process restart, SQLite checks found one confirmed receipt per simulator, no unconfirmed draft for that test, and the same operation ID, reviewed order snapshot, and measured receipt payload. Confirmation stayed local to the simulators.
+- Restored the live API build and normal Xcode entry point. Reopened both receipts from Receiving and verified that the measured summaries and temporary references were still visible.
+- Step 4 can now implement receipt sync and reconnect. Android device verification remains in Step 8.
+
 [Worker mobile plan](../../plan/worker-mobile/PLAN.md)

@@ -58,17 +58,25 @@ class WorkerOrderLine {
   WorkerOrderLine.fromJson(Map<String, Object?> json)
     : id = _requiredText(json['id']),
       remainingCartons = _cartons(json['remainingCartons']),
+      piecesPerCarton = json['qtyPerCarton'] as int?,
       nameAr = (json['product'] as Map)['nameAr'] as String?,
       nameEn = (json['product'] as Map)['nameEn'] as String?,
       nameCn = (json['product'] as Map)['nameCn'] as String?,
-      modelNumber = (json['product'] as Map)['modelNo'] as String?;
+      modelNumber = (json['product'] as Map)['modelNo'] as String? {
+    if (piecesPerCarton != null && piecesPerCarton! <= 0) {
+      throw const FormatException('Invalid pieces per carton');
+    }
+  }
 
   final String id;
   final int remainingCartons;
+  final int? piecesPerCarton;
   final String? nameAr;
   final String? nameEn;
   final String? nameCn;
   final String? modelNumber;
+
+  int get maximumReceiptCartons => 2147483647 ~/ (piecesPerCarton ?? 1);
 
   String? nameFor(String language) {
     final preferred = switch (language) {
@@ -88,6 +96,7 @@ class WorkerOrderLine {
   Map<String, Object?> toJson() => {
     'id': id,
     'remainingCartons': remainingCartons,
+    if (piecesPerCarton != null) 'qtyPerCarton': piecesPerCarton,
     'product': {
       'nameAr': nameAr,
       'nameEn': nameEn,
