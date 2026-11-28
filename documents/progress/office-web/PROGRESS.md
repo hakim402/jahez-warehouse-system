@@ -255,4 +255,22 @@
 
 - Import history follow-up: changed queued and processing “View status” actions to secondary text links with directional chevrons. Office Web build and isolated Chrome checks passed for desktop and narrow Arabic RTL, with navigation to the import detail.
 
+## Step 8 — Regional pilot verification
+
+**2026-11-28 — Local verification passed. Regional staging verification remains open.**
+
+- Read AGENTS.md, the integration guide and the Server Step 11 regional checklist. Reviewed the approved dashboard, inventory, reports and invoice review designs. Saved the Step 8 plan before adding the smoke runner. No product UI changes were needed.
+- Added the [local smoke runner and staging checklist](../../../apps/office-web/test/README.md). Ran the real Nest API and a separate worker application context against fresh, disposable PostgreSQL databases and restricted roles under both `international` and `cn-mainland` settings. Both used temporary private disk storage and the deterministic sample extractor. Cleanup removed the disposable resources.
+- Both runs passed owner/trader/worker and warehouse/company authorization, byte-matched private invoice downloads, purchase and expense image imports, low-confidence commit rejection and review, idempotent purchase commit, Chinese-header XLSX parsing, trilingual purchase workbook and filtered expense download, partial receipt live delivery, denied non-member subscription and REST balance catch-up after reconnect. The fixture uses the worker HTTP contract and a real socket client. Worker Mobile device testing still belongs to staging.
+- Server typecheck/build and Office Web build passed. Existing isolated Chrome regressions passed for receiving and findings, dispatch and print styles, expenses/private evidence, owner settings and session revocation, all seven report payloads, invoice retries/commits, focus return and narrow EN/AR/ZH layouts. An additional 30 checks across ten main routes in the three languages passed document width containment at 768 × 1024.
+
+| Evidence | Local | International staging | Mainland China staging |
+| --- | --- | --- | --- |
+| Current build, access, jobs, downloads and live receipt/reconnect | Passed with local fixtures and disposable services | Pending authorized staging URL and synthetic sign-in | Pending staging infrastructure and authorized synthetic access |
+| HTTPS, deployed assets and proxy/WebSocket routing | Local HTTP and WebSocket exercised | Pending | Pending, including Yiwu access without a VPN |
+| Private cloud storage, real vision accuracy and versioned Worker Mobile handoff | Local disk, deterministic extraction and worker HTTP contract exercised | Pending S3-compatible storage, DeepSeek and device check | Pending OSS, Qwen and device check |
+| Desktop, tablet, narrow and keyboard workflows | Synthetic browser regressions passed | Pending | Pending |
+
+The user identified international staging as the only current staging target. No staging URL was supplied during this run. Next, verify the international deployment using the checklist, then record mainland and Yiwu evidence when available. Embedded product photos and workbook template parity remain Server Step 9 gaps. Direct searchable PDF parsing and concurrent review version handling remain Server Step 10 gaps.
+
 [Office web plan](../../plan/office-web/PLAN.md)

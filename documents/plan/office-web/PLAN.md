@@ -285,6 +285,12 @@ Dependencies are Server Step 3 for order and catalog contracts, Step 1 for accou
 
 ## Step 8 — Regional pilot verification
 
-Verify the full pilot in international and mainland China staging, including permissions, all three languages, responsive layouts, downloads, and live reconnect.
+**Status:** Local verification passed for both deployment profiles (2026-11-28). International staging is the first target and needs its URL and synthetic sign-in. Mainland staging and Yiwu verification remain pending.
 
-Use the screen and shared component references from Steps 1–7 to check the implemented layouts, including Arabic RTL and narrower viewports.
+**Goal:** Verify that the Office Web pilot works across regional staging environments and record evidence and open gaps separately for each region.
+
+1. Review the existing Step 1–7 screen references, with focus on dashboard/inventory, reports, invoice import/review, shared states and Arabic layout. Check desktop, tablet, narrow and keyboard flows for EN, AR and Simplified Chinese. Keep the approved designs as the baseline.
+2. Add a repeatable local pilot smoke runner under Office Web tests using the existing server test dependencies. Provision a uniquely named disposable database and restricted runtime role, migrate it, and start the actual Nest API and job consumer with temporary private disk storage. Use generated invoices and the sample extractor. Exercise owner/trader/worker boundaries, independent warehouse and company scope, private invoice upload/download, reviewed import commit, filtered XLSX generation and authorized download, partial receipt and Socket.IO delivery/reconnect. Validate both deployment profiles locally when feasible. Tear down synthetic state.
+3. Run applicable builds and existing synthetic browser workflows for responsive layouts, locale, private evidence and steps 6–7. Fix confirmed Office Web defects under their owning steps. Record server/mobile/template gaps and defer out-of-scope changes.
+4. Use explicitly authorized international and mainland staging endpoints and synthetic accounts for remaining checks. Record deployed revision and migration version, TLS, static assets and same-origin API/Socket.IO routing. In each region run the owner/trader/worker role matrix, invoice ingestion, export downloads, receipt-to-stock, reconnect and desktop/tablet review. Verify S3/OSS access and DeepSeek/Qwen with authorized synthetic samples. Obtain Yiwu mainland evidence from a connection without VPN and coordinate the previous Worker Mobile handoff. Use Server Step 11 and the deployment runbook for infrastructure and recovery checks.
+5. Publish the local and per-region evidence matrix. Mark local results from actual executions and leave staging checks pending until there is evidence. Deployment, production account mutations, and external transfer of private invoices are outside this request. Save progress and push verified changes.
