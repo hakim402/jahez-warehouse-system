@@ -1,0 +1,20 @@
+[Unit]
+Description=Jahez Warehouse international services
+Requires=docker.service
+After=docker.service
+StartLimitIntervalSec=0
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+WorkingDirectory=%h/apps/jahez-warehouse-system/source
+Environment=DOCKER_HOST=unix:///run/user/%U/docker.sock
+ExecStart=/usr/bin/docker compose --env-file ../config/production.env -f deploy/compose.yml -f ../deployment/compose.yml up -d --no-build --wait --wait-timeout 100 postgres api worker
+ExecStop=/usr/bin/docker compose --env-file ../config/production.env -f deploy/compose.yml -f ../deployment/compose.yml stop --timeout 45
+TimeoutStartSec=150
+TimeoutStopSec=90
+Restart=on-failure
+RestartSec=10s
+
+[Install]
+WantedBy=default.target

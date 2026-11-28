@@ -6,6 +6,8 @@ region's deployed revision separately.
 
 ## International production addresses
 
+For the shared Hostinger VPS, use the [Hostinger deployment runbook](hostinger/RUNBOOK.md). Its Compose override uses the existing public and company Nginx services.
+
 | Service | Address |
 | --- | --- |
 | Office Web | `https://office.jahez.online` |

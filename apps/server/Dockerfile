@@ -2,12 +2,12 @@
 # and differ only by command, matching the modular monolith with two entry points.
 # Build context is the repository root: docker build -f apps/server/Dockerfile .
 FROM node:22-bookworm-slim AS build
-WORKDIR /app
+WORKDIR /app/apps/server
 RUN corepack enable
-COPY apps/server/package.json apps/server/pnpm-lock.yaml ./apps/server/
-RUN pnpm --dir apps/server install --frozen-lockfile
-COPY apps/server ./apps/server
-RUN pnpm --dir apps/server build && pnpm --dir apps/server prune --prod
+COPY apps/server/package.json apps/server/pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile
+COPY apps/server ./
+RUN pnpm build && pnpm prune --prod
 
 FROM node:22-bookworm-slim AS runtime
 WORKDIR /app

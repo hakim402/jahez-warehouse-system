@@ -257,6 +257,8 @@
 
 ## Step 8 — Regional pilot verification
 
+**Hostinger build preparation — 2026-11-28.** Built Office Web with Node 22 and pinned pnpm from the package directory on the VPS. The production build uses relative `/api/v1`. The warehouse assignment is pending. Next, install the generated assets and verify both private and public Nginx routes, HTTPS, API and Socket.IO.
+
 **2026-11-28 — Local verification passed. Regional staging verification remains open.**
 
 - Read AGENTS.md, the integration guide and the Server Step 11 regional checklist. Reviewed the approved dashboard, inventory, reports and invoice review designs. Saved the Step 8 plan before adding the smoke runner. No product UI changes were needed.

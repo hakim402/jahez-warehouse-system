@@ -189,6 +189,15 @@ This is an authorized follow-up to support Office Web Step 5. The existing verif
 
 ## Step 11 — Regional Staging and Pilot Readiness
 
+**Hostinger international deployment — In progress (2026-11-28).** Deploy the warehouse API, job worker and database under the Jahez rootless Docker account. Reuse the existing Jahez and public Nginx services for Office Web, API and WebSockets. Keep the warehouse stack in its own Compose project with a registered loopback listener, persistent volumes and a dedicated user service.
+
+1. Inspect the VPS routing, isolation policy, release revision and available build/backup tools. Confirm the private port and baseline the existing Jahez site and Shipping.
+2. Add a Hostinger Compose override, company Nginx config, boot unit and runbook. Bound CPU, memory and logs. Build one Server image for API and worker, apply migrations through the database owner, and keep runtime grants and credentials scoped. Use private local storage for this release. Keep external extraction disabled until an authorized provider is configured.
+3. Deploy the private stack. Verify backend readiness, migrations, role grants and job consumption. Exercise synthetic operations and a restore away from live data. Keep production identity provisioning and off-server recovery as explicit pilot onboarding checks.
+4. Register the warehouse route with the existing ingress, provision TLS for the two international domains and verify Office Web, API/WebSocket routing and existing-site health. Record the deployed revision, recovery steps, verification evidence and open dependencies.
+
+**Container build correction.** The first VPS build resolved the default pnpm release at the repository root because Corepack could not see the Server `package.json` before resolving `pnpm --dir`. Run install, build and pruning from the Server package directory so Corepack honors the existing pin. Build Office Web from its package directory for the same reason. Rebuild and verify from the reviewed revision before cutover.
+
 **Client integration documentation** — Inspect the implemented controllers and services, write one shared guide for Office Web and Worker Mobile, and link it from agent guidance and client roadmaps. Document actual contracts, permissions, retry rules, designs, and known gaps. Verify links and request examples before publishing.
 
 **Production domain update** — Document `api.jahez.online` for the international API and `office.jahez.online` for Office Web. Align the international Nginx example, TLS instructions, health checks, and client connection guidance. Validate rendered hostnames and Compose settings before committing.
