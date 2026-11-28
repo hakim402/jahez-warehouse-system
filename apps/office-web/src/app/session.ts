@@ -114,6 +114,11 @@ async function refresh(session: OfficeSession) {
   return snapshot.session?.sessionId === session.sessionId ? snapshot.session : null;
 }
 
+export function refreshCurrentSession() {
+  const session = snapshot.session;
+  return session ? refresh(session) : Promise.resolve(null);
+}
+
 export function restoreSession() {
   if (!initialSession) return Promise.resolve(null);
   if (initialSession.expiresAt - Date.now() > 5_000) {

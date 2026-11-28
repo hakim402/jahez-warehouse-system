@@ -10,6 +10,8 @@ import { ListTabs } from '../../../shared/ui/ListControls';
 import { QueryState } from '../../../shared/ui/QueryState';
 import { RecordState } from '../../../shared/ui/RecordState';
 import { revokeOfficeSession, useOfficeSessions } from '../settings-api';
+import { UsersAccessSettings } from './UsersAccessSettings';
+import { ReceivingToleranceSettings } from './ReceivingToleranceSettings';
 import { CategorySettings } from './CategorySettings';
 import styles from './SettingsPage.module.css';
 
@@ -21,7 +23,8 @@ export default function SettingsPage() {
   const cache = useQueryClient();
   const [params, setParams] = useSearchParams();
   const owner = session?.user.role === 'owner';
-  const tab = owner && params.get('tab') === 'categories' ? 'categories' : 'account';
+  const requestedTab = params.get('tab');
+  const tab = owner && ['users', 'tolerances', 'categories'].includes(requestedTab ?? '') ? requestedTab! : 'account';
   const [pending, setPending] = useState<string>();
   const [error, setError] = useState(false);
   async function revoke(id: string) {
@@ -37,8 +40,8 @@ export default function SettingsPage() {
   return <>
     <div className="workspace-heading"><h1>{t('settings')}</h1></div>
     <section className={'surface ' + styles.tabs}><ListTabs label={t('settings')} selected={tab} onChange={(value) => setParams(value === 'account' ? {} : { tab: value })}
-      items={[{ id: 'account', name: t('account') }, ...(owner ? [{ id: 'categories', name: t('expenseCategories') }] : [])]} /></section>
-    {tab === 'categories' ? <CategorySettings /> : <div className={styles.layout}>
+      items={[{ id: 'account', name: t('account') }, ...(owner ? [{ id: 'users', name: t('usersAccess') }, { id: 'tolerances', name: t('receivingTolerances') }, { id: 'categories', name: t('expenseCategories') }] : [])]} /></section>
+    {tab === 'users' ? <UsersAccessSettings /> : tab === 'tolerances' ? <ReceivingToleranceSettings /> : tab === 'categories' ? <CategorySettings /> : <div className={styles.layout}>
       <section className={'surface ' + styles.account}><h2>{t('myAccount')}</h2><div className={styles.identity}><span className={styles.avatar}><UserRound size={24} aria-hidden="true" /></span><div><strong>{session.user.name}</strong><p className="muted-text">{t(session.user.role)}</p></div></div><div className={styles.language}><span>{t('language')}</span><LanguageMenu /></div></section>
       <section className="surface workspace-panel"><h2 className="panel-heading">{t('activeSessions')}</h2>
         {error && <p className={'field-error ' + styles.error} role="alert">{t('sessionRevokeFailed')}</p>}

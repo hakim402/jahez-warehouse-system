@@ -13,6 +13,7 @@ interface ActiveSessionRow {
   revoked_at: Date | null;
   expires_at: Date;
   role: UserRole;
+  active: boolean;
   warehouse_id: string | null;
 }
 
@@ -50,7 +51,7 @@ export class SessionAuthService {
 
     const result = await this.database.withTenant(user.tenantId, user.id, (client) =>
       client.query<ActiveSessionRow>(
-        `SELECT s.revoked_at, s.expires_at, u.role,
+        `SELECT s.revoked_at, s.expires_at, u.role, u.active,
                 CASE WHEN $4::uuid IS NOT NULL AND app_has_warehouse_access($4::uuid)
                      THEN $4::uuid END AS warehouse_id
          FROM auth_sessions s
@@ -61,7 +62,7 @@ export class SessionAuthService {
     );
     const row = result.rows[0];
     const now = Date.now();
-    if (!row || row.revoked_at !== null || row.expires_at.getTime() <= now || expiresAt <= now) {
+    if (!row || !row.active || row.revoked_at !== null || row.expires_at.getTime() <= now || expiresAt <= now) {
       throw new UnauthorizedException('Session is no longer active');
     }
     return { user: { ...user, role: row.role }, warehouseId: row.warehouse_id };

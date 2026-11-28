@@ -1,0 +1,46 @@
+.usersCard { block-size: 650px; display: flex; flex-direction: column; min-inline-size: 0; }
+.heading { padding: var(--space-5); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--space-3); border-block-end: 1px solid var(--jahez-border); }
+.heading h2, .card h2 { font-size: 1.125rem; }
+.heading p, .card p { margin-block-start: var(--space-2); line-height: 1.6; }
+.filters { display: flex; flex-wrap: wrap; gap: var(--space-3); padding: var(--space-4) var(--space-5); }
+.filters > :first-child { flex: 1 1 220px; max-inline-size: none; }
+.filters :global(.filter-select) { flex: 0 1 170px; inline-size: auto; min-inline-size: 140px; }
+.table { flex: 1; min-block-size: 0; overflow: auto; display: flex; flex-direction: column; }
+.table :global(.table-scroll) { flex: 1; }
+.identity { display: flex; align-items: center; gap: var(--space-3); min-inline-size: 180px; }
+.avatar { inline-size: 38px; block-size: 38px; border-radius: 50%; display: grid; place-items: center; flex: none; color: var(--jahez-brand-deep); background: rgb(123 87 252 / 10%); border: 1px solid white; }
+.identity small { display: block; color: var(--jahez-muted); margin-block-start: 4px; }
+.warehouses { display: flex; flex-wrap: wrap; gap: 5px; max-inline-size: 260px; }
+.badge { display: inline-block; border: 1px solid var(--jahez-border); border-radius: 7px; padding: 4px 8px; font-size: 12px; background: var(--glass-input); }
+.status { color: var(--jahez-muted); }
+.status[data-active="true"] { color: var(--jahez-success); }
+.actions { display: flex; gap: var(--space-2); }
+.actions button { min-inline-size: 36px; min-block-size: 36px; padding: 7px; }
+.fields { display: grid; gap: var(--space-4); border: 0; margin: 0; min-inline-size: 0; }
+.twoColumns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4); }
+.checks { border: 1px solid var(--jahez-border); border-radius: 12px; background: var(--glass-input); padding: var(--space-3); min-inline-size: 0; max-block-size: 180px; overflow: auto; }
+.checks legend { font-size: 13px; font-weight: 600; padding-inline: 5px; }
+.checks label { display: flex; align-items: center; gap: var(--space-2); padding: 8px 4px; overflow-wrap: anywhere; }
+.checks input { inline-size: 18px; block-size: 18px; accent-color: var(--jahez-brand-deep); flex: none; }
+.note { font-size: 13px; line-height: 1.65; color: var(--jahez-muted); background: rgb(123 87 252 / 5%); border: 1px solid var(--jahez-border); border-radius: 10px; padding: var(--space-3); }
+.feedback { padding: var(--space-3) var(--space-5); font-size: 13px; }
+.failure { color: var(--jahez-danger); line-height: 1.6; }
+.failure button { margin-block-start: var(--space-2); }
+.toleranceLayout { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: var(--space-4); align-items: start; }
+.card { block-size: 460px; display: flex; flex-direction: column; min-inline-size: 0; overflow: hidden; }
+.cardBody { padding: var(--space-5); overflow: auto; flex: 1; min-block-size: 0; display: grid; align-content: start; gap: var(--space-4); }
+.cardBody fieldset { padding: 0; }
+.percent { display: flex; align-items: center; position: relative; }
+.percent input { padding-inline-end: 36px; inline-size: 100%; }
+.percent > span { position: absolute; inset-inline-end: 14px; pointer-events: none; color: var(--jahez-muted); }
+.current { font-size: 12px; color: var(--jahez-muted); margin-block-start: 6px; }
+.example { border: 1px solid var(--jahez-border); border-radius: 12px; background: var(--glass-input); padding: var(--space-4); }
+.example strong { color: var(--jahez-brand-deep); }
+@media (max-width: 1050px) { .toleranceLayout { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 700px) {
+  .usersCard, .card { block-size: auto; }
+  .usersCard .table { max-block-size: 570px; flex: auto; }
+  .twoColumns { grid-template-columns: minmax(0, 1fr); }
+  .filters > *, .filters :global(.filter-select) { flex: 1 1 100%; }
+  .heading, .filters, .cardBody { padding: var(--space-4); }
+}

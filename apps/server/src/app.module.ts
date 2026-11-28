@@ -1,3 +1,4 @@
+import { SettingsModule } from './modules/settings/settings.module';
 import { Module } from '@nestjs/common';
 import { HealthController } from './health.controller';
 import { AuthModule } from './modules/auth/auth.module';
@@ -17,7 +18,7 @@ import { TenancyModule } from './modules/tenancy/tenancy.module';
 import { PlatformModule } from './platform/platform.module';
 
 @Module({
-  imports: [PlatformModule, TenancyModule, AuthModule, CatalogModule, DispatchModule, ExpensesModule, ExportsModule, FilesModule, InventoryModule, InvoiceIngestionModule, JobsModule, OrdersModule, ReceivingModule, SyncModule, RealtimeModule],
+  imports: [SettingsModule, PlatformModule, TenancyModule, AuthModule, CatalogModule, DispatchModule, ExpensesModule, ExportsModule, FilesModule, InventoryModule, InvoiceIngestionModule, JobsModule, OrdersModule, ReceivingModule, SyncModule, RealtimeModule],
   controllers: [HealthController],
 })
 export class AppModule {}

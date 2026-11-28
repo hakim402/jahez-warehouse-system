@@ -93,7 +93,7 @@ export class AuthService {
       throw new BadRequestException('tenantId is required for this phone');
     }
 
-    const user = users.rows[0];
+    let user = users.rows[0];
     if (!verifyPassword(password, user.password_hash)) {
       throw new UnauthorizedException('Invalid phone or password');
     }
@@ -107,6 +107,11 @@ export class AuthService {
     const expiresAt = new Date(Date.now() + REFRESH_TOKEN_TTL_MS);
 
     const sessionId = await this.database.withTenant(user.tenant_id, user.id, async (client) => {
+      // Lock the user before inserting a session to serialize password resets and disables.
+      const locked = await client.query<LoginUserRow>(
+        'SELECT id, tenant_id, name, role, password_hash FROM users WHERE id = $1 AND tenant_id = $2 AND active FOR UPDATE', [user.id, user.tenant_id]);
+      if (!locked.rows[0] || !verifyPassword(password, locked.rows[0].password_hash)) throw new UnauthorizedException('Invalid phone or password');
+      user = locked.rows[0];
       const inserted = await client.query<{ id: string }>(
         `INSERT INTO auth_sessions (tenant_id, user_id, device_id, refresh_token_hash, expires_at)
          VALUES ($1, $2, $3, $4, $5)
@@ -147,25 +152,19 @@ export class AuthService {
       session.tenant_id,
       session.user_id,
       async (client) => {
-        // Rotate only while the presented hash still matches so concurrent refreshes cannot both win.
+        // Keep the user → session lock order consistent with administrative writes.
+        const users = await client.query<LoginUserRow>(
+          'SELECT id, tenant_id, name, role, password_hash FROM users WHERE id = $1 AND tenant_id = $2 AND active FOR UPDATE',
+          [session.user_id, session.tenant_id],
+        );
+        const found = users.rows[0];
+        if (!found) throw new UnauthorizedException('Invalid refresh token');
         const rotated = await client.query(
-          `UPDATE auth_sessions
-           SET refresh_token_hash = $1, last_used_at = now()
+          `UPDATE auth_sessions SET refresh_token_hash = $1, last_used_at = now()
            WHERE id = $2 AND refresh_token_hash = $3 AND revoked_at IS NULL AND expires_at > now()`,
           [nextRefreshHash, session.id, presentedHash],
         );
-        if (rotated.rowCount === 0) {
-          throw new UnauthorizedException('Invalid refresh token');
-        }
-
-        const users = await client.query<LoginUserRow>(
-          'SELECT id, tenant_id, name, role, password_hash FROM users WHERE id = $1',
-          [session.user_id],
-        );
-        const found = users.rows[0];
-        if (!found) {
-          throw new UnauthorizedException('Invalid refresh token');
-        }
+        if (rotated.rowCount === 0) throw new UnauthorizedException('Invalid refresh token');
 
         await client.query(
           `INSERT INTO audit_events (tenant_id, user_id, entity, entity_id, action, after)

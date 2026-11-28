@@ -1,6 +1,6 @@
-# Core Step 5 settings — draft design review
+# Core Step 5 settings — approved design review
 
-**Status: awaiting user approval.** These references implement the user's requested mockup-review checkpoint, not working account/settings features. The application and server are unchanged. All names, phones, values, and records in this prototype are synthetic.
+**Status: approved by the user on 2026-11-28.** These references implement the user's requested mockup-review checkpoint, not working account/settings features. These design assets are a synthetic visual reference; the working implementation is recorded under Office Web Step 5 and Server Step 2. All names, phones, values, and records in this prototype are synthetic.
 
 ## Review references
 
@@ -30,4 +30,4 @@ Preview query parameters: `view=users`, `view=dialogs`, `view=tolerances`, or `v
 
 Rendered and visually inspected the desktop page/dialog references and narrow language variants. Checked 1440/1600 px desktop and 390 px narrow layouts, Arabic direction, Chinese expansion, dialog containment, and prototype Escape/focus return. No application or server tests were run because no application/server code changed.
 
-Review these drafts before coding. After approval, implement the saved Office Web Step 5 / Server Step 2 plans, then run the service, authorization, migration, and client regression checks described there. User approval has not yet been recorded.
+The user approved these mockups and authorized the saved Office Web Step 5 / Server Step 2 implementation. See the corresponding progress logs for actual application/server verification; the checks above describe the original design-only review.

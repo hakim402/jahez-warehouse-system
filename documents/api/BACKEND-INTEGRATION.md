@@ -210,3 +210,44 @@ Before coding, record the chosen reference design and API dependencies in the ap
 Use synthetic users in two tenants and two warehouses. Verify login and refresh, commercial data denial for workers, order confirmation, an offline partial receipt and replay, remaining stock, independent photo retry, live refresh, and reconnect recovery. Verify dispatch shortages and office-only expenses, imports, and exports as those screens are built. Run the owning app's checks and record evidence in its progress log.
 
 For backend setup use the [server README](../../apps/server/README.md). Release gaps and regional checks remain tracked in the [Server Plan](../plan/server/PLAN.md#follow-ups-during-client-development) and [Server Progress](../progress/server/PROGRESS.md).
+
+## 10. Owner settings and user access (Office Web Step 5)
+
+Implemented by [SettingsModule](../../apps/server/src/modules/settings/settings.module.ts), with migration `0012_user_access_settings`. Apply migrations with the configured migration role before running the updated server. Existing users default to active. These APIs require an authenticated **active owner in the current company**; traders and workers receive 403. Never send a tenant ID to choose the authorization scope. Company roles are independent of warehouse memberships.
+
+| Request | Body / query | Response |
+| --- | --- | --- |
+| `GET /users` | `search` (name/phone literal substring, max 200), `role=owner\|trader\|worker`, `active=true\|false`, UUID `cursor`, `limit` (default 50, 1–200) | `{users: ManagedUser[], nextCursor: string\|null}` |
+| `GET /users/:id` | Company user ID; explicit reload after conflict | `ManagedUser` |
+| `POST /users` | `{name, phone, role, initialPassword, warehouseIds: string[]}` | `{user: ManagedUser, sessionsRevoked: false}` (201) |
+| `PATCH /users/:id` | `{expectedVersion, name?, phone?, role?, active?, warehouseIds?}` | `{user: ManagedUser, sessionsRevoked: boolean}` |
+| `POST /users/:id/password-reset` | `{expectedVersion, newPassword}` | `{user: ManagedUser, sessionsRevoked: true}` (201) |
+| `GET /settings/warehouses` | None | `{warehouses: [{id, name, code}]}` |
+| `GET /settings/receiving-tolerances` | None | `ReceivingTolerances` |
+| `PATCH /settings/receiving-tolerances` | `{expectedVersion, cbmTolerancePercent, weightTolerancePercent}` | `ReceivingTolerances` |
+
+`ManagedUser` is `{id, name, phone, role, active, warehouseIds: string[], version: number}`. Passwords and password hashes are never returned. Names are trimmed, required, max 200; phones are trimmed, required, max 64 and unique within a company (no automatic phone-format conversion). Passwords are 12–128 characters, entered and shared directly by the owner. No forced-change, email, SMS or mobile UI flow is added. User pages sort by UUID ascending, with an exclusive last-ID cursor. Reset pagination when filters change, deduplicate loaded IDs and stop repeated cursors.
+
+`ReceivingTolerances` is `{cbmTolerancePercent: string, weightTolerancePercent: string, version: number}`; decimal strings use two places, e.g. `"3.00"` and `"5.00"`. PATCH accepts a numeric value or plain decimal string from 0–100 with at most two decimals. Send both fields and the company version; values are saved atomically. The existing receipt comparison reads them when a receipt is processed, including an offline receipt synced later. Historical findings are never regenerated.
+
+Warehouse assignment replaces the user's memberships atomically. Every ID must belong to the authenticated company. The settings warehouse list includes existing company warehouses for assignment; it grants no additional access to orders, stock, receipts or dispatch. There is no warehouse-creation API in this change. Empty assignments are allowed.
+
+Identity-only edits retain sessions. Changes to role, warehouse assignments or active status, and password resets, revoke **all** affected sessions in the same transaction. Reactivation allows fresh sign-in and never revives old sessions. Disabled users are rejected during login, refresh, authenticated requests and realtime revalidation. If a successful response has `sessionsRevoked: true` for the signed-in user, clear the local session immediately. Workers keep their existing API shapes; no pending mobile operations are deleted.
+
+Company-row locking serializes administrative writes. The server rechecks the acting owner's active role after acquiring the lock, rejects self-disable, and prevents disabling/demoting the last active owner under concurrency. `expectedVersion` is mandatory for edits, resets and tolerances; successful writes increment the entity's version. Audit records contain safe identity/access fields or the reset event, never credentials.
+
+Errors retain the standard `{message, ...}` response shape and add a stable `code` for these settings conflicts:
+
+| HTTP | `code` | Client behavior |
+| --- | --- | --- |
+| 409 | `PHONE_CONFLICT` | Keep draft; ask for a different company phone |
+| 409 | `STALE_VERSION` | Keep draft; offer explicit Reload latest, which replaces it |
+| 409 | `LAST_OWNER` | Explain that at least one active owner must remain |
+| 400 | `SELF_DISABLE` | Explain that users cannot disable their own account |
+| 400 | `INVALID_WAREHOUSE` | Refresh warehouse options and review selection |
+| 400 | Standard validation message | Correct missing/invalid fields, password bounds or percentages |
+| 401 / 403 / 404 | Standard auth / permission / not-found message | Clear rejected sessions through the shared auth layer; show permission state; cross-company user IDs are not found |
+
+The Office Web screens use 50-user API pages, shared eight-row loaded-record pagination, owner-only settings tabs, glass dialogs and EN/AR/Chinese copy. Desktop user cards are 650px high; tolerance cards are 460px high. Internal scrolling preserves access to content; narrow layouts use automatic card heights.
+
+For reproducible server checks, build first, then run `TEST_ADMIN_DATABASE_URL=<local-admin-url> node apps/server/test/settings-regression.cjs` from the repository root. Supply the URL privately through the environment. This script creates and removes a unique disposable database and restricted role, applies migrations only there, and checks HTTP contracts/guards, RLS, concurrency, sessions, validation, and real receipt comparisons. It does not migrate or seed the configured application database. Real-account/permission-change and previous-mobile integration checks remain pending until explicitly exercised.

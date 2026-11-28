@@ -195,6 +195,17 @@
 
 ## Step 5 — Expenses and owner settings
 
+### 2026-11-28 — Approved Users/access and Receiving tolerances implemented
+
+- The user approved references 17–19 and their state/mobile variants. Marked both owning plans In progress before application changes, retained the approved glass surfaces, transparent language selector and icon-only profile. Updated the design index/review to record approval. No packages were added.
+- Added owner-only Settings tabs backed by tenant/user-scoped queries: directory search/role/status filters, 50-user cursor pages, shared eight-row loaded-record pagination/Load more, and reusable glass create/edit/password/status dialogs. Warehouse options fail independently of readable user rows. All text and validation support English, Arabic RTL and Simplified Chinese.
+- User edits preserve drafts after errors and require explicit Reload latest on stale versions. Added a scoped user-detail read for that action. Role/access/password/status changes revoke affected sessions; successful self-affecting revocation clears local auth. Identity-only self-edits refresh the account through the existing session manager. Disable/reactivate preserve history, and the UI explains session and password behavior. Dialogs return focus to the current matching action even when table refresh replaces its original node.
+- Added receiving-tolerance form/current values/examples, localized decimal normalization, 0–100/two-decimal validation, atomic versioned save, discard, failure/retry and saved states. Saved settings affect subsequent receipt processing, including later offline sync; historical findings remain unchanged.
+- Used fixed **650px user cards** and **460px tolerance cards** on desktop, with internal scrolling and automatic heights on narrow screens. Reviewed rendered 1440×1000 desktop and 390×844 EN/AR/Chinese panels/dialogs against the approved references; checked document/dialog containment and Tab/Escape/focus return.
+- Verification passed: `pnpm --dir apps/office-web build`, server typecheck/build, the checked-in disposable server regression (actual Nest HTTP/guards, RLS, two tenants, owner concurrency, session/token/reset/status behavior and receipt comparisons), and isolated Chrome user create/edit/conflict/reload/reset/disable/reactivate, 50-user cursor/search, self-sign-out, trader direct-link denial, localized percentages, invalid values, save failure/retry/conflict, warehouse-option failure isolation, and fixed heights. Browser captures/check harness are under `/private/tmp/jahez-core-settings-check/`; all API data was synthetic. Existing Expenses/category/session/evidence/retry/live-fixture and three-language narrow regressions also passed.
+- **Status: implemented and synthetically verified; live integration pending.** Migration 0012 was not applied to the application database, and no live account, mobile app or deployment was changed. Before live use, apply the forward migration and run the updated server. Real owner/trader workflows, real permission-change/Socket.IO delivery, private storage and previous-mobile verification remain open. Warehouse creation, audit browsing and expense enhancements remain deferred. Next: authorized live integration checks, then Office Web Step 6.
+
+
 ### 2026-11-28 — Core settings mockup-review checkpoint
 
 - Saved the confirmed core-settings implementation plan under Office Web Step 5 and Server Step 2: owner user creation/editing, role/warehouse assignment, initial/reset passwords (12–128 characters), disable/reactivate, last-owner/self-disable protection, and receiving-tolerance management. The user explicitly requested reviewable mockups before coding.
@@ -203,7 +214,7 @@
 - User approval is pending. No application code, server code, database migration, live data, mobile app, or deployment was changed. Next: review the draft designs with the user, then begin the saved server/client implementation only after approval. Existing Step 5 implementation/live-verification status below remains unchanged.
 
 
-**Current verification:** Expenses, Account/session settings, and owner category management are implemented and synthetically verified. Step 5 remains partially verified: live Jahez account checks and the remaining settings designs/contracts are pending.
+**Current verification:** Expenses, Account/session settings, category management, Users/access and Receiving tolerances are implemented and synthetically verified. Step 5 remains partially verified until the remaining live owner/trader and permission-change checks pass. The earlier mockup checkpoint below is historical and has been approved.
 
 ### 2026-11-28 — Expenses, account sessions, and expense categories
 

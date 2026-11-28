@@ -1,3 +1,4 @@
+import { accessSettingsCopy } from "./access-settings-copy";
 import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
 import { arabic, chinese, english } from "./translations";
@@ -42,9 +43,9 @@ export async function initLanguage() {
     fallbackLng: "en",
     supportedLngs: Object.keys(languages),
     resources: {
-      en: { translation: { ...english, ...recordCopy(0), ...expenseSettingsCopy(0) } },
-      ar: { translation: { ...arabic, ...recordCopy(1), ...expenseSettingsCopy(1) } },
-      "zh-Hans": { translation: { ...chinese, ...recordCopy(2), ...expenseSettingsCopy(2) } },
+      en: { translation: { ...english, ...recordCopy(0), ...expenseSettingsCopy(0), ...accessSettingsCopy(0) } },
+      ar: { translation: { ...arabic, ...recordCopy(1), ...expenseSettingsCopy(1), ...accessSettingsCopy(1) } },
+      "zh-Hans": { translation: { ...chinese, ...recordCopy(2), ...expenseSettingsCopy(2), ...accessSettingsCopy(2) } },
     },
     interpolation: { escapeValue: false },
   });
