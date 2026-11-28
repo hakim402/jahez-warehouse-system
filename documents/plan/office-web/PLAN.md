@@ -281,6 +281,8 @@ Dependencies are Server Step 3 for order and catalog contracts, Step 1 for accou
 
 **Review header follow-up (2026-11-28):** Match `16-invoice-review.png` by replacing the boxed history button above the title with the shared back-link pattern. Verify placement, direction and navigation on desktop and narrow layouts.
 
+**Import history follow-up (2026-11-28):** Use a compact secondary link for queued and processing rows. Keep status badges and the destination available and verify the link in both directions.
+
 ## Step 8 — Regional pilot verification
 
 Verify the full pilot in international and mainland China staging, including permissions, all three languages, responsive layouts, downloads, and live reconnect.

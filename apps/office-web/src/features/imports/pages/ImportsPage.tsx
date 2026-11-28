@@ -1,4 +1,4 @@
-import { FileText, Upload } from 'lucide-react';
+import { ChevronRight, FileText, Upload } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router';
 import { useQuery } from '@tanstack/react-query';
@@ -67,7 +67,13 @@ function ImportHistory({ scope }: { scope: WarehouseScope }) {
       if (item.status === 'committed' && item.committedEntityId) {
         return <Link className="button" to={importedRecordPath(item.kind, item.committedEntityId)}>{t('importOpenRecord')}</Link>;
       }
-      return <Link className="button" to={'/imports/' + encodeURIComponent(item.id)}>
+      const detail = '/imports/' + encodeURIComponent(item.id);
+      if (item.status === 'queued' || item.status === 'processing') {
+        return <Link className={'record-link ' + styles.statusLink} to={detail}>
+          {t('importViewStatus')}<ChevronRight className="rtl-icon" size={14} aria-hidden="true" />
+        </Link>;
+      }
+      return <Link className="button" to={detail}>
         {t(item.status === 'draft' ? 'importReview' : item.status === 'failed' ? 'reportViewError' : 'importViewStatus')}
       </Link>;
     } },

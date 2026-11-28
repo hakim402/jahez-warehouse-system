@@ -253,4 +253,6 @@
 
 - Review header follow-up: replaced the boxed Invoice imports button with the shared back link above the title to match `16-invoice-review.png`. Office Web build and isolated Chrome checks passed for desktop placement, narrow Arabic RTL, and navigation back to history.
 
+- Import history follow-up: changed queued and processing “View status” actions to secondary text links with directional chevrons. Office Web build and isolated Chrome checks passed for desktop and narrow Arabic RTL, with navigation to the import detail.
+
 [Office web plan](../../plan/office-web/PLAN.md)

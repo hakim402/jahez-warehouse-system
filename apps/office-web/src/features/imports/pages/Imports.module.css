@@ -9,6 +9,14 @@
 .badge[data-status='draft'] { color: #86500b; background: #fff2d9; }
 .badge[data-status='committed'] { color: var(--jahez-success); background: rgb(23 136 88 / 10%); }
 .badge[data-status='failed'] { color: var(--jahez-danger); background: rgb(158 35 56 / 9%); }
+.statusLink {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-block-size: 32px;
+  font-size: .8125rem;
+  white-space: nowrap;
+}
 .split { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); align-items: start; gap: var(--space-4); }
 .source, .panel { min-inline-size: 0; padding: var(--space-5); display: grid; gap: var(--space-3); }
 .heading { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: var(--space-2); }
