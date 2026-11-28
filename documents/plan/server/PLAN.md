@@ -169,6 +169,8 @@ This is an authorized follow-up to support Office Web Step 5. The existing verif
 
 ## Step 10 — Invoice Ingestion and Trader Review
 
+**International DeepSeek activation — Verified on one synthetic invoice (2026-11-28).** Use the canonical `INVOICE_AI_API_KEY` setting in Hostinger's private environment file. Verify the deployed provider's structured extraction against known synthetic fields, then recreate the API and worker and check readiness. Representative invoice accuracy, queued production workflow and mainland provider checks remain pending.
+
 **Review follow-up** — Review and commit lock the import row and share one tenant transaction with order or expense creation, preventing duplicate orders and partial commits.
 
 **Status** — Verified on disposable PostgreSQL (37 checks).
@@ -210,7 +212,7 @@ This is an authorized follow-up to support Office Web Step 5. The existing verif
 
 **Review follow-up** — Added Docker secret exclusions and writable storage ownership, API readiness gating, distinct runtime-role templates and required provisioning instructions. Restore failures exit nonzero and roll back the database restore. Cloud object recovery remains a regional staging check.
 
-**Status** — International infrastructure and on-VPS encrypted recovery passed. The first owner and warehouse are configured. Off-server backup and recovery, external invoice extraction and full live authenticated acceptance are pending. Mainland staging is outside the Hostinger release. See the [Hostinger runbook](../../../deploy/hostinger/RUNBOOK.md) and verification record.
+**Status** — International infrastructure and on-VPS encrypted recovery passed. The first owner and warehouse are configured, and DeepSeek passed a synthetic provider check. Off-server backup and recovery and full live authenticated acceptance are pending. Mainland staging is outside the Hostinger release. See the [Hostinger runbook](../../../deploy/hostinger/RUNBOOK.md) and verification record.
 
 **Goal** — Produce the deployment configuration and operational scripts so the same build and migrations can run in both regions (Hostinger international, Alibaba Cloud ECS mainland), and practice locally the parts that can be rehearsed without staging — above all encrypted, region-local, off-server backup and restore. Regional deployment, TLS issuance, Nginx routing under real domains, Yiwu network access, and mobile-upgrade compatibility cannot be exercised from the development machine, so they are recorded as pending staging checks rather than claimed as verified.
 

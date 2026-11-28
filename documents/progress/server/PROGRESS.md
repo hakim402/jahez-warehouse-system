@@ -165,6 +165,8 @@ Steps 1–10 are verified on the recorded local and disposable PostgreSQL checks
 
 ## Step 10 — Invoice Ingestion and Trader Review
 
+**International DeepSeek activation — 2026-11-28.** The VPS key was set under `DEEPSEEK_API_KEY` while Compose supplied an empty canonical variable. Set `INVOICE_AI_API_KEY` privately and tested the compiled provider with `deepseek-flash` against a synthetic PNG. The supplier, currency, total and line amount matched the fixture. No supplier data was transferred and no import records were created. Recreated the API and worker and verified the production environment and public readiness. Live queue-to-review and a representative invoice benchmark remain pending.
+
 **Verified** — 2026-11-26. 37 checks on disposable PostgreSQL.
 
 - Shipped migration 0011: office-only, warehouse-scoped `invoice_imports` (kind purchase|expense, source_file_id FK files, status queued|processing|draft|committed|failed, provider, draft jsonb of header+lines each carrying value/confidence/source plus a review object, committed_entity_id, error). Office-only RLS select/insert/update; DELETE/TRUNCATE and full-row UPDATE revoked; column-level UPDATE (status, provider, draft, committed_entity_id, error, updated_at) granted to the runtime role. Added the `import` entity-link branch to FilesService validating against `invoice_imports`.
