@@ -116,7 +116,7 @@ Confirm with `POST /orders/:id/confirm`. Cancel a draft or ready order with `POS
 
 Upload a purchase source with purpose `invoice_source` or an expense source with `expense_invoice`. Then call `POST /orders/extract` or `/expenses/extract` with `{ warehouseId, fileId }`.
 
-Poll `GET /imports/:id` until `draft` or `failed`. Draft fields contain `value`, `confidence`, and `source`; `unreviewedFields` identifies values that still need review. Patch `/imports/:id` with edited `header`, `lines`, and `review`. Resolve purchase `review.supplierId`, `review.customerId`, and every line's `productId`, or the expense `review.categoryId`. Record reviewed paths in `review.reviewedFields`.
+`GET /imports?warehouseId=…` returns the latest 100 jobs as `{warehouseId, imports}`. Resolve source metadata with the private files API using each job’s `sourceFileId`. Poll `GET /imports/:id` until `draft` or `failed`. Draft fields contain `value`, `confidence`, and `source`; `unreviewedFields` identifies values that still need review. Patch `/imports/:id` with edited `header`, `lines`, and `review`. Resolve purchase `review.supplierId`, `review.customerId`, and every line's `productId`, or the expense `review.categoryId`. Record reviewed paths in `review.reviewedFields`.
 
 Commit with `POST /imports/:id/commit`. It returns `status` and `orderId` or `expenseId`. A purchase becomes a draft order that still needs normal confirmation. XLSX parsing is direct; live vision accuracy, searchable-PDF parsing, and handwriting automation remain release follow-ups. The sample provider returns synthetic fields for development.
 

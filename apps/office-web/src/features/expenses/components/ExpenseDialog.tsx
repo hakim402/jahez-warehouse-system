@@ -11,7 +11,7 @@ import { uploadOfficeFile, type OfficeFile } from '../../files/files-api';
 import { useOrders } from '../../orders/order-api';
 import { categoryName, recordExpense, useExpenseCategories, type ExpenseInput } from '../expenses-api';
 import { expenseAmount, validExpenseDate } from '../expense-validation';
-import { InvoiceField, invoiceTypes } from './InvoiceField';
+import { InvoiceField, validInvoiceFile } from '../../files/components/InvoiceField';
 import styles from './ExpenseDialog.module.css';
 
 function today() {
@@ -41,7 +41,7 @@ export function ExpenseDialog({ scope, onClose }: { scope: WarehouseScope; onClo
   const chooseFile = (next: File | null) => {
     if (busy || unknown) return;
     setFile(null); setUploaded(undefined); uploadId.current = crypto.randomUUID();
-    const invalid = next && (next.size === 0 || next.size > 15 * 1024 * 1024 || !invoiceTypes.includes(next.type));
+    const invalid = next && !validInvoiceFile(next);
     setErrors((current) => ({ ...current, file: invalid ? t('invoiceFileInvalid') : '' }));
     if (!invalid) setFile(next);
   };

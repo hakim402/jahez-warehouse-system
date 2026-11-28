@@ -267,9 +267,17 @@ Dependencies are Server Step 3 for order and catalog contracts, Step 1 for accou
 
 ## Step 7 — Invoice import and review
 
-Upload invoice files, show the source beside the extracted draft, and let traders correct flagged values and confirm. Keep manual entry available when extraction fails.
+**Status:** Office Web implemented and synthetically verified (2026-11-28). Live integration remains pending.
 
-Use `15-invoice-imports.png` for import history and `16-invoice-review.png` for the side-by-side review. Use the private files, extraction, and import review APIs.
+**Goal:** Let office users turn private purchase or expense invoices into reviewed records. Purchase imports create draft orders and use the existing order confirmation workflow.
+
+1. Follow `15-invoice-imports.png` and `16-invoice-review.png`. Reuse glass dialogs, file picker, table states, localized filters and the current shell. Use a bounded source preview beside editable draft fields and stack the columns on narrow screens. Offer existing manual order and expense entry from import failure states.
+2. Add protected `/imports` and `/imports/:id` routes. Use tenant/account/warehouse keys for history, detail and file metadata. Poll active imports and show the latest 100 with filename search, type/status filters, local pagination and routes to committed records. File metadata comes from the authorized files API. Unavailable metadata uses a fallback label.
+3. Reuse private multipart upload, retaining its operation ID on retry. Enqueue through `POST /orders/extract` or `POST /expenses/extract`. Before repeating an uncertain enqueue, reconcile by source file ID against history. Show a retry for known failed jobs. Never send files from Office Web directly to an extraction provider.
+4. Fetch the source using authenticated binary requests. Render supported image previews and a bounded, read-only XLSX preview with a lazy-loaded ExcelJS browser module. Keep original download available for every format, including PDF and formats unsupported by browser preview. Reuse the private blob URL lifecycle.
+5. Use typed drafts with confidence and provenance. Resolve supplier/customer/product or expense category and optional customer using existing catalog queries. Review every flagged path explicitly or correct its value. Patch changed fields only, preserve edits on API errors, and reuse order and expense validation. Derive order amounts with the existing exact arithmetic and reconcile source totals to the edited lines before commit. Surface the authoritative response and handle ambiguous commit by reloading the import or repeating the idempotent commit.
+6. Verify Office Web build and synthetic browser workflows for upload/retry, queued-to-review progress, both record types, source preview/download, review gates, server errors, commit and navigation, warehouse denial and EN/AR/ZH narrow views. Record live worker, storage and provider accuracy checks separately.
+7. Dependencies: existing Server Step 10, migration 0011, worker, private files and the configured extractor. No server or mobile changes. Direct searchable PDF extraction and multi-reviewer version conflicts are server gaps. Use synthetic invoices only for verification.
 
 ## Step 8 — Regional pilot verification
 

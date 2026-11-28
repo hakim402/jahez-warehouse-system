@@ -1,0 +1,9 @@
+.fileInput { position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden; clip-path: inset(50%); }
+.dropzone { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: var(--space-2); min-block-size: 64px; padding: var(--space-3); border: 1px dashed var(--jahez-control-border); border-radius: var(--radius-control); background: var(--glass-input); color: var(--jahez-muted); cursor: pointer; }
+.dropzone strong, .dropzone svg { color: var(--jahez-brand-deep); }
+.dropzone span { font-size: 12px; }
+.fileInput:focus-visible + .dropzone { outline: 2px solid var(--jahez-brand-deep); outline-offset: 3px; }
+.fileInput[aria-invalid="true"] + .dropzone { border-color: var(--jahez-danger); }
+.dropzone[data-drag="true"] { background: var(--jahez-lavender); border-color: var(--jahez-brand); }
+.selectedFile { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); font-size: 13px; overflow-wrap: anywhere; }
+.fileInput:disabled + .dropzone { opacity: .65; cursor: default; }

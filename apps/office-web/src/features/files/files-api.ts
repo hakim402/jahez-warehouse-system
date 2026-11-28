@@ -1,3 +1,5 @@
+import { ApiError } from '../../api/client';
+import type { WarehouseScope } from '../../app/use-warehouse-scope';
 import { useQuery } from '@tanstack/react-query';
 import { authenticatedBlob, authenticatedForm, authenticatedJson } from '../../app/session';
 import { useWarehouseScope } from '../../app/use-warehouse-scope';
@@ -68,5 +70,17 @@ export function usePrivateFile(scope: ReturnType<typeof useWarehouseScope>, file
     queryFn: ({ signal }) => fetchOfficeFile(fileId, signal),
     staleTime: Number.POSITIVE_INFINITY,
     gcTime: 5 * 60_000,
+  });
+}
+
+export function useOfficeFile(scope: WarehouseScope, fileId: string) {
+  return useQuery({
+    queryKey: scope.queryKey('file-metadata', fileId),
+    enabled: Boolean(scope.warehouseId && fileId),
+    queryFn: async ({ signal }) => {
+      const file = await authenticatedJson<OfficeFile>('/files/' + encodeURIComponent(fileId), { signal });
+      if (file.warehouseId !== scope.warehouseId) throw new ApiError(404);
+      return file;
+    },
   });
 }

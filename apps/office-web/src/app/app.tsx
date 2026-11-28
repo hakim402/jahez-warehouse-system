@@ -10,6 +10,8 @@ import { OfficeShell } from "./OfficeShell";
 import { queryClient } from "./query-client";
 import { useSession, watchIdleSession } from "./session";
 
+const ImportsPage = lazy(() => import('../features/imports/pages/ImportsPage'));
+const ImportDetailPage = lazy(() => import('../features/imports/pages/ImportDetailPage'));
 const ReportsPage = lazy(() => import('../features/reports/pages/ReportsPage'));
 const ExpensesPage = lazy(() => import('../features/expenses/pages/ExpensesPage'));
 const SettingsPage = lazy(() => import('../features/settings/pages/SettingsPage'));
@@ -86,6 +88,8 @@ export function App() {
                 <Route path="dispatch" element={<DispatchHistoryPage />} />
                 <Route path="dispatch/:dispatchId" element={<DispatchDetailPage />} />
                 <Route path="catalog" element={<CatalogPage />} />
+                <Route path="imports" element={<ImportsPage />} />
+                <Route path="imports/:importId" element={<ImportDetailPage />} />
                 <Route path="reports" element={<ReportsPage />} />
                 <Route path="expenses" element={<ExpensesPage />} />
                 <Route path="settings" element={<SettingsPage />} />

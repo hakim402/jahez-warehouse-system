@@ -1,3 +1,4 @@
+import { importCopy } from "./import-copy";
 import { reportCopy } from "./report-copy";
 import { accessSettingsCopy } from "./access-settings-copy";
 import i18n from "i18next";
@@ -44,9 +45,9 @@ export async function initLanguage() {
     fallbackLng: "en",
     supportedLngs: Object.keys(languages),
     resources: {
-      en: { translation: { ...english, ...recordCopy(0), ...expenseSettingsCopy(0), ...accessSettingsCopy(0), ...reportCopy(0) } },
-      ar: { translation: { ...arabic, ...recordCopy(1), ...expenseSettingsCopy(1), ...accessSettingsCopy(1), ...reportCopy(1) } },
-      "zh-Hans": { translation: { ...chinese, ...recordCopy(2), ...expenseSettingsCopy(2), ...accessSettingsCopy(2), ...reportCopy(2) } },
+      en: { translation: { ...english, ...recordCopy(0), ...expenseSettingsCopy(0), ...accessSettingsCopy(0), ...reportCopy(0), ...importCopy(0) } },
+      ar: { translation: { ...arabic, ...recordCopy(1), ...expenseSettingsCopy(1), ...accessSettingsCopy(1), ...reportCopy(1), ...importCopy(1) } },
+      "zh-Hans": { translation: { ...chinese, ...recordCopy(2), ...expenseSettingsCopy(2), ...accessSettingsCopy(2), ...reportCopy(2), ...importCopy(2) } },
     },
     interpolation: { escapeValue: false },
   });

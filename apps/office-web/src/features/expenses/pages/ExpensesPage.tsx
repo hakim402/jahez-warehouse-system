@@ -2,7 +2,7 @@ import { ExportLink } from '../../reports/components/ExportLink';
 import { ArrowDown, ArrowUp, FileText, Plus } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router';
+import { Link, useSearchParams } from 'react-router';
 import { useWarehouseScope } from '../../../app/use-warehouse-scope';
 import { useRecordFormat } from '../../../shared/format-record';
 import { DataTable, type RecordColumn } from '../../../shared/ui/DataTable';
@@ -26,7 +26,9 @@ export default function ExpensesPage() {
   const scope = useWarehouseScope();
   const query = useExpenses(scope);
   const categories = useExpenseCategories();
-  const [recording, setRecording] = useState(false);
+  const [params, setParams] = useSearchParams();
+  const importedId = params.get('expenseId');
+  const [recording, setRecording] = useState(() => params.get('record') === '1');
   const [evidence, setEvidence] = useState<Expense>();
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('');
@@ -36,11 +38,11 @@ export default function ExpensesPage() {
   const [oldest, setOldest] = useState(false);
   const rows = query.data ?? noExpenses;
   const needle = search.trim().toLocaleLowerCase(format.language);
-  const filtered = useMemo(() => rows.filter((row) => (!category || row.categoryId === category) && (!customer || row.customerId === customer) &&
+  const filtered = useMemo(() => rows.filter((row) => (!importedId || row.id === importedId) && (!category || row.categoryId === category) && (!customer || row.customerId === customer) &&
     (!from || row.expenseDate >= from) && (!to || row.expenseDate <= to) && (!needle ||
       [row.expenseNo, row.customerName, row.customerMark, row.orderNo, row.categoryName].some((value) => value?.toLocaleLowerCase(format.language).includes(needle))))
     .sort((a, b) => oldest ? a.expenseDate.localeCompare(b.expenseDate) : b.expenseDate.localeCompare(a.expenseDate)),
-    [rows, category, customer, from, to, needle, oldest, format.language]);
+    [rows, importedId, category, customer, from, to, needle, oldest, format.language]);
   const customers = Array.from(new Map(rows.filter((row) => row.customerId).map((row) => [row.customerId!, {
     value: row.customerId!, label: [row.customerName, row.customerMark].filter(Boolean).join(' · ') || row.customerId!,
   }])).values());
@@ -70,6 +72,7 @@ export default function ExpensesPage() {
       </div>
     </div>
     <section className="surface workspace-panel"><WarehouseGate scope={scope}><QueryState query={query}>
+      {importedId && <div className="table-toolbar"><Link className="button" to="/expenses">{t('importAllExpenses')}</Link></div>}
       <div className="table-toolbar"><SearchField label={t('searchExpenses')} value={search} onChange={setSearch} /><div className="workspace-actions">
         <FilterSelect label={t('category')} value={category} onChange={setCategory} options={[{ value: '', label: t('category') }, ...categoryOptions]} />
         <FilterSelect label={t('customer')} value={customer} onChange={setCustomer} options={[{ value: '', label: t('customer') }, ...customers]} />
@@ -79,7 +82,7 @@ export default function ExpensesPage() {
       {filtered.length ? <DataTable records={filtered} columns={columns} label={t('expenses')} /> : <RecordState state={hasFilters ? 'noResults' : 'empty'} action={hasFilters ? clear : undefined} />}
       <p className={styles.limit}>{t('expenseLimit')}</p>
     </QueryState></WarehouseGate></section>
-    {recording && <ExpenseDialog scope={scope} onClose={() => setRecording(false)} />}
+    {recording && <ExpenseDialog scope={scope} onClose={() => { setRecording(false); if (params.has('record')) setParams({}, { replace: true }); }} />}
     {evidence?.invoiceFileId && <PrivateFileDialog scope={scope} fileId={evidence.invoiceFileId} name={evidence.expenseNo + '-invoice'} onClose={() => setEvidence(undefined)} />}
     {evidence && !evidence.invoiceFileId && <OfficeDialog title={t('noInvoiceNote')} onClose={() => setEvidence(undefined)}><div className={'office-dialog-body ' + styles.note}><strong>{evidence.expenseNo}</strong><p>{evidence.noInvoiceNote}</p></div></OfficeDialog>}
   </>;
