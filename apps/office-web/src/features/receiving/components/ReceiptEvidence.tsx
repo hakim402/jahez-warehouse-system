@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { usePrivateFile, type OfficeFile } from '../../files/files-api';
 import { useWarehouseScope } from '../../../app/use-warehouse-scope';
-import { OfficeDialog } from '../../../shared/ui/OfficeDialog';
+import { PrivateFileDialog } from '../../files/components/PrivateFileDialog';
 import styles from './ReceiptEvidence.module.css';
 
 export function ReceiptEvidence({ scope, files, loading, error, retry }: {
@@ -41,9 +41,6 @@ function EvidenceItem({ scope, file }: { scope: ReturnType<typeof useWarehouseSc
     <button type="button" className={styles.photo} onClick={() => setOpen(true)} aria-label={t('viewPhoto', { name })}>
       <img src={url} alt="" loading="lazy" /><span>{name}</span>
     </button>
-    {open && <OfficeDialog title={name} onClose={() => setOpen(false)} wide>
-      <div className="office-dialog-body"><img className={styles.viewer} src={url} alt={name} /></div>
-      <div className="office-dialog-actions"><a className="button" href={url} download={file.originalName || undefined}><Download size={16} aria-hidden="true" />{t('download')}</a></div>
-    </OfficeDialog>}
+    {open && <PrivateFileDialog scope={scope} fileId={file.id} name={name} onClose={() => setOpen(false)} />}
   </>;
 }

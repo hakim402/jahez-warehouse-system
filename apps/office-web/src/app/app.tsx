@@ -10,6 +10,9 @@ import { OfficeShell } from "./OfficeShell";
 import { queryClient } from "./query-client";
 import { useSession, watchIdleSession } from "./session";
 
+const ExpensesPage = lazy(() => import('../features/expenses/pages/ExpensesPage'));
+const SettingsPage = lazy(() => import('../features/settings/pages/SettingsPage'));
+
 const ReceivingPage = lazy(
   () => import("../features/receiving/pages/ReceivingPage"),
 );
@@ -82,6 +85,8 @@ export function App() {
                 <Route path="dispatch" element={<DispatchHistoryPage />} />
                 <Route path="dispatch/:dispatchId" element={<DispatchDetailPage />} />
                 <Route path="catalog" element={<CatalogPage />} />
+                <Route path="expenses" element={<ExpensesPage />} />
+                <Route path="settings" element={<SettingsPage />} />
               </Route>
               <Route path="*" element={<Navigate to="/" replace />} />
             </Route>

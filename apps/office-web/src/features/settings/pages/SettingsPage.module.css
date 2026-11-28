@@ -1,0 +1,22 @@
+.tabs { margin-block-end: var(--space-4); }
+.tabs :global(.list-tabs) { border: 0; }
+.layout { display: grid; grid-template-columns: minmax(240px, 28%) minmax(0, 1fr); gap: var(--space-4); align-items: start; }
+.layout > section { min-inline-size: 0; }
+.account { padding: var(--space-5); }
+.account h2, .panelHeading h2 { font-size: 1.125rem; }
+.identity { display: flex; align-items: center; gap: var(--space-3); margin-block: var(--space-5); overflow-wrap: anywhere; }
+.avatar { display: grid; place-items: center; inline-size: 48px; block-size: 48px; flex: none; border: 1px solid white; border-radius: 50%; background: rgb(123 87 252 / 10%); color: var(--jahez-brand-deep); }
+.language { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--space-2); border-block-start: 1px solid var(--jahez-border); padding-block-start: var(--space-3); font-size: 13px; }
+.device { display: flex; align-items: center; gap: var(--space-3); min-inline-size: 150px; }
+.device > svg { color: var(--jahez-brand-deep); }
+.current { display: block; color: var(--jahez-success); font-size: 12px; font-weight: 600; }
+.signOut { min-block-size: 36px; padding: 6px 10px; border: 1px solid rgb(158 35 56 / 20%); border-radius: 8px; background: var(--glass-input); color: var(--jahez-danger); white-space: nowrap; cursor: pointer; font-size: 12px; font-weight: 600; }
+.error { padding: var(--space-3) var(--space-5); }
+.panelHeading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--space-3); padding: var(--space-4) var(--space-5); border-block-end: 1px solid var(--jahez-border); }
+.panelHeading button { min-block-size: 40px; font-size: 13px; }
+.categoryFields { display: grid; gap: var(--space-4); border: 0; margin: 0; min-inline-size: 0; }
+.activeToggle { display: flex; align-items: center; gap: var(--space-2); }
+.activeToggle input { accent-color: var(--jahez-brand-deep); inline-size: 18px; block-size: 18px; }
+.categoryStatus { color: var(--jahez-muted); }
+.categoryStatus[data-active="true"] { color: var(--jahez-success); }
+@media (max-width: 1000px) { .layout { grid-template-columns: minmax(0, 1fr); } }

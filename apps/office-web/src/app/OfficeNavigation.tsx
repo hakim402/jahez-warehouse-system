@@ -27,7 +27,7 @@ const navigationGroups: NavigationItem[][] = [
   ],
   [
     { label: "catalog", icon: Package, to: "/catalog" },
-    { label: "expenses", icon: ReceiptText },
+    { label: "expenses", icon: ReceiptText, to: "/expenses" },
     { label: "invoiceImports", icon: FileUp },
     { label: "reportsExports", icon: ChartNoAxesCombined },
   ],
@@ -71,13 +71,12 @@ export function OfficeNavigation({ onNavigate }: { onNavigate?: () => void }) {
             )}
           </div>
         ))}
-        <span
+        <NavLink to="/settings" onClick={onNavigate}
           className={styles.navItem + " " + styles.settings}
-          aria-disabled="true"
         >
           <Settings size={17} aria-hidden="true" />
           {t("settings")}
-        </span>
+        </NavLink>
       </nav>
     </>
   );

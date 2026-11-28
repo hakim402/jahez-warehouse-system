@@ -217,9 +217,21 @@ Dependencies are Server Step 3 for order and catalog contracts, Step 1 for accou
 
 ## Step 5 — Expenses and owner settings
 
-Add expense entry and history with invoice evidence or a documented exception. Add owner controls for users, warehouse access, tolerances, and expense categories.
+**Status** Partially verified (2026-11-28). Expenses, Account/session settings, and owner category management are implemented and synthetically verified. Category management uses the existing table/dialog pattern confirmed by the user. Live-account verification remains pending. Users/access, receiving tolerances, warehouse administration, and audit log require missing designs/contracts and will remain explicitly deferred.
 
-Use `12-expenses.png` and the Record expense form in `reference-dialog.png`. Use `13-settings.png` for the account and sessions view. Confirm layouts and server contracts for the remaining settings tabs before wiring them.
+**Goal** Let authorized Jahez office users record and review expenses with private evidence or an exception, manage their own sessions, and give owners category controls using the confirmed reuse pattern.
+
+1. Build `/expenses` from `12-expenses.png`: search, category/customer/date filters, eight-row pagination, exact currency display, invoice/exception actions, loading/error/no-results states, and the latest-200-record limitation. Export belongs to Step 6 and will not be presented as a working action.
+2. Build Record expense from `reference-dialog.png` with amount, uppercase currency, active category, valid expense date, optional customer/order, and mutually exclusive invoice upload or required exception note. Reuse shared labeled controls, glass surfaces, file services, and numeric normalization. Preserve edits after errors and prevent duplicate requests while busy.
+3. Use typed `/expenses` and `/expense-categories` services (list records already contain the evidence and exception fields) with shared account/warehouse scope keys. Keep expense idempotency and upload IDs stable for identical retries. On an ambiguous POST result, lock the payload until retry reconciles it; do not silently create a second operation. Uploaded evidence uses `expense_invoice` and private authenticated blob access. Reuse a shared attachment viewer instead of a new full detail page; no expense-detail design is supplied.
+4. Build `/settings` Account from `13-settings.png`: current name/role/language, active sessions, current-session marker, and session sign-out. Use `/auth/sessions` and `DELETE /auth/sessions/:id`, clearing the local session immediately after revoking the current session. Hide unsupported tabs/actions rather than inventing administration interfaces. Account settings are available to both office roles.
+5. With explicit design reuse confirmation (2026-11-28), owners manage category name, optional Chinese name, and active flag with `/expense-categories` POST/PATCH. Traders can read categories for expenses but must not see mutation controls. Keep category deactivation reversible, preserve edits on server errors, and invalidate both settings and expense-form reads.
+6. Enable Expenses/Settings navigation, translate new copy in English/Arabic/Simplified Chinese, preserve approved glass/header styling, and extend scoped live refresh with `expense.recorded` plus REST reconnect recovery.
+7. Run Office Web build and isolated synthetic browser checks: photo and exception expenses, validation, normalized decimal input, upload failure and ambiguous-save retry IDs, filtering/pagination, evidence access, owner/trader category access, current/other session revocation, and desktop/narrow/RTL/Chinese layouts. Record actual results and remaining live gaps before commit/push.
+
+**Affected modules** `features/expenses`, `features/settings`, shared file/upload controls, navigation/routes, translations, and live invalidation. Existing auth/request/session and warehouse authorization remain authoritative. No Server/Worker Mobile changes, migrations, dependency installs, deployment, export, or extraction work.
+
+**Design/API constraints** Expense history is capped at 200 without server date pagination. Expenses are immutable through the current API. The sessions endpoint lists only the signed-in user's sessions; no user provisioning, permission/tolerance editor, warehouse list, or audit-log endpoint exists. Missing settings panels remain pending rather than claiming full Step 5 completion.
 
 ## Step 6 — Reports and Excel downloads
 

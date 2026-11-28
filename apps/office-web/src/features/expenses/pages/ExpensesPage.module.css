@@ -1,0 +1,6 @@
+.invoice, .exception { display: inline-flex; align-items: center; gap: 6px; min-block-size: 36px; border: 0; border-radius: var(--radius-control); padding: 4px 8px; font-size: 12px; font-weight: 600; cursor: pointer; }
+.invoice { background: transparent; color: var(--jahez-brand-deep); }
+.exception { background: #fff2dc; color: #784700; }
+.limit { padding: var(--space-3) var(--space-5); border-block-start: 1px solid var(--jahez-border); color: var(--jahez-muted); font-size: 12px; }
+.sort { display: inline-flex; gap: 6px; align-items: center; border: 0; background: transparent; padding: 4px 0; font: inherit; cursor: pointer; }
+.note { display: grid; gap: var(--space-3); white-space: pre-wrap; overflow-wrap: anywhere; }

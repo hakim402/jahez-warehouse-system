@@ -60,10 +60,10 @@ export function useOrderScope() {
   };
 }
 
-export function useOrders(scope: ReturnType<typeof useOrderScope>, enabled = true) {
+export function useOrders(scope: WarehouseScope, enabled = true) {
   const query = scope.warehouseId ? '?warehouseId=' + encodeURIComponent(scope.warehouseId) : '';
   return useQuery({
-    queryKey: scope.listKey, enabled: scope.canRead && enabled,
+    queryKey: scope.queryKey('orders'), enabled: scope.canRead && enabled,
     queryFn: ({ signal }) => authenticatedJson<OrderRow[]>('/orders' + query, { signal }),
   });
 }

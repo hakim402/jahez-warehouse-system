@@ -1,0 +1,2 @@
+.image { display: block; max-inline-size: 100%; max-block-size: 68dvh; margin-inline: auto; border-radius: var(--radius-control); }
+.document { display: grid; justify-items: center; gap: var(--space-4); padding: var(--space-6); color: var(--jahez-muted); text-align: center; }

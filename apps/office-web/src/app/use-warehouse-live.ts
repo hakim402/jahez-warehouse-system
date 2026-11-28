@@ -32,6 +32,7 @@ export function useWarehouseLive(warehouseId: string | undefined) {
             "dispatch",
             "dispatch-detail",
             "stock-lots",
+            "expenses",
           ].includes(String(query.queryKey[0])) &&
           query.queryKey[1] === session.user.tenantId &&
           query.queryKey[2] === session.user.id && query.queryKey[3] === warehouseId,
@@ -44,6 +45,7 @@ export function useWarehouseLive(warehouseId: string | undefined) {
       "finding.resolved",
       "dispatch.confirmed",
       "adjustment.recorded",
+      "expense.recorded",
     ];
     for (const event of events) socket.on(event, refresh);
     socket.on("connect", () => {
