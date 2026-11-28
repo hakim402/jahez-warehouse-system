@@ -257,6 +257,8 @@
 
 ## Step 8 — Regional pilot verification
 
+**Default warehouse release — 2026-11-28.** Rebuilt the deployed `f640b2a` Office Web revision on Hostinger with `Yiwu Warehouse` configured. The production build passed, and the live HTML and JavaScript matched the staged release. Same-origin API readiness passed and the previous asset release is available for rollback. The VPS build environment now carries the default warehouse so future builds can reuse it. The owner’s authenticated browser session was outside these checks.
+
 **Hostinger international deployment — 2026-11-28.** Published the Office Web static release at `https://office.jahez.online` under `f640b2a`. Verified the sign-in shell, JavaScript assets, direct route refresh, same-origin API readiness and WebSocket over TLS. Both international domains passed IPv4 and IPv6 routing and renewal checks. The shell is available without a configured warehouse ID. First-owner and warehouse provisioning, the warehouse-scoped rebuild and live authenticated workflow checks remain pending.
 
 **Hostinger build preparation — 2026-11-28.** Built Office Web with Node 22 and pinned pnpm from the package directory on the VPS. The production build uses relative `/api/v1`. The warehouse assignment is pending. Next, install the generated assets and verify both private and public Nginx routes, HTTPS, API and Socket.IO.

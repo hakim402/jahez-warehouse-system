@@ -285,7 +285,9 @@ Dependencies are Server Step 3 for order and catalog contracts, Step 1 for accou
 
 ## Step 8 — Regional pilot verification
 
-**Hostinger international deployment — Deployed and transport verified (2026-11-28).** Release `f640b2a` serves Office Web with relative `/api/v1` and same-origin Socket.IO through the existing Jahez Nginx. The sign-in shell, static assets, direct routes, REST readiness and WebSocket handshake passed over TLS. The international warehouse ID and first owner are needed before staff onboarding and live authenticated acceptance. The deployment depends on Server Step 11.
+**Yiwu Warehouse configuration — Verified (2026-11-28).** Saved the warehouse UUID in the VPS Office Web build environment and rebuilt the deployed revision with the relative `/api/v1` route. Published an atomic release and verified the live HTML, configured asset, same-origin API readiness and owner membership. Retained the previous asset directory for rollback. This used the international provisioning in Server Step 11.
+
+**Hostinger international deployment — Deployed and transport verified (2026-11-28).** Release `f640b2a` serves Office Web with relative `/api/v1` and same-origin Socket.IO through the existing Jahez Nginx. The sign-in shell, static assets, direct routes, REST readiness and WebSocket handshake passed over TLS. The deployment depends on Server Step 11.
 
 **Status:** Local verification passed for both deployment profiles (2026-11-28). International Hostinger transport checks passed. Authenticated international pilot checks, mainland staging and Yiwu verification remain pending.
 

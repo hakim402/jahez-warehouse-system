@@ -184,6 +184,8 @@ Steps 1–10 are verified on the recorded local and disposable PostgreSQL checks
 
 ## Step 11 — Regional Staging and Pilot Readiness
 
+**Yiwu Warehouse provisioning — 2026-11-28.** Created the `YIWU` warehouse under the international Jahez tenant and added Jahez Admin's membership in one database transaction. With the same tenant and user context as the API, the restricted runtime role could read the warehouse and passed the membership check. The warehouse UUID was supplied to the Office Web build. Live pilot workflow verification remains pending.
+
 **Hostinger international deployment — 2026-11-28.** Deployed `f640b2a` under the Jahez rootless Docker account. PostgreSQL 16, the API and the queue worker run in the dedicated `jahez-warehouse-intl` project. The API publishes only on loopback port `18744`. Verified the two other company accounts could not reach it. All 12 migrations applied, restricted roles passed, and a bootstrap rerun applied no new migrations. Verified the worker registered both queues and recovered after a warehouse-only restart with the migration ledger intact.
 
 - Verified public HTTPS on IPv4 and IPv6, HTTP redirects, API readiness, a synthetic unauthorized sign-in and WebSocket handshakes on both warehouse domains. Let's Encrypt issuance and the renewal dry-run passed. The existing Jahez website and Shipping returned HTTPS 200 after the cutover and again after the warehouse restart.

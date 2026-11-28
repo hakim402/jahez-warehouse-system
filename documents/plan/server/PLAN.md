@@ -189,6 +189,8 @@ This is an authorized follow-up to support Office Web Step 5. The existing verif
 
 ## Step 11 — Regional Staging and Pilot Readiness
 
+**Yiwu Warehouse provisioning — Verified (2026-11-28).** Provisioned `Yiwu Warehouse` with code `YIWU` in the international Jahez tenant and assigned its active owner Jahez Admin. Verified warehouse visibility and membership under the restricted runtime role and supplied its UUID to Office Web Step 8.
+
 **Hostinger international deployment — Deployed and infrastructure verified (2026-11-28).** Release `f640b2a` runs the warehouse API, job worker and database under the Jahez rootless Docker account. The existing Jahez and public Nginx services serve Office Web, API and WebSockets. The warehouse has its own Compose project, registered loopback listener, persistent volumes and user service.
 
 1. Inspect the VPS routing, isolation policy, release revision and available build/backup tools. Confirm the private port and baseline the existing Jahez site and Shipping.
@@ -208,7 +210,7 @@ This is an authorized follow-up to support Office Web Step 5. The existing verif
 
 **Review follow-up** — Added Docker secret exclusions and writable storage ownership, API readiness gating, distinct runtime-role templates and required provisioning instructions. Restore failures exit nonzero and roll back the database restore. Cloud object recovery remains a regional staging check.
 
-**Status** — International infrastructure and on-VPS encrypted recovery passed. Pilot onboarding still needs the first owner, an assigned warehouse and an off-server backup destination and recovery test. External invoice extraction and full live authenticated acceptance are pending. Mainland staging is outside the Hostinger release. See the [Hostinger runbook](../../../deploy/hostinger/RUNBOOK.md) and verification record.
+**Status** — International infrastructure and on-VPS encrypted recovery passed. The first owner and warehouse are configured. Off-server backup and recovery, external invoice extraction and full live authenticated acceptance are pending. Mainland staging is outside the Hostinger release. See the [Hostinger runbook](../../../deploy/hostinger/RUNBOOK.md) and verification record.
 
 **Goal** — Produce the deployment configuration and operational scripts so the same build and migrations can run in both regions (Hostinger international, Alibaba Cloud ECS mainland), and practice locally the parts that can be rehearsed without staging — above all encrypted, region-local, off-server backup and restore. Regional deployment, TLS issuance, Nginx routing under real domains, Yiwu network access, and mobile-upgrade compatibility cannot be exercised from the development machine, so they are recorded as pending staging checks rather than claimed as verified.
 

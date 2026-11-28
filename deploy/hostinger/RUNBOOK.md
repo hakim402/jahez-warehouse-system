@@ -11,7 +11,16 @@ The Jahez account runs the warehouse API, worker and PostgreSQL 16 in the `jahez
    docker build -f apps/server/Dockerfile -t "jahez-warehouse-intl:$release" .
    ```
 
-3. Build Office Web with Node 22 and the repository’s pinned pnpm. Run Corepack and pnpm from `apps/office-web`. Set `VITE_API_BASE_URL=/api/v1`. Set `VITE_DEFAULT_WAREHOUSE_ID` to the assigned production warehouse UUID before user onboarding. The public shell can be deployed with that field empty. Install the built `dist` in a new `www/releases/` directory outside the checkout and switch `www/current` by atomic symlink replacement.
+3. Keep `VITE_API_BASE_URL=/api/v1` and `VITE_DEFAULT_WAREHOUSE_ID` in the app’s `config/office.env`. Use the assigned production warehouse UUID. Reuse this environment file for each Office Web build from the checkout root.
+
+   ```sh
+   docker run --rm --memory=1200m --cpus=1.5 --pids-limit=192 \
+     --mount "type=bind,source=$PWD,target=/workspace" --workdir /workspace/apps/office-web \
+     --env-file ../config/office.env node:22-bookworm-slim \
+     sh -ec 'corepack enable; pnpm install --frozen-lockfile; pnpm build'
+   ```
+
+   Install `dist` in a new directory under `www/releases/`. Keep old hashed assets reachable for open browser tabs, then switch `www/current` by atomic symlink replacement. Verify the live HTML, configured assets and API readiness. Restore the previous symlink if verification fails.
 4. Install the files from this folder into the app’s sibling `deployment` directory. Run `bash ../deployment/initialize.sh "$release"` from the checkout. It creates mode-600 credentials on first install, starts PostgreSQL, creates the separate roles, applies migrations with the migration credential and applies the runtime grants. The API and worker carry the restricted login. Private files start on the warehouse storage volume. External invoice extraction starts disabled.
 5. Register port `18744` for Jahez in the administrator-managed bind and connect policies before publishing it. Verify existing services and company isolation. Install `warehouse.service` as `~/.config/systemd/user/jahez-warehouse.service`, then run `systemctl --user daemon-reload` and `systemctl --user enable --now jahez-warehouse.service`. Check `/api/v1/health/ready` on the loopback listener and check the background worker logs.
 
