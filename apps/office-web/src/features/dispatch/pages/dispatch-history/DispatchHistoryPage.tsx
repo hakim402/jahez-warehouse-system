@@ -1,3 +1,4 @@
+import { ExportLink } from '../../../reports/components/ExportLink';
 import { ChevronRight } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -100,6 +101,7 @@ export default function DispatchHistoryPage() {
     <>
       <div className="workspace-heading">
         <h1>{t('dispatchHistory')}</h1>
+        {scope.warehouseId && <ExportLink kind="goods_dispatched" filters={{ from: fromDate, to: toDate, customerId }} />}
       </div>
       <section className="surface workspace-panel" aria-label={t('dispatchHistory')} aria-busy={query.isFetching}>
         {!scope.canRead || !scope.warehouseId ? (

@@ -109,6 +109,7 @@ Confirm with `POST /orders/:id/confirm`. Cancel a draft or ready order with `POS
 - `GET /expense-categories` returns `{ categories }`. Owners create categories with `name` and optionally `nameCn`, and patch their name or `active` flag.
 - `POST /expenses` accepts `clientOperationId`, `warehouseId`, `amount`, uppercase `currency`, `expenseDate`, `categoryId`, optional `customerId`/`orderId`, and exactly one of `invoiceFileId` or `noInvoiceNote`. List through `/expenses?warehouseId=...` and read `/expenses/:id`.
 - `POST /exports` accepts `{ warehouseId, kind, filters }`. Kinds are `goods_received`, `goods_dispatched`, `inventory`, `stock_movements`, `order_vs_received`, `expenses`, and `purchase_order`. Filters support `from`, `to`, `customerId`, `supplierId`, and `orderId` as applicable. Purchase orders require `orderId`.
+- `GET /exports?warehouseId=…` returns `{warehouseId, exports}` for the latest 100 requests, newest first. The Office Web history polls this list while a job is active.
 - Poll `GET /exports/:id` for `queued`, `processing`, `completed`, or `failed`. Fetch `/exports/:id/file` as an authenticated binary download when complete. The worker process must be running.
 
 ### Invoice extraction and review

@@ -1,3 +1,4 @@
+import { ExportLink } from '../../../reports/components/ExportLink';
 import { ArrowDown, ArrowUp, ChevronRight, Plus } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -92,9 +93,12 @@ export default function OrderListPage() {
     <>
       <div className="workspace-heading">
         <h1>{t('purchaseOrders')}</h1>
-        {scope.warehouseId && <Link to="/orders/new" className="button button-primary">
-          <Plus size={16} aria-hidden="true" />{t('newPurchaseOrder')}
-        </Link>}
+        {scope.warehouseId && <div className="workspace-actions">
+          <ExportLink kind="order_vs_received" filters={{ from: fromDate, to: toDate, supplierId }} />
+          <Link to="/orders/new" className="button button-primary">
+            <Plus size={16} aria-hidden="true" />{t('newPurchaseOrder')}
+          </Link>
+        </div>}
       </div>
       {scope.canRead && !scope.warehouseId &&
         <p className={'surface muted-text ' + styles.notice}>{t('warehouseRequired')}</p>}

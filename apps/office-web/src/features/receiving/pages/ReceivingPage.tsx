@@ -1,3 +1,4 @@
+import { ExportLink } from '../../reports/components/ExportLink';
 import { useSearchParams } from 'react-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -35,7 +36,7 @@ export default function ReceivingPage() {
     [order.orderNo, order.supplier.name, order.customer.name, order.customer.shippingMark].some((value) => value?.toLocaleLowerCase().includes(queueNeedle)));
   const findingRows = findings.filter((finding) => !needle || [finding.type, t(finding.type), finding.receiptId, finding.id, finding.note]
     .some((value) => value?.toLocaleLowerCase().includes(needle)));
-  return <><div className="workspace-heading"><h1>{t('receiving')}</h1></div>
+  return <><div className="workspace-heading"><h1>{t('receiving')}</h1>{data.scope.warehouseId && <ExportLink kind="goods_received" />}</div>
     <section className="surface workspace-panel"><WarehouseGate scope={data.scope}>
       <ListTabs label={t('receiving')} selected={tab} onChange={setTab} items={[
         { id: 'queue', name: t('expectedDeliveries'), count: data.queue.data?.length },

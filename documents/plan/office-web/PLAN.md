@@ -254,9 +254,16 @@ Dependencies are Server Step 3 for order and catalog contracts, Step 1 for accou
 
 ## Step 6 — Reports and Excel downloads
 
-Add report filters, export progress, and authorized Excel downloads. Include the trilingual purchase order export with product photos.
+**Status:** Office Web implemented and synthetically verified (2026-11-28). Live job processing and workbook parity remain open.
 
-Use `14-reports-exports.png` with the export history, job status, and download endpoints.
+**Goal:** Let owners and traders generate and download server-built Excel reports for their active, assigned warehouse.
+
+1. Use `14-reports-exports.png` for the report builder and export history, with the approved glass tokens and shared dropdown/table states. Use `12-expenses.png` for the expense shortcut and the existing record heading actions for other linked reports. Keep desktop history bounded and narrow layouts flexible.
+2. Add the protected `/reports` route and navigation. Keep typed requests, report definitions, and UI under the reports feature. Reuse warehouse scope, authenticated JSON/blob requests, catalog parties, and warehouse orders.
+3. Offer the seven existing report kinds. Show only filters read by the corresponding server builder: dates for received/dispatched/movements/order comparison/expenses; customer for all except purchase order; supplier for received/inventory/movements/order comparison; optional order for comparison and expenses; required order for purchase order. Validate reversed dates and require a known order for single-order exports. Carry supported filters through shortcuts from order list/detail, receiving, inventory, dispatch history, and expenses. The report builder previews the selected parameters before submission. Existing list-only filters are outside the export contract.
+4. POST `/exports` once per submission. Use warehouse-scoped `GET /exports?warehouseId=…` for the latest 100 jobs; poll while queued or processing and allow manual refresh. Preserve the builder after errors and refresh history before a user retries an uncertain submission. Use shared pagination, translated statuses, a glass failure dialog, and an authenticated XLSX blob download for completed jobs only. Keep file URLs private and clean up temporary blob URLs.
+5. Run the Office Web build and synthetic browser checks for all report types, filter payloads, reversed dates, recent-history polling, refresh/errors, downloads, shortcuts, warehouse gating, and EN/AR/Chinese responsive layouts. Record live worker and storage verification separately, then update progress and commit/push.
+6. Server dependencies are the existing migration 0010, background worker, and private storage. The existing purchase-order workbook has EN/AR/ZH product-name columns and photo URLs. Embedded product photos and exact client workbook template parity require server work and remain open. No new package, API change, or migration is required for the Office Web implementation.
 
 ## Step 7 — Invoice import and review
 

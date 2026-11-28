@@ -41,14 +41,19 @@ export function useProducts() {
   });
 }
 
+export function useParties() {
+  const { session } = useSession();
+  return useQuery({
+    queryKey: ['catalog', session?.user.tenantId, session?.user.id, 'parties'],
+    queryFn: ({ signal }) => authenticatedJson<Party[]>('/parties', { signal }),
+  });
+}
+
 export function useCatalog() {
   const { session } = useSession();
   const queryKey = ['catalog', session?.user.tenantId, session?.user.id] as const;
   const products = useProducts();
-  const parties = useQuery({
-    queryKey: [...queryKey, 'parties'],
-    queryFn: ({ signal }) => authenticatedJson<Party[]>('/parties', { signal }),
-  });
+  const parties = useParties();
   const data = useMemo<Catalog | undefined>(() => products.data && parties.data
     ? { products: products.data, parties: parties.data } : undefined, [products.data, parties.data]);
   return {

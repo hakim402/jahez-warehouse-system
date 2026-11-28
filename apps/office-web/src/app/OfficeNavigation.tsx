@@ -29,7 +29,7 @@ const navigationGroups: NavigationItem[][] = [
     { label: "catalog", icon: Package, to: "/catalog" },
     { label: "expenses", icon: ReceiptText, to: "/expenses" },
     { label: "invoiceImports", icon: FileUp },
-    { label: "reportsExports", icon: ChartNoAxesCombined },
+    { label: "reportsExports", icon: ChartNoAxesCombined, to: "/reports" },
   ],
 ];
 

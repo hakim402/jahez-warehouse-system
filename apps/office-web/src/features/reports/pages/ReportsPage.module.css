@@ -1,0 +1,54 @@
+.layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-4); }
+.builder { padding: var(--space-5); }
+.builder h2, .history h2 { font-size: 1.125rem; }
+.builder form { display: grid; gap: var(--space-3); margin-block-start: var(--space-4); }
+.fields {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: start;
+  gap: var(--space-3);
+  min-inline-size: 0;
+  padding: 0;
+  margin: 0;
+  border: 0;
+}
+.fields > :global(.field) { flex: 1 1 150px; min-inline-size: 0; }
+.fields > :first-child { flex-basis: 195px; }
+.fields > button { align-self: start; margin-block-start: 28px; }
+.label { font-size: .8125rem; font-weight: 600; }
+.history { min-inline-size: 0; display: flex; flex-direction: column; block-size: 560px; }
+.historyHeading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-5);
+  border-block-end: 1px solid var(--jahez-border);
+}
+.historyHeading :global(.filter-select) { inline-size: auto; min-inline-size: 145px; }
+.historyBody { flex: 1; min-block-size: 0; overflow: auto; display: flex; flex-direction: column; }
+.historyBody :global(.table-scroll) { flex: 1; }
+.summary { display: grid; gap: 4px; min-inline-size: 175px; overflow-wrap: anywhere; }
+.notice { padding: var(--space-2) var(--space-5); }
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: var(--glass-input);
+  color: var(--jahez-muted);
+  font-size: .75rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.badge::before { content: ''; inline-size: 6px; block-size: 6px; border-radius: 50%; background: currentColor; }
+.badge[data-status='processing'] { color: var(--jahez-brand-deep); background: rgb(123 87 252 / 9%); }
+.badge[data-status='completed'] { color: var(--jahez-success); background: rgb(23 136 88 / 9%); }
+.badge[data-status='failed'] { color: var(--jahez-danger); background: rgb(158 35 56 / 8%); }
+@media (max-width: 700px) {
+  .history { block-size: auto; }
+  .fields > :global(.field), .fields > button { flex: 1 1 100%; }
+  .fields > button { margin-block-start: 0; }
+}

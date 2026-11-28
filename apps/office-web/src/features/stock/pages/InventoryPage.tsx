@@ -1,3 +1,4 @@
+import { ExportLink } from '../../reports/components/ExportLink';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router';
 import { useTranslation } from 'react-i18next';
@@ -30,7 +31,7 @@ export default function InventoryPage() {
   const records = tab === 'movements' ? movements : tab === 'age' ? data.age.data ?? [] : balances;
   const filtered = records.filter((row) => (!customer || customer === row.customerMark) && (!supplier || supplier === row.supplierName) && (!brand || brand === row.brand) &&
     Object.values(row.product).some((value) => value?.toLocaleLowerCase(format.language).includes(search.trim().toLocaleLowerCase(format.language))));
-  return <><div className="workspace-heading"><h1>{t('inventory')}</h1></div><section className="surface workspace-panel"><WarehouseGate scope={data.scope}>
+  return <><div className="workspace-heading"><h1>{t('inventory')}</h1>{data.scope.warehouseId && <ExportLink kind={tab === 'movements' ? 'stock_movements' : 'inventory'} />}</div><section className="surface workspace-panel"><WarehouseGate scope={data.scope}>
     <ListTabs end={data.balances.data ? t('stockTotal', { value: formatStockCount(sumStockCounts(balances.map((row) => row.cartons)), format.language) }) : undefined} selected={tab} onChange={setTab} label={t('inventory')} items={(['balances', 'movements', 'age'] as const).map((id) => ({ id, name: t(id), count: id === 'movements' ? (data.movements.data ? movements.length : undefined) : data[id].data?.length, partial: id === 'movements' && data.movements.hasNextPage }))} />
     <div className="table-toolbar"><SearchField label={t('searchProducts')} value={search} onChange={setSearch} /><div className="workspace-actions">
       {([{ key: 'customerMark', label: 'shippingMark', value: customer, set: setCustomer }, { key: 'supplierName', label: 'supplier', value: supplier, set: setSupplier }, { key: 'brand', label: 'brand', value: brand, set: setBrand }] as const).map((filter) =>

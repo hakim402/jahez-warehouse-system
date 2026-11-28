@@ -1,3 +1,4 @@
+import { ExportLink } from '../../reports/components/ExportLink';
 import { ArrowDown, ArrowUp, FileText, Plus } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -59,7 +60,15 @@ export default function ExpensesPage() {
     { id: 'evidence', header: t('invoiceEvidence'), cell: ({ row }) => <button type="button" className={row.original.invoiceFileId ? styles.invoice : styles.exception} onClick={() => setEvidence(row.original)}><FileText size={14} aria-hidden="true" />{t(row.original.invoiceFileId ? 'viewInvoice' : 'exceptionNoted')}</button> },
   ];
   return <>
-    <div className="workspace-heading"><h1>{t('expenses')}</h1><button type="button" className="button button-primary" disabled={!scope.warehouseId} onClick={() => setRecording(true)}><Plus size={16} aria-hidden="true" />{t('recordExpense')}</button></div>
+    <div className="workspace-heading">
+      <h1>{t('expenses')}</h1>
+      <div className="workspace-actions">
+        {scope.warehouseId && <ExportLink kind="expenses" filters={{ from, to, customerId: customer }} />}
+        <button type="button" className="button button-primary" disabled={!scope.warehouseId} onClick={() => setRecording(true)}>
+          <Plus size={16} aria-hidden="true" />{t('recordExpense')}
+        </button>
+      </div>
+    </div>
     <section className="surface workspace-panel"><WarehouseGate scope={scope}><QueryState query={query}>
       <div className="table-toolbar"><SearchField label={t('searchExpenses')} value={search} onChange={setSearch} /><div className="workspace-actions">
         <FilterSelect label={t('category')} value={category} onChange={setCategory} options={[{ value: '', label: t('category') }, ...categoryOptions]} />

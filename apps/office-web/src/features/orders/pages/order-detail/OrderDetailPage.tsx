@@ -1,3 +1,4 @@
+import { ExportLink } from '../../../reports/components/ExportLink';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Check, Ellipsis, Pencil, XCircle } from 'lucide-react';
 import { DropdownMenu } from 'radix-ui';
@@ -71,6 +72,7 @@ export default function OrderDetailPage() {
       <div className="workspace-heading">
         <div className="workspace-actions"><h1><bdi>{order.orderNo}</bdi></h1><OrderStatusBadge status={order.status} /></div>
         <div className="workspace-actions">
+          <ExportLink kind="purchase_order" filters={{ orderId: order.id }} />
           {order.status === 'draft' && <>
             <Link className="button" to={'/orders/' + id + '/edit'}><Pencil size={15} aria-hidden="true" />{t('editDraft')}</Link>
             <button type="button" className="button button-primary" onClick={() => choose('confirm')}>
