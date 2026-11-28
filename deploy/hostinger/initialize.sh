@@ -73,6 +73,6 @@ COMMIT;
 SQL
 } | "${compose[@]}" exec -T postgres psql -X -q -v ON_ERROR_STOP=1 -U warehouse_admin -d jahez_warehouse
 
-"${compose[@]}" run --rm --no-deps -T --env-from-file "$migration" api node apps/server/dist/migrate.js
+"${compose[@]}" run --rm --no-deps -T --env-from-file "$migration" api node apps/server/dist/migrate.js </dev/null
 "${compose[@]}" exec -T postgres psql -X -v ON_ERROR_STOP=1 -U warehouse_admin -d jahez_warehouse \
   < "$deployment/runtime-grants.sql"

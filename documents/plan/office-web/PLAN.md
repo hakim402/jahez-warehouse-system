@@ -285,9 +285,9 @@ Dependencies are Server Step 3 for order and catalog contracts, Step 1 for accou
 
 ## Step 8 — Regional pilot verification
 
-**Hostinger international deployment — In progress (2026-11-28).** Build Office Web with the pinned repository dependencies and relative `/api/v1`. Serve the release from the existing Jahez Nginx with the same-origin API and Socket.IO routes. The build needs the international warehouse ID before staff onboarding. Verify the sign-in shell, static assets, direct routes, REST readiness and the WebSocket handshake over TLS. Use synthetic accounts for authorized end-to-end checks and record first-owner and warehouse provisioning gaps separately. The deployment depends on Server Step 11 and changes no Office Web screens or API contracts.
+**Hostinger international deployment — Deployed and transport verified (2026-11-28).** Release `f640b2a` serves Office Web with relative `/api/v1` and same-origin Socket.IO through the existing Jahez Nginx. The sign-in shell, static assets, direct routes, REST readiness and WebSocket handshake passed over TLS. The international warehouse ID and first owner are needed before staff onboarding and live authenticated acceptance. The deployment depends on Server Step 11.
 
-**Status:** Local verification passed for both deployment profiles (2026-11-28). International staging is the first target and needs its URL and synthetic sign-in. Mainland staging and Yiwu verification remain pending.
+**Status:** Local verification passed for both deployment profiles (2026-11-28). International Hostinger transport checks passed. Authenticated international pilot checks, mainland staging and Yiwu verification remain pending.
 
 **Goal:** Verify that the Office Web pilot works across regional staging environments and record evidence and open gaps separately for each region.
 

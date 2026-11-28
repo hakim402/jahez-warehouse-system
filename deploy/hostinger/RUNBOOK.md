@@ -19,7 +19,7 @@ The Jahez account runs the warehouse API, worker and PostgreSQL 16 in the `jahez
 
 1. Install `company-nginx-proxy.conf` as `~/services/nginx/snippets/jahez-warehouse-proxy.conf` and `company-nginx.conf` as `~/services/nginx/conf.d/jahez-warehouse.conf`. Test the Jahez Nginx configuration and reload it. Probe both private virtual hosts with their `Host` headers.
 2. The administrator installs `public-nginx-http.conf` as a separate site and creates `/var/www/jahez-warehouse-acme/.well-known/acme-challenge/`. Test and reload public Nginx, then issue a webroot certificate named `warehouse.jahez.online` for both domains. Install `public-nginx-https.conf`, test and reload, and configure a renewal deploy hook to reload Nginx for that certificate.
-3. Verify HTTPS on both hosts, redirects, SPA route refresh, assets, API readiness and Socket.IO upgrades. Recheck the Jahez website and Shipping. Run the Office Web pilot checklist against synthetic data before staff onboarding.
+3. Wait for the new Nginx workers to take over after each reload. Verify HTTPS on both hosts, redirects, SPA route refresh, assets, API readiness and Socket.IO upgrades. Recheck the Jahez website and Shipping. Run the Office Web pilot checklist against synthetic data before staff onboarding.
 
 ## Operate and recover
 

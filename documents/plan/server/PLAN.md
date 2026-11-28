@@ -189,7 +189,7 @@ This is an authorized follow-up to support Office Web Step 5. The existing verif
 
 ## Step 11 — Regional Staging and Pilot Readiness
 
-**Hostinger international deployment — In progress (2026-11-28).** Deploy the warehouse API, job worker and database under the Jahez rootless Docker account. Reuse the existing Jahez and public Nginx services for Office Web, API and WebSockets. Keep the warehouse stack in its own Compose project with a registered loopback listener, persistent volumes and a dedicated user service.
+**Hostinger international deployment — Deployed and infrastructure verified (2026-11-28).** Release `f640b2a` runs the warehouse API, job worker and database under the Jahez rootless Docker account. The existing Jahez and public Nginx services serve Office Web, API and WebSockets. The warehouse has its own Compose project, registered loopback listener, persistent volumes and user service.
 
 1. Inspect the VPS routing, isolation policy, release revision and available build/backup tools. Confirm the private port and baseline the existing Jahez site and Shipping.
 2. Add a Hostinger Compose override, company Nginx config, boot unit and runbook. Bound CPU, memory and logs. Build one Server image for API and worker, apply migrations through the database owner, and keep runtime grants and credentials scoped. Use private local storage for this release. Keep external extraction disabled until an authorized provider is configured.
@@ -197,6 +197,8 @@ This is an authorized follow-up to support Office Web Step 5. The existing verif
 4. Register the warehouse route with the existing ingress, provision TLS for the two international domains and verify Office Web, API/WebSocket routing and existing-site health. Record the deployed revision, recovery steps, verification evidence and open dependencies.
 
 **Container build correction.** The first VPS build resolved the default pnpm release at the repository root because Corepack could not see the Server `package.json` before resolving `pnpm --dir`. Run install, build and pruning from the Server package directory so Corepack honors the existing pin. Build Office Web from its package directory for the same reason. Rebuild and verify from the reviewed revision before cutover.
+
+**Bootstrap follow-up.** Close the migration container's standard input so it cannot consume commands sent to the parent SSH shell. Verify the initialized roles, start the dedicated unit and confirm private readiness before enabling the edge routes.
 
 **Client integration documentation** — Inspect the implemented controllers and services, write one shared guide for Office Web and Worker Mobile, and link it from agent guidance and client roadmaps. Document actual contracts, permissions, retry rules, designs, and known gaps. Verify links and request examples before publishing.
 
@@ -206,7 +208,7 @@ This is an authorized follow-up to support Office Web Step 5. The existing verif
 
 **Review follow-up** — Added Docker secret exclusions and writable storage ownership, API readiness gating, distinct runtime-role templates and required provisioning instructions. Restore failures exit nonzero and roll back the database restore. Cloud object recovery remains a regional staging check.
 
-**Status** — Deliverables shipped; encrypted backup/restore verified locally (17 checks). Regional staging checks are pending — they require staging hosts, domains, TLS certificates, cloud storage credentials, AI provider keys, and physical Yiwu network access that are not available from the development machine. See the open-checks list in the [deploy runbook](../../../deploy/RUNBOOK.md).
+**Status** — International infrastructure and on-VPS encrypted recovery passed. Pilot onboarding still needs the first owner, an assigned warehouse and an off-server backup destination and recovery test. External invoice extraction and full live authenticated acceptance are pending. Mainland staging is outside the Hostinger release. See the [Hostinger runbook](../../../deploy/hostinger/RUNBOOK.md) and verification record.
 
 **Goal** — Produce the deployment configuration and operational scripts so the same build and migrations can run in both regions (Hostinger international, Alibaba Cloud ECS mainland), and practice locally the parts that can be rehearsed without staging — above all encrypted, region-local, off-server backup and restore. Regional deployment, TLS issuance, Nginx routing under real domains, Yiwu network access, and mobile-upgrade compatibility cannot be exercised from the development machine, so they are recorded as pending staging checks rather than claimed as verified.
 

@@ -257,6 +257,8 @@
 
 ## Step 8 — Regional pilot verification
 
+**Hostinger international deployment — 2026-11-28.** Published the Office Web static release at `https://office.jahez.online` under `f640b2a`. Verified the sign-in shell, JavaScript assets, direct route refresh, same-origin API readiness and WebSocket over TLS. Both international domains passed IPv4 and IPv6 routing and renewal checks. The shell is available without a configured warehouse ID. First-owner and warehouse provisioning, the warehouse-scoped rebuild and live authenticated workflow checks remain pending.
+
 **Hostinger build preparation — 2026-11-28.** Built Office Web with Node 22 and pinned pnpm from the package directory on the VPS. The production build uses relative `/api/v1`. The warehouse assignment is pending. Next, install the generated assets and verify both private and public Nginx routes, HTTPS, API and Socket.IO.
 
 **2026-11-28 — Local verification passed. Regional staging verification remains open.**
