@@ -36,6 +36,20 @@ Use [Office Web's roadmap](../office-web/ROADMAP.md) and [Worker Mobile's roadma
 
 ## Step 2 — Identity, Tenancy, and Audit
 
+### Core Office Web settings support — Planned, awaiting mockup approval (2026-11-28)
+
+This is an authorized follow-up to support Office Web Step 5. The existing verified Step 2 baseline remains unchanged. The user's design-review checkpoint must pass before server implementation. No server code, migration, live user, or deployment changes during mockup preparation.
+
+1. Add owner-only tenant-scoped user/settings services and controllers. Contracts: `GET /users` with search/role/active/cursor/limit (default 50, max 200) returning safe user records and `nextCursor`; `POST /users` with name/phone/role/initial password/warehouseIds; `PATCH /users/:id` with editable identity/role/active/warehouseIds plus expected version; `POST /users/:id/password-reset` with new password and expected version; `GET /settings/warehouses` returning existing company id/name/code options; GET/PATCH `/settings/receiving-tolerances` returning/updating both percentages and version. Return no passwords/hashes. Keep existing APIs compatible.
+2. Add a forward migration for active-user status (existing accounts active), indexes, narrowly scoped owner access, and required runtime grants/functions. Reuse existing user/company versions for stale-write checks and increment versions on successful changes. Do not rewrite applied migrations, seed/rename categories, delete users, or create warehouses.
+3. Perform user creation and membership assignment, and user edits plus membership replacement, transactionally. Validate company scope for every user and warehouse ID, enforce duplicate-phone handling, and audit safe field changes. Serialize owner-affecting changes with a company-row lock so concurrent demotions/disables cannot remove the last active owner; reject self-disable. Preserve historical user IDs and warehouse records.
+4. Hash initial/reset passwords with the existing scrypt helper; enforce 12–128 characters. Revoke affected sessions transactionally on password/role/access/active changes. Reject disabled users at login, refresh, authenticated REST, and Socket.IO revalidation, including old access tokens. Reactivation never revives revoked sessions. Keep mobile wire shapes stable; no forced password-change flow or deletion of pending offline operations.
+5. Read/update company tolerance fields through an owner-only service. Validate 0–100 with at most two decimals and an expected-version conflict check; save both values atomically and audit before/after. Preserve 3% CBM/5% weight defaults and the existing receiving comparison service. Apply the new values on subsequent receipt processing; never regenerate historical findings.
+6. Update the Backend Integration Guide with request/response/error shapes and access rules. Test on disposable PostgreSQL: owner success, trader/worker denial, cross-tenant and invalid-warehouse rejection, duplicate phone, stale versions, concurrent last-owner protection, self-disable, password bounds/reset, disable/reactivate, old-token/refresh/realtime rejection, audit redaction, migration rerun/runtime restrictions, and next-receipt tolerance changes without historical rewrites. Run server typecheck/build and Office Web build, record actual progress, and commit/push the verified implementation/documents together. Live-account and previous-mobile integration checks remain separate until exercised.
+
+**Design dependency** Office Web references 17–19, linked from its Step 5 plan. **Current status** Planning only; mockup approval pending.
+
+
 **Status** — Verified for the recorded server scope. See the [pilot setup notes](../../progress/server/PROGRESS.md#step-2--identity-tenancy-and-audit).
 
 1. Use migrations 0002–0004 to add companies, warehouses, users, memberships, authentication sessions, audit events, and tenant and warehouse row-level security.

@@ -195,6 +195,14 @@
 
 ## Step 5 — Expenses and owner settings
 
+### 2026-11-28 — Core settings mockup-review checkpoint
+
+- Saved the confirmed core-settings implementation plan under Office Web Step 5 and Server Step 2: owner user creation/editing, role/warehouse assignment, initial/reset passwords (12–128 characters), disable/reactivate, last-owner/self-disable protection, and receiving-tolerance management. The user explicitly requested reviewable mockups before coding.
+- Inspected the approved Settings, dialog, and dropdown references. Prepared draft references `17-settings-users-access.png`, `18-settings-user-dialogs.png`, and `19-settings-receiving-tolerances.png`, state examples, source HTML/CSS/JS, and narrow English/Arabic/Chinese variants. All records are synthetic. The prototype has no API connections and does not change accounts/settings.
+- Rendered 12 PNGs in isolated Chrome, visually inspected the principal pages/dialog board and narrow Arabic/Chinese previews, and verified desktop/narrow document overflow, Arabic direction, narrow dialog containment, and prototype Escape/focus return. JavaScript syntax and staged-diff checks passed. Application/server builds were not applicable to this documentation/design-only update.
+- User approval is pending. No application code, server code, database migration, live data, mobile app, or deployment was changed. Next: review the draft designs with the user, then begin the saved server/client implementation only after approval. Existing Step 5 implementation/live-verification status below remains unchanged.
+
+
 **Current verification:** Expenses, Account/session settings, and owner category management are implemented and synthetically verified. Step 5 remains partially verified: live Jahez account checks and the remaining settings designs/contracts are pending.
 
 ### 2026-11-28 — Expenses, account sessions, and expense categories

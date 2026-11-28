@@ -20,6 +20,13 @@ Steps 1–10 are verified on the recorded local and disposable PostgreSQL checks
 
 ## Step 2 — Identity, Tenancy, and Audit
 
+### 2026-11-28 — Office Web core-settings follow-up planned
+
+- Saved the authorized owner user/access/password/status and receiving-tolerance API/migration/testing plan under Server Step 2, linked to Office Web Step 5. Preserve the existing verified identity/tenancy baseline and mobile contracts.
+- Prepared and rendered the Office Web design drafts first, as explicitly requested by the user. Owner controls, transactional membership edits, session revocation/disabled-user checks, concurrency protection for the last active owner, tolerance validation/history behavior, audit redaction, and disposable-database checks are planned; none are implemented in this follow-up yet.
+- This update changes plans, design references, and progress records only. No server code, migrations, live accounts, databases, or deployment changed. Server typecheck/build were not required for these documentation changes. Next: obtain user design approval, then implement and verify the saved follow-up plan.
+
+
 **Verified** — 2026-11-25 to 2026-11-26. Commits `679bc50`, `f447834`, and `4787ed4`.
 
 - Shipped companies, warehouses, users, memberships, password sign-in by phone, JWT sessions with refresh rotation and revocation, tenant and warehouse row-level security, and append-only audit events in migrations 0002–0004.
