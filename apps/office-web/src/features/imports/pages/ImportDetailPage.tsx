@@ -1,3 +1,4 @@
+import { ChevronLeft } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { useTranslation } from 'react-i18next';
@@ -16,7 +17,9 @@ export default function ImportDetailPage() {
   const scope = useWarehouseScope();
   const { importId = '' } = useParams();
   return <>
-    <Link className="button" to="/imports">{t('invoiceImports')}</Link>
+    <Link className="back-link" to="/imports">
+      <ChevronLeft className="rtl-icon" size={16} aria-hidden="true" />{t('invoiceImports')}
+    </Link>
     {scope.warehouseId ? <ImportDetail key={scope.queryKey('import', importId).join('/')} scope={scope} id={importId} /> :
       <section className="surface workspace-panel"><WarehouseState active={scope.active} /></section>}
   </>;

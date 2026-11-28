@@ -251,4 +251,6 @@
 - Office Web build passed. Isolated Chrome exercised upload failure and the same upload ID on retry, an ambiguous enqueue that yielded one import, queued-to-draft polling, authenticated XLSX preview and byte-matched download, missing match and confidence gates, Arabic digit correction, review failure with retained edits, derived totals, both commit paths, filename search, failed extraction retry, manual expense fallback and denied warehouse access. Reviewed 1440 px desktop and 390 px EN/AR/ZH views. The existing synthetic Expenses/category/session regression passed after shared file-control changes.
 - Live provider accuracy, worker and storage integration remain pending. Direct searchable-PDF extraction and concurrent-review version handling are server follow-ups. No server or mobile code changed. Next roadmap step is Step 8 regional pilot verification.
 
+- Review header follow-up: replaced the boxed Invoice imports button with the shared back link above the title to match `16-invoice-review.png`. Office Web build and isolated Chrome checks passed for desktop placement, narrow Arabic RTL, and navigation back to history.
+
 [Office web plan](../../plan/office-web/PLAN.md)

@@ -279,6 +279,8 @@ Dependencies are Server Step 3 for order and catalog contracts, Step 1 for accou
 6. Verify Office Web build and synthetic browser workflows for upload/retry, queued-to-review progress, both record types, source preview/download, review gates, server errors, commit and navigation, warehouse denial and EN/AR/ZH narrow views. Record live worker, storage and provider accuracy checks separately.
 7. Dependencies: existing Server Step 10, migration 0011, worker, private files and the configured extractor. No server or mobile changes. Direct searchable PDF extraction and multi-reviewer version conflicts are server gaps. Use synthetic invoices only for verification.
 
+**Review header follow-up (2026-11-28):** Match `16-invoice-review.png` by replacing the boxed history button above the title with the shared back-link pattern. Verify placement, direction and navigation on desktop and narrow layouts.
+
 ## Step 8 — Regional pilot verification
 
 Verify the full pilot in international and mainland China staging, including permissions, all three languages, responsive layouts, downloads, and live reconnect.
