@@ -98,6 +98,18 @@ Dependencies are Server Step 3 for order and catalog contracts, Step 1 for accou
 
 ## Step 4 — Findings, evidence, and dispatch views
 
+### Dialog design conformance fix — Verified (2026-11-28)
+
+**Goal** Remove the visual deviations between the implemented stock-adjustment dialog and `reference-dialog.png`, reported by the user from the running app on 2026-11-28.
+
+1. Match the dialog surface and scrim to `reference-dialog.png`: a light blurred lavender veil behind a near-white floating glass panel, instead of the current dark scrim showing through the translucent dialog body. Applies to every `OfficeDialog` consumer.
+2. Remove the stray native fieldset border around the adjustment dialog body (`.fields` in `StockAdjustmentDialog.module.css`), keeping the disabled-fieldset busy protection. The catalog editor already resets this chrome.
+3. Replace the native select arrow (`select.text-input { appearance: auto }`) with the thin muted chevron from `reference-dropdown.png` and the editor mockups: `appearance: none` plus a token-colored SVG chevron layered over the glass input gradient, RTL-aware placement, and reserved inline-end padding. Native option list, keyboard behavior, and values stay unchanged.
+4. Rebuild the adjustment photo field as the reference dropzone: dashed glass zone with an upload icon, brand-colored "Choose a file", and muted "or drag it here"; hidden but focusable file input; drag-and-drop with the existing 15 MB and image-type validation; selected-photo preview below. Remove the native "Choose File / No file chosen" chrome and the duplicated "Choose a photo" hint. Add trilingual copy for the dropzone.
+5. Verify the Office Web build and synthetic Chrome checks: desktop and 390 px layouts, Arabic RTL, keyboard focus on the dropzone and select, file selection and drag-drop validation, preview, and a successful synthetic submission. Record results under Step 4, then commit and push the focused Office Web update.
+
+**Design references** `reference-dialog.png`, `reference-dropdown.png`, `09-inventory.png`. **Dependencies** none beyond the existing Step 4 contracts; no API, Server, or Worker Mobile changes.
+
 **Status** Verified (2026-11-28).
 
 **Goal** Show ordered and received values together, let traders review private evidence and resolve findings, and display dispatch packing details and authorized stock adjustments with traceable movement history.

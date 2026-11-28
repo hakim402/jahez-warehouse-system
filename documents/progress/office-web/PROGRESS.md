@@ -129,6 +129,15 @@
 
 ## Step 4 — Findings, evidence, and dispatch views
 
+### 2026-11-28 — Dialog design conformance fix
+
+- Fixed the user-reported visual deviations of the stock-adjustment dialog against `reference-dialog.png` and `reference-dropdown.png`. The dialog overlay is now a light blurred lavender veil (`rgb(244 241 255 / 60%)` with 6 px backdrop blur) behind a near-white `--glass-floating` panel for every `OfficeDialog` consumer, replacing the dark scrim that showed through the translucent body.
+- Removed the stray native fieldset border around the adjustment form body (`.fields` border/margin reset), keeping the disabled-fieldset busy protection.
+- Replaced the native select arrow with the reference thin muted chevron: `appearance: none` plus a token-colored SVG layered over the glass input gradient, RTL-aware placement (right 12 px LTR, left 12 px RTL), and 40 px reserved inline-end padding. Native option list, keyboard behavior, and values are unchanged.
+- Rebuilt the adjustment photo field as the reference dashed glass dropzone with an upload icon, brand-colored "Choose a file", and muted "or drag it here" (trilingual copy added). The file input is visually hidden but focusable; drag-over highlights the zone; drops reuse the existing 15 MB and image-type validation; the selected-photo preview renders below. Removed the native "Choose File / No file chosen" chrome and the duplicated hint.
+- Verification: `pnpm --dir apps/office-web build` (typecheck + Vite) passed before and after removing the temporary fixture. Synthetic Chrome checks on a stubbed-fetch fixture page passed: computed styles confirmed `appearance: none` with one chevron layer, zero fieldset border, light veil, and floating panel; file selection showed the preview; drag-over set the highlight; a dropped `.txt` file showed "Choose a JPG, PNG, WebP, HEIC, or HEIF photo." with `aria-invalid` and cleared the preview; a dropped PNG restored the preview and cleared the error; real Tab focus drew the 2 px brand outline (3 px offset) on the dropzone; a synthetic submission (lot RCPT-000101, 2 cartons) closed the dialog. Arabic RTL rendered `dir="rtl"` with the chevron at left 12 px and Arabic dropzone copy; the emulated 390 × 844 mobile viewport showed no document or dialog horizontal overflow. Console reported no errors or warnings. Temporary fixture files and the dev server were removed; no production records or private invoices were used.
+- Remaining gaps are unchanged from the Step 4 entry below; live-account and Worker Mobile integration checks remain separate.
+
 ### 2026-11-28 — Finding resolution, receipt details, dispatch, and stock adjustments
 
 - Reviewed the repository workflow, Office Web structure, Backend Integration Guide, and the receiving, receipt-detail, inventory, dispatch-history, and dispatch-detail mockups. Confirmed the finding review dialog and advanced lot-aware adjustment form before implementation. Server and Worker Mobile were not changed.

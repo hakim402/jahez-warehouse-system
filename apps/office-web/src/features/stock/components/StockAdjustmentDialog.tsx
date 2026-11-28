@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { ImagePlus } from 'lucide-react';
+import { ImagePlus, Upload } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { ApiError } from '../../../api/client';
 import { useRecordFormat } from '../../../shared/format-record';
@@ -42,6 +42,7 @@ export function StockAdjustmentDialog({ stock, scope, onClose }: {
   const [failureDetails, setFailureDetails] = useState<string[]>([]);
   const [submissionUnknown, setSubmissionUnknown] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
   const operationId = useRef(crypto.randomUUID());
   const uploadId = useRef(crypto.randomUUID());
   const lastPayload = useRef<string | undefined>(undefined);
@@ -68,6 +69,14 @@ export function StockAdjustmentDialog({ stock, scope, onClose }: {
     setFailure(undefined);
     setFailureDetails([]);
   };
+
+  function selectPhoto(file: File | null) {
+    setPhoto(null); setUploadedPhoto(null); uploadId.current = crypto.randomUUID();
+    if (file && file.size > maxPhotoBytes) { setErrors((current) => ({ ...current, photo: t('photoTooLarge') })); return; }
+    if (file && file.type && !photoTypes.has(file.type)) { setErrors((current) => ({ ...current, photo: t('photoTypeInvalid') })); return; }
+    setPhoto(file);
+    setErrors((current) => ({ ...current, photo: '' })); setFailure(undefined); setFailureDetails([]);
+  }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -202,14 +211,22 @@ export function StockAdjustmentDialog({ stock, scope, onClose }: {
           {(attributes) => <textarea {...attributes} rows={3} maxLength={2000} value={reason} onChange={(event) => update('reason', event.target.value)} />}
         </LabeledField>
         <LabeledField label={t('adjustmentPhoto')} hint={t('required')} error={errors.photo}>
-          {(attributes) => <div className={styles.photoField}><input {...attributes} type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" onChange={(event) => {
-            const file = event.target.files?.[0] ?? null;
-            setPhoto(null); setUploadedPhoto(null); uploadId.current = crypto.randomUUID();
-            if (file && file.size > maxPhotoBytes) { setErrors((current) => ({ ...current, photo: t('photoTooLarge') })); return; }
-            if (file && file.type && !photoTypes.has(file.type)) { setErrors((current) => ({ ...current, photo: t('photoTypeInvalid') })); return; }
-            setPhoto(file);
-            setErrors((current) => ({ ...current, photo: '' })); setFailure(undefined); setFailureDetails([]);
-          }} /><PhotoPreview file={photo} /></div>}
+          {(attributes) => <div className={styles.photoField}>
+            <input {...attributes} className={styles.photoInput} type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" onChange={(event) => selectPhoto(event.target.files?.[0] ?? null)} />
+            <label htmlFor={attributes.id} className={styles.photoDropzone} data-drag={dragOver ? 'true' : undefined}
+              onDragOver={(event) => { if (busy || submissionUnknown) return; event.preventDefault(); setDragOver(true); }}
+              onDragLeave={() => setDragOver(false)}
+              onDrop={(event) => {
+                if (busy || submissionUnknown) return;
+                event.preventDefault(); setDragOver(false);
+                selectPhoto(event.dataTransfer.files?.[0] ?? null);
+              }}>
+              <Upload size={18} aria-hidden="true" />
+              <span className={styles.photoChoose}>{t('chooseFile')}</span>
+              <span>{t('dragFileHere')}</span>
+            </label>
+            <PhotoPreview file={photo} />
+          </div>}
         </LabeledField>
         <LabeledField label={t('note')} hint={t('optional')}>
           {(attributes) => <textarea {...attributes} rows={3} maxLength={2000} value={note} onChange={(event) => update('note', event.target.value)} />}
@@ -241,7 +258,7 @@ function PhotoPreview({ file }: { file: File | null }) {
     setUrl(objectUrl);
     return () => URL.revokeObjectURL(objectUrl);
   }, [file]);
-  if (!file) return <span className={styles.photoEmpty}><ImagePlus size={18} aria-hidden="true" />{t('choosePhoto')}</span>;
+  if (!file) return null;
   return <div className={styles.photoPreview}>{url && file.type.startsWith('image/') ? <img src={url} alt={file.name} /> : <ImagePlus size={22} aria-hidden="true" />}<span>{file.name}</span></div>;
 }
 

@@ -223,7 +223,8 @@ const copy = {
   retryAdjustment: ['Retry adjustment', 'إعادة محاولة التسوية', '重试调整'],
   recordAdjustment: ['Record adjustment', 'تسجيل التسوية', '记录调整'],
   lotDimensionsAutomatic: ['From receipt lot', 'من دفعة الاستلام', '取自收货批次'],
-  choosePhoto: ['Choose a photo', 'اختر صورة', '选择照片'],
+  chooseFile: ['Choose a file', 'اختر ملفاً', '选择文件'],
+  dragFileHere: ['or drag it here', 'أو أفلته هنا', '或拖拽到此处'],
   adjustmentOverdraw: ['Available {{available}}; requested {{requested}}; shortage {{shortage}}. Reduce the amount and try again.', 'المتاح {{available}}؛ المطلوب {{requested}}؛ النقص {{shortage}}. قلّل الكمية وحاول مجدداً.', '可用 {{available}}，申请 {{requested}}，缺少 {{shortage}}。请减少数量后重试。'],
 
   dispatchHistory: ['Dispatch history', 'سجل الشحن', '发货历史'],

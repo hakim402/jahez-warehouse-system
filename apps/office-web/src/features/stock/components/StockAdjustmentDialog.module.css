@@ -2,6 +2,8 @@
   display: grid;
   gap: var(--space-4);
   min-inline-size: 0;
+  border: 0;
+  margin: 0;
 }
 .stockSummary {
   display: flex;
@@ -96,29 +98,49 @@
   display: grid;
   gap: var(--space-3);
 }
-.photoField input[type="file"] {
-  inline-size: 100%;
-  min-block-size: 50px;
-  padding: var(--space-2);
+.photoInput {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.photoDropzone {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  min-block-size: 64px;
+  padding: var(--space-3);
   border: 1px dashed var(--jahez-control-border);
   border-radius: var(--radius-control);
   background: var(--glass-input);
-}
-.photoField input[type="file"]::file-selector-button {
-  min-block-size: 36px;
-  margin-inline-end: var(--space-3);
-  padding-inline: var(--space-3);
-  border: 1px solid var(--jahez-control-border);
-  border-radius: 8px;
-  background: var(--jahez-white);
-  cursor: pointer;
-}
-.photoEmpty {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
   color: var(--jahez-muted);
-  font-size: 13px;
+  font-size: 14px;
+  cursor: pointer;
+  transition:
+    border-color 150ms,
+    background-color 150ms;
+}
+.photoDropzone svg {
+  color: var(--jahez-brand-deep);
+}
+.photoChoose {
+  color: var(--jahez-brand-deep);
+  font-weight: 700;
+}
+.photoDropzone[data-drag="true"] {
+  border-color: var(--jahez-brand);
+  background: var(--jahez-lavender);
+}
+.photoInput:focus-visible + .photoDropzone {
+  outline: 2px solid var(--jahez-brand-deep);
+  outline-offset: 3px;
+}
+.photoInput[aria-invalid="true"] + .photoDropzone {
+  border-color: var(--jahez-danger);
 }
 .photoPreview {
   display: flex;

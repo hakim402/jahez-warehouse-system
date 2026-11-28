@@ -192,7 +192,22 @@ button:disabled {
 }
 
 select.text-input {
-  appearance: auto;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23625b78' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"),
+    var(--glass-input);
+  background-position:
+    right 12px center,
+    center;
+  background-size:
+    16px 16px,
+    auto;
+  background-repeat: no-repeat;
+  padding-inline-end: var(--space-8);
+}
+html[dir="rtl"] select.text-input {
+  background-position:
+    left 12px center,
+    center;
 }
 .text-input:hover:not(:disabled) {
   border-color: #8f7dbb;
@@ -631,8 +646,8 @@ html[dir="rtl"] .rtl-icon {
   position: fixed;
   z-index: 60;
   inset: 0;
-  background: rgb(23 19 43 / 32%);
-  backdrop-filter: blur(4px);
+  background: rgb(244 241 255 / 60%);
+  backdrop-filter: blur(6px);
 }
 .office-dialog {
   position: fixed;
@@ -646,7 +661,7 @@ html[dir="rtl"] .rtl-icon {
   overflow: auto;
   border: 1px solid var(--jahez-border);
   border-radius: var(--radius-card);
-  background: var(--glass-surface);
+  background: var(--glass-floating);
   border-color: rgb(255 255 255 / 80%);
   -webkit-backdrop-filter: blur(24px) saturate(130%);
   backdrop-filter: blur(24px) saturate(130%);
