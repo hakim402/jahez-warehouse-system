@@ -37,6 +37,10 @@
 - The first Step 2 iPad launch surfaced a storage startup error. Retry now rechecks startup storage without clearing a saved session, and the app reports draft database cleanup failures separately from secure session storage errors. Flutter analysis, the nine synthetic tests, and the iOS rebuild passed with this change.
 - Both the iPhone 17 and iPad mini created the native SQLite database. Read-only schema checks confirmed version 1 and the cached-order and receipt-draft tables on each simulator. The live receiving workflow remains pending on both simulators.
 - The iPhone 17 on iOS 26.4 signed in to Yiwu Warehouse. The live Receiving queue loaded and refreshed successfully, showing no orders waiting to be received. The iPad mini on iOS 26.5 reached the authenticated Yiwu home earlier in the session and later showed the session-ended screen. The iPad was returned to sign-in.
-- Pending before Step 3: refresh the live queue after signing back in on iPad and use a confirmed synthetic order in Yiwu to verify carton draft edits and offline relaunch on both simulators. Android device verification remains in Step 8.
+- After both workers signed in, each simulator loaded the confirmed Yiwu test order from the live queue. The iPhone opened a separate Check goods screen, and the iPad showed the queue and Check goods side by side. Both saved a carton draft locally. No receipt was submitted.
+- A temporary simulator build failed only the app’s HTTP connections. Both simulators showed the cached-order notice, opened the order and accepted a carton edit offline. Read-only SQLite comparisons after offline relaunch confirmed that the draft UUID and carton edits survived on both devices.
+- The first iPhone offline attempt showed a secure-storage retry and then an expired session. The empty order cache and draft table confirmed expiry cleanup. The offline workflow passed after a fresh sign-in. Explicit sign-out cleanup was verified with synthetic data.
+- Restored the original live build on both simulators. A read-only scan found no price, cost, or other checked commercial fields in either simulator’s order or draft snapshots.
+- Ready for Step 3, three-step receiving. Android device verification remains in Step 8.
 
 [Worker mobile plan](../../plan/worker-mobile/PLAN.md)
