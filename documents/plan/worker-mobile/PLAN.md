@@ -29,7 +29,7 @@ Server Steps 1–2 provide phone/password sign-in and reads of known assigned wa
 
 ## Step 2 — Offline order queue and receipt drafts
 
-**Implemented.** Step 1 was pushed as `d697a33`. The Step 2 SQLite and synthetic UI checks passed. The device check remains open.
+**Implemented.** Step 1 was pushed as `d697a33`. The Step 2 SQLite and synthetic UI checks passed. The iPhone live queue returned an empty result for Yiwu. Complete the authenticated iPad queue check and verify draft editing and offline recovery on both devices with a confirmed Yiwu test order before starting Step 3.
 
 1. Fetch the worker-safe `GET /orders/awaiting?warehouseId=…` response through the existing authenticated API client. Deserialize only the queue and receipt fields the worker needs. Use the signed-in tenant, worker, and server-verified warehouse to scope storage and requests.
 2. In `apps/worker-mobile/lib/offline`, add Drift tables and the initial SQLite schema for cached orders and local receipt drafts. Replace the cached queue only after a successful, valid response. Give each draft a stable UUID, preserve local edits and the order snapshot across offline restarts, and retain drafts when their orders leave the refreshed queue.

@@ -36,5 +36,7 @@
 - Nine synthetic Flutter tests passed. The 320 and 820 logical pixel layouts exercised an unavailable queue refresh, a carton edit using cached data, the draft-count sign-out prompt, and sign-out cleanup. The live iOS simulator check of the Step 2 receiving queue remains open.
 - The first Step 2 iPad launch surfaced a storage startup error. Retry now rechecks startup storage without clearing a saved session, and the app reports draft database cleanup failures separately from secure session storage errors. Flutter analysis, the nine synthetic tests, and the iOS rebuild passed with this change.
 - Both the iPhone 17 and iPad mini created the native SQLite database. Read-only schema checks confirmed version 1 and the cached-order and receipt-draft tables on each simulator. The live receiving workflow remains pending on both simulators.
+- The iPhone 17 on iOS 26.4 signed in to Yiwu Warehouse. The live Receiving queue loaded and refreshed successfully, showing no orders waiting to be received. The iPad mini on iOS 26.5 reached the authenticated Yiwu home earlier in the session and later showed the session-ended screen. The iPad was returned to sign-in.
+- Pending before Step 3: refresh the live queue after signing back in on iPad and use a confirmed synthetic order in Yiwu to verify carton draft edits and offline relaunch on both simulators. Android device verification remains in Step 8.
 
 [Worker mobile plan](../../plan/worker-mobile/PLAN.md)
