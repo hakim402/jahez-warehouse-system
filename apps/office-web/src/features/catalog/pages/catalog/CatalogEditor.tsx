@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
+import { photoSource } from '../../../../shared/photo-source';
 import { ApiError } from '../../../../api/client';
 import { LabeledField } from '../../../../shared/ui/LabeledField';
 import { OfficeDialog } from '../../../../shared/ui/OfficeDialog';
@@ -13,17 +14,6 @@ export const catalogAction = {
   supplier: { add: 'addSupplier', edit: 'editSupplier' },
   customer: { add: 'addCustomer', edit: 'editCustomer' },
 } as const;
-
-export function photoSource(value: string | null) {
-  if (!value) return undefined;
-  try {
-    const url = new URL(value, window.location.origin);
-    return url.protocol === 'https:' || (url.protocol === 'http:' && url.origin === window.location.origin)
-      ? url.href : undefined;
-  } catch {
-    return undefined;
-  }
-}
 
 export function CatalogEditor({ editor, queryKey, onClose }: {
   editor: CatalogEditorState;

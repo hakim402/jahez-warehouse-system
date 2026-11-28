@@ -1,4 +1,5 @@
 import { CalendarDays, ChevronDown, X } from 'lucide-react';
+import { useId, useState } from 'react';
 import { Popover } from 'radix-ui';
 import { useTranslation } from 'react-i18next';
 import { useRecordFormat } from '../format-record';
@@ -14,11 +15,23 @@ export function DateRangeFilter({ label, from, to, onFromChange, onToChange }: {
 }) {
   const { t, i18n } = useTranslation();
   const format = useRecordFormat();
+  const [draftFrom, setDraftFrom] = useState(from);
+  const [draftTo, setDraftTo] = useState(to);
+  const errorId = useId();
+  const invalid = Boolean(draftFrom && draftTo && draftFrom > draftTo);
+  const changeRange = (nextFrom: string, nextTo: string) => {
+    setDraftFrom(nextFrom);
+    setDraftTo(nextTo);
+    if (!nextFrom || !nextTo || nextFrom <= nextTo) {
+      onFromChange(nextFrom);
+      onToChange(nextTo);
+    }
+  };
   const active = Boolean(from || to);
   const range = from && to ? `${format.date(from)} – ${format.date(to)}` :
     from ? `${t('fromDate')} ${format.date(from)}` : to ? `${t('toDate')} ${format.date(to)}` : label;
 
-  return <Popover.Root>
+  return <Popover.Root onOpenChange={(open) => { if (open) { setDraftFrom(from); setDraftTo(to); } }}>
     <Popover.Trigger className={'text-input filter-select ' + styles.trigger} aria-label={label} data-active={active}>
       <CalendarDays size={16} aria-hidden="true" />
       <span className={styles.triggerLabel}>{range}</span>
@@ -34,17 +47,18 @@ export function DateRangeFilter({ label, from, to, onFromChange, onToChange }: {
         </div>
         <div className={styles.fields}>
           <LabeledField label={t('fromDate')}>
-            {(props) => <input {...props} type="date" value={from} max={to || undefined}
-              onChange={(event) => onFromChange(event.currentTarget.value)} />}
+            {(props) => <input {...props} type="date" value={draftFrom} max={draftTo || undefined} aria-invalid={invalid || undefined} aria-describedby={invalid ? errorId : undefined}
+              onChange={(event) => changeRange(event.currentTarget.value, draftTo)} />}
           </LabeledField>
           <LabeledField label={t('toDate')}>
-            {(props) => <input {...props} type="date" value={to} min={from || undefined}
-              onChange={(event) => onToChange(event.currentTarget.value)} />}
+            {(props) => <input {...props} type="date" value={draftTo} min={draftFrom || undefined} aria-invalid={invalid || undefined} aria-describedby={invalid ? errorId : undefined}
+              onChange={(event) => changeRange(draftFrom, event.currentTarget.value)} />}
           </LabeledField>
         </div>
+        {invalid && <p id={errorId} className={'field-error ' + styles.error} role="alert">{t('dateRangeInvalid')}</p>}
         <div className={styles.actions}>
-          <button type="button" className={styles.clear} disabled={!active}
-            onClick={() => { onFromChange(''); onToChange(''); }}>{t('clearFilters')}</button>
+          <button type="button" className={styles.clear} disabled={!active && !draftFrom && !draftTo}
+            onClick={() => changeRange('', '')}>{t('clearFilters')}</button>
           <Popover.Close className="button button-primary">{t('close')}</Popover.Close>
         </div>
       </Popover.Content>

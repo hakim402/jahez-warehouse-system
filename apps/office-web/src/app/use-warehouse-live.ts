@@ -22,6 +22,7 @@ export function useWarehouseLive(warehouseId: string | undefined) {
         predicate: (query) =>
           [
             "warehouse-data",
+            "receiving-queue",
             "dashboard-history",
             "orders",
             "order",
@@ -31,7 +32,9 @@ export function useWarehouseLive(warehouseId: string | undefined) {
             "dispatch",
             "dispatch-detail",
             "stock-lots",
-          ].includes(String(query.queryKey[0])),
+          ].includes(String(query.queryKey[0])) &&
+          query.queryKey[1] === session.user.tenantId &&
+          query.queryKey[2] === session.user.id && query.queryKey[3] === warehouseId,
       });
     };
     const events = [

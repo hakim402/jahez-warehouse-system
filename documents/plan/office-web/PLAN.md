@@ -10,6 +10,13 @@ The filenames below refer to `documents/designs/office-web/`. Use `reference-dro
 
 ## Step 1 — App shell, API connection, and sign-in
 
+### Steps 1–4 review cleanup — Synthetically verified (2026-11-28)
+
+1. Move warehouse access, scope keys, and warehouse loading state into application/shared ownership. Preserve existing order keys and session/authorization behavior. Consolidate shared formatting and controls while keeping approved glass/header styling.
+2. Use the existing Step 1 design references and API contracts plus approved glass refinements. No Server, Worker Mobile, dependency or API changes.
+3. Verify production build and focused synthetic/browser regression checks, including independent failures, pagination, filters, keyboard/focus, multilingual layouts and existing mutation retries. Record actual checks and remaining live gaps before commit/push.
+
+
 ### Language trigger refinement — Verified (2026-11-28)
 
 1. Match the minimal header language control in `06-dashboard-overview.png` and `reference-dropdown.png`: remove its background and border, retain the globe, language label, chevron, 44 px target, and visible keyboard focus. Share this appearance with the sign-in language control.
@@ -52,6 +59,13 @@ This step changes Office Web only. The server and Worker Mobile contracts stay a
 
 ## Step 2 — Catalog and manual purchase orders
 
+### Steps 1–4 review cleanup — Synthetically verified (2026-11-28)
+
+1. Validate shared date ranges using draft fields and last valid applied range, with translated inline error. Reuse name fields without fake catalog records. Standardize toolbar clear actions and verify Orders date filtering.
+2. Use the existing Step 2 design references and API contracts plus approved glass refinements. No Server, Worker Mobile, dependency or API changes.
+3. Verify production build and focused synthetic/browser regression checks, including independent failures, pagination, filters, keyboard/focus, multilingual layouts and existing mutation retries. Record actual checks and remaining live gaps before commit/push.
+
+
 ### Order date filter refinement — Verified (2026-11-28)
 
 1. Refine the existing date-range popover using `02-purchase-orders.png` and `reference-dropdown.png`, retaining the requested glass finish. Extract a reusable date-range control with a matching filter trigger, clear heading, aligned From/To fields, clear action, and close action. Show the selected range on the trigger.
@@ -73,6 +87,13 @@ This step changes Office Web only. The server and Worker Mobile contracts stay a
 Dependencies are Server Step 3 for order and catalog contracts, Step 1 for account and verified warehouse context, and the assigned worker for end-to-end receiving verification. This step works in Office Web.
 
 ## Step 3 — Live receiving and stock dashboard
+
+### Steps 1–4 review cleanup — Synthetically verified (2026-11-28)
+
+1. Separate queue, findings, balances, age, and movements queries with resource-level states. Correct movement counts, independent receiving searches, translated discrepancy search, and no-results resets. Split stock/receiving views by owner, share safe movement pagination, and align Inventory model/photo/numeric/stock-total presentation with references.
+2. Use the existing Step 3 design references and API contracts plus approved glass refinements. No Server, Worker Mobile, dependency or API changes.
+3. Verify production build and focused synthetic/browser regression checks, including independent failures, pagination, filters, keyboard/focus, multilingual layouts and existing mutation retries. Record actual checks and remaining live gaps before commit/push.
+
 
 ### Receiving filter alignment — Verified (2026-11-28)
 
@@ -98,6 +119,13 @@ Dependencies are Server Step 3 for order and catalog contracts, Step 1 for accou
 
 ## Step 4 — Findings, evidence, and dispatch views
 
+### Steps 1–4 review cleanup — Synthetically verified (2026-11-28)
+
+1. Retain finding resolution, private evidence, exact adjustment arithmetic and replay protection while adapting shared scope and query invalidation. Review receipt/finding/adjustment/dispatch desktop/narrow/RTL/Chinese and print rendering. Keep server-contract gaps and live verification pending.
+2. Use the existing Step 4 design references and API contracts plus approved glass refinements. No Server, Worker Mobile, dependency or API changes.
+3. Verify production build and focused synthetic/browser regression checks, including independent failures, pagination, filters, keyboard/focus, multilingual layouts and existing mutation retries. Record actual checks and remaining live gaps before commit/push.
+
+
 ### Dialog design conformance fix — Verified (2026-11-28)
 
 **Goal** Remove the visual deviations between the implemented stock-adjustment dialog and `reference-dialog.png`, reported by the user from the running app on 2026-11-28.
@@ -110,7 +138,7 @@ Dependencies are Server Step 3 for order and catalog contracts, Step 1 for accou
 
 **Design references** `reference-dialog.png`, `reference-dropdown.png`, `09-inventory.png`. **Dependencies** none beyond the existing Step 4 contracts; no API, Server, or Worker Mobile changes.
 
-**Status** Verified (2026-11-28).
+**Status** Implemented and synthetically verified for Office Web (2026-11-28). Live-account, native browser print-preview, real Socket.IO/Worker Mobile handoff checks remain pending.
 
 **Goal** Show ordered and received values together, let traders review private evidence and resolve findings, and display dispatch packing details and authorized stock adjustments with traceable movement history.
 

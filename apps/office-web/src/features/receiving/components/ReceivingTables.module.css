@@ -1,0 +1,2 @@
+.progress { display: flex; align-items: center; gap: 10px; white-space: nowrap; }
+.progress progress { inline-size: 88px; block-size: 6px; accent-color: var(--jahez-brand); }

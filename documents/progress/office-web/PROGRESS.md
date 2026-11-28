@@ -8,6 +8,15 @@
 
 ## Step 1 — App shell, API connection, and sign-in
 
+**Current verification:** Implemented and synthetically verified for the cleanup below. Live-account sign-in and assigned-warehouse switching remain pending.
+
+### 2026-11-28 — Steps 1–4 shared structure cleanup
+
+- Moved warehouse scope, identity-aware query keys, and warehouse loading/error state into application/shared ownership. Order keys retain their previous identity order; other feature APIs no longer depend on the Orders scope. Live refresh now targets the active account/warehouse and includes the separate receiving queue.
+- Added a reusable resource query boundary with local loading/error/retry states and last-loaded-data handling. Shared product name fallback, photo URL validation, product identity thumbnails, numeric formatting, metadata styling, and clear-filter controls. Removed unused stock and duplicate catalog CSS. Catalog product reads share one cache with Inventory photo enrichment.
+- `pnpm --dir apps/office-web build` passed (TypeScript and Vite). Synthetic browser sign-in/reload and account-scoped live receipt-event invalidation passed. Approved glass surfaces, icon-only profile, and transparent language trigger remain in place. No server/mobile/API/dependency changes.
+
+
 ### 2026-11-28 — Structured API errors and session restoration
 
 - Preserved validation message arrays, shortage and review-field details, HTTP status, and the safe error body in the shared Office Web request layer. The order and catalog editors now show all server validation messages while retaining their translated headlines, inline field errors, draft values, focus behavior, and approved layouts.
@@ -70,6 +79,15 @@
 
 ## Step 2 — Catalog and manual purchase orders
 
+**Current verification:** Implemented and synthetically verified for the cleanup below. Live Jahez order creation and Worker Mobile handoff remain pending.
+
+### 2026-11-28 — Validated date ranges and shared product controls
+
+- Date-range inputs now keep editable drafts separate from the applied filters. A reversed range shows a translated inline error and preserves the last valid applied range; correction applies immediately, and reopening discards an invalid draft. Orders and Dispatch reuse the same control, reset action, and keyboard focus behavior.
+- Catalog and Inventory share product thumbnails, safe URL checks, language fallbacks, and unavailable-image placeholders. Catalog product/party requests use separate reusable caches with the existing catalog invalidation prefix.
+- Synthetic Chrome checks passed valid inclusive ranges, rejected reversed ranges, correction, clearing, Escape/focus return, catalog create/edit and cache refresh, and shared product rendering. Production build passed. No live records or private invoices were used.
+
+
 ### 2026-11-28 — Order date dropdown refinement
 
 - Extracted a reusable `DateRangeFilter` with a glass panel, calendar heading, aligned labeled From/To fields, clear and close actions, and selected-range text on the trigger. Reused shared glass tokens, translations, date formatting, and inclusive order filtering.
@@ -93,6 +111,17 @@
 - Still open: verify with an authorized Jahez account against the running API and confirm the same order is visible to an assigned worker on Worker Mobile. Complete those checks before marking Step 2 verified.
 
 ## Step 3 — Live receiving and stock dashboard
+
+**Current verification:** Implemented and synthetically verified for the cleanup below. Receipt-list/history and historical dashboard comparisons require server contracts; live Worker Mobile receiving verification remains pending.
+
+### 2026-11-28 — Independent resources, filters, and Inventory alignment
+
+- Split queue, findings, balances, stock age, and movements into independently keyed queries. Dashboard cards/panels and the selected Inventory/Receiving view show their own loading/error states. Receiving does not request stock/age/movements, and an age or findings failure no longer hides unrelated records.
+- Moved queue/finding tables to Receiving, and split Inventory page and StockTable into stock-owned files. Receiving queue and discrepancy searches are independent; discrepancy search includes translated types and available IDs/notes. Receiving, findings, and Inventory show no-results states with reset actions when filtered out.
+- Movement counts come from deduplicated loaded pages, remain stable across tabs, omit unloaded counts, and show a plus/load-more explanation while more pages exist. Dashboard history and stock lots share cursor collection with duplicate-ID protection and repeated-cursor rejection.
+- Inventory now shows exact stock totals, model numbers, actual catalog photos or placeholders, and aligned numeric headers/values. Shared stock arithmetic remains unchanged.
+- Build passed. Focused assertions passed cursor deduplication, repeated-cursor rejection, early stopping, exact large decimal summation and lot proportions. Synthetic Chrome checks passed queue failure isolation from dashboard balances/charts, findings failure isolation from Receiving, stock-age failure isolation from Inventory balances/movements, movement loading/deduplication/counts, independent searches/reset, live queue refresh, and no-results recovery. Desktop and 390 px EN/AR/ZH layouts passed document-overflow checks; captures were visually inspected.
+
 
 ### 2026-11-28 — Exact decimal stock rendering
 
@@ -128,6 +157,17 @@
 - 2026-11-27: Installed `recharts` 3.11.1 and its `react-is` 19.3.1 peer, matching React 19.3.1. Verified a chart bar rendered in the browser fixture. Dashboard chart design and data integration remain pending.
 
 ## Step 4 — Findings, evidence, and dispatch views
+
+**Current verification:** Implemented and synthetically verified for Office Web. Live-account mutation checks, real Socket.IO/Worker Mobile handoff, and native print-preview remain pending. Headless print rendering is verified below.
+
+### 2026-11-28 — Receipt design alignment and dialog regression
+
+- Receipt details now follows the reference two-column layout with details/items/findings on the main side and receipt summary/photo evidence alongside, collapsing into one column on narrow screens. Preserved exact comparisons, partial/unmatched lines, and all measurements. Added the existing finding review dialog entry point and evidence captions.
+- Preserved private file access, evidence object-URL cleanup, finding resolution, and group/lot adjustment retry behavior while migrating to shared scope keys. Exact quantities remain intact. Fixed narrow adjustment summary wrapping for very large values and added a stable stock-row focus target when background refresh replaces the opener button; nested evidence dialogs still return focus to their parent.
+- Synthetic Chrome checks passed authenticated evidence loading, nested photo viewing/Escape/focus, required-note finding resolution, adjustment upload and same-payload retry with one upload and identical operation/payload IDs, and receipt-lot decrease arithmetic (`-2` cartons / `-48` units / `-0.001868` m³ without group dimensions). Catalog create/edit and Dispatch search/reset/reversed-date filtering passed after the refactor.
+- Final build passed. EN/AR/ZH receipt desktop and receiving/inventory/receipt/dispatch 390 px captures were checked. Narrow adjustment dialogs in all three languages had no horizontal overflow and restored focus on Escape. Headless A4 landscape dispatch PDF rendering passed with header/navigation hidden; the rendered output was inspected. Native print-preview and physical printing were not exercised.
+- Known server constraints remain: no complete receipt-list/history endpoint, no adjustment detail/evidence history endpoint, no receipt-line identifier on stock-age rows, and only the latest 200 dispatch records without server date pagination. Dispatch Excel remains Step 6. Next: continue Step 5 once its remaining settings references/contracts are confirmed; track live integration separately.
+
 
 ### 2026-11-28 — Dialog design conformance fix
 

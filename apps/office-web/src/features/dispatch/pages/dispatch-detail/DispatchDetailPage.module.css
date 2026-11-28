@@ -56,18 +56,6 @@
   margin: 0;
 }
 
-.detailsGrid dt {
-  margin-block-end: var(--space-1);
-  color: var(--jahez-muted);
-  font-size: 13px;
-}
-
-.detailsGrid dd {
-  margin: 0;
-  font-weight: 600;
-  overflow-wrap: anywhere;
-}
-
 .secondaryValue {
   display: block;
   margin-block-start: 2px;

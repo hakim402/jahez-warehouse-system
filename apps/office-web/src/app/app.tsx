@@ -22,11 +22,7 @@ const DispatchHistoryPage = lazy(
 const DispatchDetailPage = lazy(
   () => import("../features/dispatch/pages/dispatch-detail/DispatchDetailPage"),
 );
-const InventoryPage = lazy(() =>
-  import("../features/stock/pages/WarehouseViews").then((module) => ({
-    default: module.InventoryPage,
-  })),
-);
+const InventoryPage = lazy(() => import('../features/stock/pages/InventoryPage'));
 
 const OrderListPage = lazy(
   () => import("../features/orders/pages/order-list/OrderListPage"),

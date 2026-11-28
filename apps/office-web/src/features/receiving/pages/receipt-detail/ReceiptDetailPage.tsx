@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { Link, useParams } from 'react-router';
 import { useTranslation } from 'react-i18next';
@@ -7,9 +8,12 @@ import { DataTable, type RecordColumn } from '../../../../shared/ui/DataTable';
 import { RecordState } from '../../../../shared/ui/RecordState';
 import { StatusBadge } from '../../../../shared/ui/StatusBadge';
 import { partyName, productName, useCatalog } from '../../../catalog/catalog-api';
-import { OrderWorkspaceState } from '../../../orders/components/OrderWorkspaceState';
-import { useOrder, useOrderScope, type OrderLine } from '../../../orders/order-api';
+import { WarehouseState } from '../../../../shared/ui/WarehouseState';
+import { useOrder, type OrderLine } from '../../../orders/order-api';
+import { useWarehouseScope } from '../../../../app/use-warehouse-scope';
 import { formatStockCount, stockCountSign, subtractStockCounts, sumStockCounts } from '../../../stock/stock-count';
+import { FindingReviewDialog } from '../../components/FindingReviewDialog';
+import type { Finding } from '../../receiving-api';
 import { ReceiptEvidence } from '../../components/ReceiptEvidence';
 import { useReceipt, useReceiptEvidence, type ReceiptLine } from '../../receiving-api';
 import styles from './ReceiptDetailPage.module.css';
@@ -25,12 +29,13 @@ export default function ReceiptDetailPage() {
   const { t } = useTranslation();
   const format = useRecordFormat();
   const { receiptId = '' } = useParams();
-  const scope = useOrderScope();
+  const scope = useWarehouseScope();
+  const [review, setReview] = useState<Finding | null>(null);
   const receipt = useReceipt(scope, receiptId);
   const order = useOrder(scope, receipt.data?.orderId ?? '');
   const evidence = useReceiptEvidence(scope, receipt.data);
   const catalog = useCatalog();
-  if (!scope.canRead || !scope.warehouseId) return <OrderWorkspaceState active={scope.active} />;
+  if (!scope.canRead || !scope.warehouseId) return <WarehouseState active={scope.active} />;
   if (receipt.isError || order.isError) {
     const unavailable = [receipt.error, order.error].some((error) => error instanceof ApiError && [403, 404].includes(error.status));
     return <><Link to="/receiving" className="back-link"><ArrowLeft className="rtl-icon" size={15} aria-hidden="true" />{t('receiving')}</Link>
@@ -89,35 +94,40 @@ export default function ReceiptDetailPage() {
       <h1><bdi>{record.receiptNo}</bdi></h1><StatusBadge status={record.status} />
       <Link className="record-link" to={'/orders/' + purchase.id}>{t('orderNo')}: <bdi>{purchase.orderNo}</bdi></Link>
     </div></div>
-    <dl className={styles.metadata}>
+    <div className={styles.layout}>
+    <section className={'surface ' + styles.metadataPanel}><h2>{t('receiptDetails')}</h2>
+    <dl className={'record-details ' + styles.metadata}>
       <div><dt>{t('supplier')}</dt><dd>{partyName(supplier, format.language) || '—'}</dd></div>
       <div><dt>{t('customer')}</dt><dd>{partyName(customer, format.language) || '—'}</dd></div>
       <div><dt>{t('shippingMark')}</dt><dd>{customer?.shippingMark || '—'}</dd></div>
       <div><dt>{t('receivedAt')}</dt><dd><time dateTime={record.receivedAt}>{format.dateTime(record.receivedAt)}</time></dd></div>
       <div><dt>{t('receivedBy')}</dt><dd><bdi>{record.receivedBy}</bdi></dd></div>
       <div><dt>{t('status')}</dt><dd>{purchase.status ? t(purchase.status) : '—'}</dd></div>
-    </dl>
-    <section className={styles.summary} aria-label={t('receiptSummary')}>
-      <div className="surface"><span>{t('orderedCartons')}</span><strong>{formatStockCount(orderedCartons, format.language)}</strong></div>
-      <div className="surface"><span>{t('receivedCartons')}</span><strong>{formatStockCount(receivedCartons, format.language)}</strong></div>
-      <div className="surface"><span>{t('openFindings')}</span><strong>{format.quantity(openFindings.length)}</strong></div>
+    </dl></section>
+    <section className={'surface ' + styles.summary} aria-label={t('receiptSummary')}><h2>{t('receiptSummary')}</h2>
+      <div><span>{t('orderedCartons')}</span><strong>{formatStockCount(orderedCartons, format.language)}</strong></div>
+      <div><span>{t('receivedCartons')}</span><strong>{formatStockCount(receivedCartons, format.language)}</strong></div>
+      <div><span>{t('openFindings')}</span><strong>{format.quantity(openFindings.length)}</strong></div>
     </section>
-    <section className="surface" aria-labelledby="received-items">
+    <section className={'surface ' + styles.items} aria-labelledby="received-items">
       <h2 id="received-items" className="panel-heading">{t('receivedItems')}</h2>
       {rows.length ? <DataTable records={rows} columns={columns} label={t('receivedItems')} /> : <RecordState state="empty" />}
     </section>
-    <section className="surface section" aria-labelledby="receipt-findings">
+    <section className={'surface ' + styles.section + ' ' + styles.findings} aria-labelledby="receipt-findings">
       <h2 id="receipt-findings">{t('discrepancies')}</h2>
       {record.findings.length ? <div className={styles.findingList}>{record.findings.map((finding) => <article className={styles.finding} key={finding.id}>
         <div><strong>{t(finding.type)}</strong><StatusBadge status={finding.status} /></div>
         <p>{t('expected')}: {formatStockCount(finding.expected, format.language)} · {t('actual')}: {formatStockCount(finding.actual, format.language)}</p>
         {finding.note && <p>{finding.note}</p>}
+        {finding.status === 'open' && <button type="button" className="button button-primary" onClick={() => setReview({ ...finding, receiptId: record.id, warehouseId: record.warehouseId, resolvedBy: null })}>{t('review')}</button>}
       </article>)}</div> : <RecordState state="empty" message={t('noFindings')} />}
     </section>
-    <section className="surface section" aria-labelledby="receipt-evidence">
+    <section className={'surface ' + styles.section + ' ' + styles.evidence} aria-labelledby="receipt-evidence">
       <h2 id="receipt-evidence">{t('photoEvidence')}</h2>
       <ReceiptEvidence scope={scope} files={evidence.data} loading={evidence.isLoading} error={evidence.isError} retry={() => { void evidence.refetch(); }} />
     </section>
+    </div>
+    {review && <FindingReviewDialog finding={review} scope={scope} onClose={() => setReview(null)} />}
   </div>;
 }
 

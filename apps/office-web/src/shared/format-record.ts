@@ -15,11 +15,15 @@ export function useRecordFormat() {
     const number = new Intl.NumberFormat(language);
     const amount = new Intl.NumberFormat(language, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     const unitPrice = new Intl.NumberFormat(language, { minimumFractionDigits: 2, maximumFractionDigits: 4 });
+    const volume = new Intl.NumberFormat(language, { minimumFractionDigits: 3, maximumFractionDigits: 3 });
+    const weight = new Intl.NumberFormat(language, { minimumFractionDigits: 1, maximumFractionDigits: 3 });
     const currencyNames = new Intl.DisplayNames(language, { type: 'currency' });
     return {
       language,
       date: (value: string | null) => value ? date.format(new Date(value + 'T00:00:00Z')) : '—',
       dateTime: (value: string | null) => value && !Number.isNaN(new Date(value).getTime()) ? dateTime.format(new Date(value)) : '—',
+      volume: (value: number | null) => value === null ? '—' : volume.format(value),
+      weight: (value: number | null) => value === null ? '—' : weight.format(value),
       quantity: (value: number | null) => value === null ? '—' : number.format(value),
       amount: (value: number | null) => value === null ? '—' : amount.format(value),
       unitPrice: (value: number | null) => value === null ? '—' : unitPrice.format(value),

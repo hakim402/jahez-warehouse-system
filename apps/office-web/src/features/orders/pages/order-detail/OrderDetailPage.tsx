@@ -12,7 +12,7 @@ import { partyName, productName, useCatalog } from '../../../catalog/catalog-api
 import { OrderBackLink } from '../../components/OrderBackLink';
 import { OrderStatusBadge } from '../../components/OrderStatusBadge';
 import { OrderSummary } from '../../components/OrderSummary';
-import { OrderWorkspaceState } from '../../components/OrderWorkspaceState';
+import { WarehouseState } from '../../../../shared/ui/WarehouseState';
 import styles from '../../components/OrderWorkspace.module.css';
 import { changeOrderStatus, useOrder, useOrderScope } from '../../order-api';
 
@@ -28,7 +28,7 @@ export default function OrderDetailPage() {
   const [actionError, setActionError] = useState(false);
   const mutation = useMutation({ mutationFn: (value: 'confirm' | 'cancel') => changeOrderStatus(id, value) });
 
-  if (!scope.canRead) return <OrderWorkspaceState active={scope.active} />;
+  if (!scope.canRead) return <WarehouseState active={scope.active} />;
   if (query.isError || catalog.isError) {
     const unavailable = query.error instanceof ApiError && [403, 404].includes(query.error.status);
     return <><OrderBackLink /><RecordState state="error" message={unavailable ? t('orderUnavailable') : undefined}

@@ -1,4 +1,9 @@
 const copy = {
+  receiptDetails: ['Receipt details', 'تفاصيل الاستلام', '收货详情'],
+  refreshFailed: ['Could not refresh. Showing the last loaded data.', 'تعذر التحديث. تُعرض آخر بيانات محملة.', '刷新失败，正在显示上次加载的数据。'],
+  dateRangeInvalid: ['The end date must be on or after the start date.', 'يجب أن يكون تاريخ النهاية في تاريخ البداية أو بعده.', '结束日期不能早于开始日期。'],
+  stockTotal: ['{{value}} cartons in stock', 'المخزون {{value}} كرتون', '库存 {{value}} 箱'],
+  loadedMovements: ['{{value}} movements loaded; more available', 'تم تحميل {{value}} حركة؛ تتوفر حركات أخرى', '已加载 {{value}} 条流水，还有更多'],
   missing: ['Missing cartons', 'كراتين ناقصة', '缺少箱数'],
   extra: ['Extra cartons', 'كراتين إضافية', '多收箱数'],
   wrong: ['Wrong item', 'صنف غير مطابق', '货品不符'],

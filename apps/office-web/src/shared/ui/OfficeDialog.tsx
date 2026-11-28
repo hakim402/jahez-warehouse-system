@@ -3,7 +3,8 @@ import { Dialog } from 'radix-ui';
 import { useRef, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
-export function OfficeDialog({ title, children, onClose, busy = false, closeDisabled = false, wide = false }: {
+export function OfficeDialog({ title, children, onClose, busy = false, closeDisabled = false, wide = false, returnFocus }: {
+  returnFocus?: () => HTMLElement | null;
   title: string;
   children: ReactNode;
   onClose: () => void;
@@ -20,7 +21,9 @@ export function OfficeDialog({ title, children, onClose, busy = false, closeDisa
         <Dialog.Content className="office-dialog" data-wide={wide ? 'true' : undefined} aria-describedby={undefined} aria-busy={busy}
           onCloseAutoFocus={(event) => {
             event.preventDefault();
-            trigger.current?.focus();
+            const target = returnFocus?.() ?? trigger.current;
+            if (target?.isConnected) target.focus();
+            else document.getElementById('office-content')?.focus();
           }}>
           <div className="office-dialog-heading">
             <Dialog.Title>{title}</Dialog.Title>

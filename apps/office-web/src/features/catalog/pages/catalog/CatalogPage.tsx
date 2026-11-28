@@ -1,4 +1,4 @@
-import { Package, Pencil, Plus } from 'lucide-react';
+import { Pencil, Plus } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { languages, type Language } from '../../../../app/i18n';
@@ -6,9 +6,10 @@ import { useRecordFormat } from '../../../../shared/format-record';
 import { DataTable, type RecordColumn } from '../../../../shared/ui/DataTable';
 import { ListTabs, SearchField } from '../../../../shared/ui/ListControls';
 import { FilterSelect } from '../../../../shared/ui/FilterSelect';
+import { ProductIdentity } from '../../../../shared/ui/ProductIdentity';
 import { RecordState } from '../../../../shared/ui/RecordState';
-import { partyName, productName, productNameFields, useCatalog, type Party, type Product } from '../../catalog-api';
-import { CatalogEditor, catalogAction, photoSource, type CatalogEditorState } from './CatalogEditor';
+import { partyName, productNameFields, useCatalog, type Party, type Product } from '../../catalog-api';
+import { CatalogEditor, catalogAction, type CatalogEditorState } from './CatalogEditor';
 import styles from './CatalogPage.module.css';
 
 const kindLabels = { product: 'products', supplier: 'suppliers', customer: 'customers' } as const;
@@ -16,17 +17,6 @@ type Kind = keyof typeof kindLabels;
 type CatalogRow = Product | Party;
 const empty: CatalogRow[] = [];
 const catalogLanguages = Object.keys(languages) as Language[];
-
-function ProductPhoto({ value }: { value: string | null }) {
-  const [failedSrc, setFailedSrc] = useState<string>();
-  const src = photoSource(value);
-  return <span className={styles.thumbnail}>
-    {src && src !== failedSrc
-      ? <img src={src} width="40" height="40" alt="" loading="lazy" referrerPolicy="no-referrer"
-        onError={() => setFailedSrc(src)} />
-      : <Package size={17} aria-hidden="true" />}
-  </span>;
-}
 
 export default function CatalogPage() {
   const { t } = useTranslation();
@@ -56,10 +46,7 @@ export default function CatalogPage() {
   const columns: RecordColumn<CatalogRow>[] = kind === 'product' ? [
     { id: 'name', header: t('product'), cell: ({ row: { original: record } }) => {
       if ('type' in record) return null;
-      return <div className={styles.productName}>
-        <ProductPhoto value={record.photoUrl} />
-        <bdi>{productName(record, format.language) || record.modelNo || '—'}</bdi>
-      </div>;
+      return <ProductIdentity product={record} showModel={false} />;
     } },
     { id: 'model', header: t('modelNo'), cell: ({ row }) => (
       <bdi>{'modelNo' in row.original ? row.original.modelNo || '—' : '—'}</bdi>

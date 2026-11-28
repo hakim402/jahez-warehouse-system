@@ -1,34 +1,25 @@
 import { useQuery } from '@tanstack/react-query';
-import { authenticatedJson, useSession } from '../../../../app/session';
+import { authenticatedJson } from '../../../../app/session';
+import { useWarehouseScope } from '../../../../app/use-warehouse-scope';
+import { collectMovements } from '../../../stock/movement-pages';
 import type { Movement } from '../../../stock/warehouse-api';
 import { compareStockCounts, sumStockCounts, type StockCountValue } from '../../../stock/stock-count';
 
 const day = 86_400_000;
 
 export function useReceiptHistory(warehouseId: string | undefined) {
-  const { session } = useSession();
+  const scope = useWarehouseScope();
   return useQuery({
-    queryKey: ['dashboard-history', session?.user.tenantId, session?.user.id, warehouseId],
+    queryKey: scope.queryKey('dashboard-history'),
     enabled: Boolean(warehouseId),
     refetchInterval: 30_000,
     queryFn: async ({ signal }) => {
       const cutoff = Date.now() - 56 * day;
-      const records = new Map<string, Movement>();
-      const seenCursors = new Set<string>();
-      let cursor: string | null = null;
-      do {
+      return collectMovements((cursor) => {
         const params = new URLSearchParams({ warehouseId: warehouseId!, limit: '200' });
         if (cursor) params.set('cursor', cursor);
-        const page = await authenticatedJson<{ movements: Movement[]; nextCursor: string | null }>(
-          '/stock/movements?' + params, { signal },
-        );
-        page.movements.forEach((movement) => records.set(movement.id, movement));
-        cursor = page.nextCursor;
-        if (page.movements.some((movement) => Date.parse(movement.createdAt) < cutoff)) break;
-        if (cursor && seenCursors.has(cursor)) throw new Error('Repeated movement cursor');
-        if (cursor) seenCursors.add(cursor);
-      } while (cursor);
-      return [...records.values()];
+        return authenticatedJson('/stock/movements?' + params, { signal });
+      }, (page) => page.movements.some((movement) => Date.parse(movement.createdAt) < cutoff));
     },
   });
 }

@@ -1,7 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
-import { authenticatedJson, useSession } from '../../app/session';
-import { useOrderScope } from '../orders/order-api';
+import { authenticatedJson } from '../../app/session';
+import { useWarehouseScope } from '../../app/use-warehouse-scope';
 import { compareStockCounts, stockCountSign, sumStockCounts } from './stock-count';
+import { collectMovements } from './movement-pages';
 import type { Movement, StockRow } from './warehouse-api';
 
 export type StockGroup = Pick<StockRow, 'customerId' | 'supplierId' | 'brand' | 'productId'>;
@@ -65,21 +66,14 @@ export function recordStockAdjustment(input: AdjustmentInput) {
   return authenticatedJson<AdjustmentResponse>('/stock/adjustments', { method: 'POST', json: input });
 }
 
-export function useStockLots(scope: ReturnType<typeof useOrderScope>, group: StockGroup | null) {
-  const { session } = useSession();
+export function useStockLots(scope: ReturnType<typeof useWarehouseScope>, group: StockGroup | null) {
   const key = group ? stockGroupKey(group) : '';
   return useQuery({
-    queryKey: ['stock-lots', session?.user.tenantId, session?.user.id, scope.warehouseId, key],
+    queryKey: scope.queryKey('stock-lots', key),
     enabled: scope.canRead && Boolean(scope.warehouseId && group),
     queryFn: async ({ signal }) => {
-      const movements: Movement[] = [];
-      let cursor: string | null = null;
-      do {
-        const query = movementQuery(scope.warehouseId!, group!, cursor);
-        const page = await authenticatedJson<{ movements: Movement[]; nextCursor: string | null }>(query, { signal });
-        movements.push(...page.movements);
-        cursor = page.nextCursor;
-      } while (cursor);
+      const movements = await collectMovements((cursor) => authenticatedJson(
+        movementQuery(scope.warehouseId!, group!, cursor), { signal }));
       return remainingLots(movements, group!);
     },
   });

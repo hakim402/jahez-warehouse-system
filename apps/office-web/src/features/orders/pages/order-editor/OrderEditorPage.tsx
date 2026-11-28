@@ -10,7 +10,7 @@ import { RecordState } from '../../../../shared/ui/RecordState';
 import { partyName, useCatalog, type Catalog, type PartyKind } from '../../../catalog/catalog-api';
 import { OrderAmount, OrderSummary } from '../../components/OrderSummary';
 import { OrderBackLink } from '../../components/OrderBackLink';
-import { OrderWorkspaceState } from '../../components/OrderWorkspaceState';
+import { WarehouseState } from '../../../../shared/ui/WarehouseState';
 import styles from '../../components/OrderWorkspace.module.css';
 import { createOrder, updateOrder, useOrder, useOrders, useOrderScope, type DraftInput, type FullOrder } from '../../order-api';
 import { OrderLineEditor } from './OrderLineEditor';
@@ -25,7 +25,7 @@ export default function OrderEditorPage() {
   const catalog = useCatalog();
   const order = useOrder(scope, orderId ?? '');
 
-  if (!scope.canRead) return <OrderWorkspaceState active={scope.active} />;
+  if (!scope.canRead) return <WarehouseState active={scope.active} />;
   if (!orderId && !scope.warehouseId) return <>
     <OrderBackLink /><RecordState state="error" message={t('warehouseRequired')} />
   </>;
@@ -38,8 +38,9 @@ export default function OrderEditorPage() {
     <OrderBackLink /><RecordState state="error" message={t('draftOnly')} />
   </>;
 
-  if (!orderId && (!catalog.data.products.length || !['supplier', 'customer'].every((type) =>
-    catalog.data.parties.some((party) => party.type === type)))) {
+  const catalogRecords = catalog.data;
+  if (!orderId && (!catalogRecords.products.length || !['supplier', 'customer'].every((type) =>
+    catalogRecords.parties.some((party) => party.type === type)))) {
     return <>
       <OrderBackLink />
       <RecordState state="empty" message={t('missingCatalog')} />

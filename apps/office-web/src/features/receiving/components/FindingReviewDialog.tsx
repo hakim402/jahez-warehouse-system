@@ -8,7 +8,7 @@ import { LabeledField } from '../../../shared/ui/LabeledField';
 import { OfficeDialog } from '../../../shared/ui/OfficeDialog';
 import { RecordState } from '../../../shared/ui/RecordState';
 import { productName, useCatalog } from '../../catalog/catalog-api';
-import type { useOrderScope } from '../../orders/order-api';
+import { useWarehouseScope } from '../../../app/use-warehouse-scope';
 import { formatStockCount } from '../../stock/stock-count';
 import { resolveFinding, useReceipt, useReceiptEvidence, type Finding } from '../receiving-api';
 import { ReceiptEvidence } from './ReceiptEvidence';
@@ -16,7 +16,7 @@ import styles from './FindingReviewDialog.module.css';
 
 export function FindingReviewDialog({ finding, scope, onClose }: {
   finding: Finding;
-  scope: ReturnType<typeof useOrderScope>;
+  scope: ReturnType<typeof useWarehouseScope>;
   onClose: () => void;
 }) {
   const { t } = useTranslation();
@@ -34,10 +34,10 @@ export function FindingReviewDialog({ finding, scope, onClose }: {
     mutationFn: () => resolveFinding(finding.id, note.trim()),
     onSuccess: async () => {
       await Promise.all([
-        cache.invalidateQueries({ queryKey: ['findings'] }),
-        cache.invalidateQueries({ queryKey: ['receipt'] }),
-        cache.invalidateQueries({ queryKey: ['receipt-files'] }),
-        cache.invalidateQueries({ queryKey: ['warehouse-data'] }),
+        cache.invalidateQueries({ queryKey: scope.queryKey('findings') }),
+        cache.invalidateQueries({ queryKey: scope.queryKey('receipt') }),
+        cache.invalidateQueries({ queryKey: scope.queryKey('receipt-files') }),
+        cache.invalidateQueries({ queryKey: scope.queryKey('warehouse-data') }),
       ]);
       onClose();
     },

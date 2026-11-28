@@ -19,7 +19,9 @@
 .stockSummary > div {
   display: grid;
   gap: var(--space-1);
-  min-inline-size: 160px;
+  min-inline-size: min(160px, 100%);
+  max-inline-size: 100%;
+  overflow-wrap: anywhere;
 }
 .stockSummary > div span {
   color: var(--jahez-muted);
@@ -27,11 +29,17 @@
 }
 .stockSummary dl {
   display: flex;
+  flex-wrap: wrap;
+  min-inline-size: 0;
+  max-inline-size: 100%;
   gap: var(--space-5);
   margin: 0;
 }
 .stockSummary dl div {
   display: grid;
+  min-inline-size: 0;
+  max-inline-size: 100%;
+  overflow-wrap: anywhere;
   gap: var(--space-1);
 }
 .stockSummary dt {
@@ -178,3 +186,5 @@
     justify-content: space-between;
   }
 }
+
+@media (prefers-reduced-motion: reduce) { .photoDropzone { transition: none; } }

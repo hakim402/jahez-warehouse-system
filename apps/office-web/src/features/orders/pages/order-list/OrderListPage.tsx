@@ -5,13 +5,13 @@ import { Link } from 'react-router';
 import { useRecordFormat } from '../../../../shared/format-record';
 import { DataTable, type RecordColumn } from '../../../../shared/ui/DataTable';
 import { DateRangeFilter } from '../../../../shared/ui/DateRangeFilter';
-import { ListTabs, SearchField } from '../../../../shared/ui/ListControls';
+import { ClearFilters, ListTabs, SearchField } from '../../../../shared/ui/ListControls';
 import { FilterSelect } from '../../../../shared/ui/FilterSelect';
 import { RecordState } from '../../../../shared/ui/RecordState';
 import { partyName, useCatalog } from '../../../catalog/catalog-api';
 import { OrderStatusBadge } from '../../components/OrderStatusBadge';
 import { OrderAmount } from '../../components/OrderSummary';
-import { OrderWorkspaceState } from '../../components/OrderWorkspaceState';
+import { WarehouseState } from '../../../../shared/ui/WarehouseState';
 import styles from '../../components/OrderWorkspace.module.css';
 import { orderStatuses, useOrders, useOrderScope, type OrderRow, type OrderStatus } from '../../order-api';
 
@@ -99,7 +99,7 @@ export default function OrderListPage() {
       {scope.canRead && !scope.warehouseId &&
         <p className={'surface muted-text ' + styles.notice}>{t('warehouseRequired')}</p>}
       <section className="surface workspace-panel" aria-label={t('purchaseOrders')}>
-        {!scope.canRead ? <OrderWorkspaceState active={scope.active} /> :
+        {!scope.canRead ? <WarehouseState active={scope.active} /> :
           orders.isError || catalog.isError ? <RecordState state="error" action={() => {
             if (orders.isError) void orders.refetch();
             if (catalog.isError) void catalog.refetch();
@@ -114,6 +114,7 @@ export default function OrderListPage() {
                     .map((party) => ({ value: party.id, label: partyName(party, format.language) }))]} />
                 <DateRangeFilter label={t('orderDate')} from={fromDate} to={toDate}
                   onFromChange={setFromDate} onToChange={setToDate} />
+                {(search.trim() || supplierId || fromDate || toDate || status !== 'all') && <ClearFilters onClear={clear} />}
               </div>
             </div>
             {filtered.length ? <DataTable records={filtered} columns={columns} label={t('purchaseOrders')} /> :

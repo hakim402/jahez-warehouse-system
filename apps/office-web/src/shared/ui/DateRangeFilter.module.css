@@ -15,3 +15,5 @@
 .clear { min-block-size: 36px; padding: 0; border: 0; background: transparent; color: var(--jahez-brand-deep); font-size: 13px; font-weight: 600; cursor: pointer; }
 .clear:disabled { color: var(--jahez-muted); opacity: 0.6; cursor: default; }
 @media (max-width: 360px) { .fields { grid-template-columns: minmax(0, 1fr); } }
+
+.error { padding: 0 var(--space-4) var(--space-3); font-size: 13px; }

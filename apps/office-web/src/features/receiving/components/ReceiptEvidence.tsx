@@ -2,12 +2,12 @@ import { Download, Image as ImageIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { usePrivateFile, type OfficeFile } from '../../files/files-api';
-import type { useOrderScope } from '../../orders/order-api';
+import { useWarehouseScope } from '../../../app/use-warehouse-scope';
 import { OfficeDialog } from '../../../shared/ui/OfficeDialog';
 import styles from './ReceiptEvidence.module.css';
 
 export function ReceiptEvidence({ scope, files, loading, error, retry }: {
-  scope: ReturnType<typeof useOrderScope>;
+  scope: ReturnType<typeof useWarehouseScope>;
   files: OfficeFile[] | undefined;
   loading: boolean;
   error: boolean;
@@ -20,7 +20,7 @@ export function ReceiptEvidence({ scope, files, loading, error, retry }: {
   return <div className={styles.gallery}>{files.map((file) => <EvidenceItem key={file.id} scope={scope} file={file} />)}</div>;
 }
 
-function EvidenceItem({ scope, file }: { scope: ReturnType<typeof useOrderScope>; file: OfficeFile }) {
+function EvidenceItem({ scope, file }: { scope: ReturnType<typeof useWarehouseScope>; file: OfficeFile }) {
   const { t } = useTranslation();
   const query = usePrivateFile(scope, file.id);
   const [url, setUrl] = useState<string | null>(null);
@@ -39,7 +39,7 @@ function EvidenceItem({ scope, file }: { scope: ReturnType<typeof useOrderScope>
   if (!image) return <a className={styles.file} href={url} download={file.originalName || undefined}><Download size={20} aria-hidden="true" /><span>{name}</span></a>;
   return <>
     <button type="button" className={styles.photo} onClick={() => setOpen(true)} aria-label={t('viewPhoto', { name })}>
-      <img src={url} alt={name} loading="lazy" />
+      <img src={url} alt="" loading="lazy" /><span>{name}</span>
     </button>
     {open && <OfficeDialog title={name} onClose={() => setOpen(false)} wide>
       <div className="office-dialog-body"><img className={styles.viewer} src={url} alt={name} /></div>

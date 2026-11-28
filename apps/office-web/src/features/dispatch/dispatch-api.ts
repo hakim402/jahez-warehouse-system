@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { ApiError } from '../../api/client';
-import { authenticatedJson, useSession } from '../../app/session';
-import { useOrderScope } from '../orders/order-api';
+import { authenticatedJson } from '../../app/session';
+import { useWarehouseScope } from '../../app/use-warehouse-scope';
 
 export type DispatchSummary = {
   id: string;
@@ -68,14 +68,12 @@ type DispatchListResponse = {
 };
 
 export function useDispatchScope() {
-  const scope = useOrderScope();
-  const { session } = useSession();
-  const identity = [session?.user.tenantId, session?.user.id, scope.warehouseId ?? null] as const;
+  const scope = useWarehouseScope();
 
   return {
     ...scope,
-    listKey: ['dispatch', ...identity] as const,
-    detailKey: (id: string) => ['dispatch-detail', ...identity, id] as const,
+    listKey: scope.queryKey('dispatch'),
+    detailKey: (id: string) => scope.queryKey('dispatch-detail', id),
   };
 }
 

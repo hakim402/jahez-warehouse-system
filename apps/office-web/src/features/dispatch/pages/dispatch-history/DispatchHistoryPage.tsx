@@ -7,7 +7,7 @@ import { useRecordFormat } from '../../../../shared/format-record';
 import { DataTable, type RecordColumn } from '../../../../shared/ui/DataTable';
 import { DateRangeFilter } from '../../../../shared/ui/DateRangeFilter';
 import { FilterSelect } from '../../../../shared/ui/FilterSelect';
-import { SearchField } from '../../../../shared/ui/ListControls';
+import { ClearFilters, SearchField } from '../../../../shared/ui/ListControls';
 import { RecordState } from '../../../../shared/ui/RecordState';
 import { formatStockCount } from '../../../stock/stock-count';
 import { useDispatches, useDispatchScope, type DispatchSummary } from '../../dispatch-api';
@@ -34,12 +34,7 @@ export default function DispatchHistoryPage() {
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
   const rows = query.data ?? noDispatches;
-  const volumeFormatter = useMemo(() => new Intl.NumberFormat(format.language, {
-    minimumFractionDigits: 3, maximumFractionDigits: 3,
-  }), [format.language]);
-  const weightFormatter = useMemo(() => new Intl.NumberFormat(format.language, {
-    minimumFractionDigits: 1, maximumFractionDigits: 3,
-  }), [format.language]);
+
 
   const customers = useMemo(() => Array.from(new Map(rows.map((row) => [row.customerId, row])).values())
     .map((row) => ({
@@ -80,10 +75,10 @@ export default function DispatchHistoryPage() {
       <bdi dir="ltr" className={styles.numeric}>{formatStockCount(row.original.cartons, format.language)}</bdi>
     ) },
     { id: 'cbm', header: t('volume'), cell: ({ row }) => (
-      <bdi dir="ltr" className={styles.numeric}>{row.original.cbm === null ? '—' : volumeFormatter.format(row.original.cbm)}</bdi>
+      <bdi dir="ltr" className={styles.numeric}>{row.original.cbm === null ? '—' : format.volume(row.original.cbm)}</bdi>
     ) },
     { id: 'weightKg', header: t('weightKg'), cell: ({ row }) => (
-      <bdi dir="ltr" className={styles.numeric}>{row.original.weightKg === null ? '—' : weightFormatter.format(row.original.weightKg)}</bdi>
+      <bdi dir="ltr" className={styles.numeric}>{row.original.weightKg === null ? '—' : format.weight(row.original.weightKg)}</bdi>
     ) },
     { id: 'open', header: () => <span className="sr-only">{t('dispatchDetails')}</span>, cell: ({ row }) => (
       <Link className="icon-button" tabIndex={-1} to={'/dispatch/' + encodeURIComponent(row.original.id)}
@@ -124,6 +119,7 @@ export default function DispatchHistoryPage() {
                 options={[{ value: '', label: t('allCustomers') }, ...customers]} />
               <DateRangeFilter label={t('dispatchDate')} from={fromDate} to={toDate}
                 onFromChange={setFromDate} onToChange={setToDate} />
+              {hasFilters && <ClearFilters onClear={clearFilters} />}
             </div>
           </div>
           {filtered.length ? (

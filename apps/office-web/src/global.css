@@ -731,3 +731,15 @@ html[dir="rtl"] .rtl-icon {
     display: none;
   }
 }
+
+.clear-filters { min-block-size: 42px; padding: 8px 12px; border: 0; border-radius: var(--radius-control); background: transparent; color: var(--jahez-brand-deep); font-size: 13px; font-weight: 600; cursor: pointer; }
+.clear-filters:hover { background: rgb(123 87 252 / 8%); }
+.query-warning { padding: var(--space-3); color: var(--jahez-muted); font-size: 13px; }
+.numeric-value { display: block; text-align: end; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.product-identity { display: flex; align-items: center; gap: var(--space-3); min-inline-size: 180px; font-weight: 600; }
+.product-thumbnail { display: grid; place-items: center; flex: none; inline-size: 40px; block-size: 40px; border: 1px solid var(--jahez-border); border-radius: var(--radius-control); background: var(--glass-input); color: var(--jahez-muted); overflow: hidden; }
+.product-thumbnail img { inline-size: 100%; block-size: 100%; object-fit: cover; }
+
+.record-details dt { margin-block-end: var(--space-1); color: var(--jahez-muted); font-size: 13px; }
+.record-details dd { margin: 0; font-weight: 600; overflow-wrap: anywhere; }
+@media (prefers-reduced-motion: reduce) { .text-input { transition: none; } }

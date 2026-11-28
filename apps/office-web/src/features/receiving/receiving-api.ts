@@ -1,8 +1,22 @@
 import { useQuery } from '@tanstack/react-query';
 import { ApiError } from '../../api/client';
-import { authenticatedJson, useSession } from '../../app/session';
+import { authenticatedJson } from '../../app/session';
 import { listOfficeFiles, type OfficeFile } from '../files/files-api';
-import { useOrderScope } from '../orders/order-api';
+import { useWarehouseScope } from '../../app/use-warehouse-scope';
+
+export type QueueOrder = {
+  id: string; orderNo: string; status: 'ready' | 'partly_received'; expectedDate: string | null;
+  supplier: { name: string; nameCn: string | null }; customer: { name: string; shippingMark: string | null };
+  expectedCartons: number; remainingCartons: number;
+};
+export function useReceivingQueue(scope: ReturnType<typeof useWarehouseScope>, enabled = true) {
+  return useQuery({
+    queryKey: scope.queryKey('receiving-queue'),
+    enabled: enabled && scope.canRead && Boolean(scope.warehouseId), refetchInterval: 30_000,
+    queryFn: ({ signal }) => authenticatedJson<QueueOrder[]>(
+      '/orders/awaiting?warehouseId=' + encodeURIComponent(scope.warehouseId!), { signal }),
+  });
+}
 
 export type FindingType = 'missing' | 'extra' | 'wrong' | 'damaged' | 'cbm' | 'weight';
 export type FindingStatus = 'open' | 'resolved';
@@ -69,11 +83,10 @@ export type ReceiptDetail = {
   }>;
 };
 
-export function useFindings(scope: ReturnType<typeof useOrderScope>, status: FindingStatus) {
-  const { session } = useSession();
+export function useFindings(scope: ReturnType<typeof useWarehouseScope>, status: FindingStatus, enabled = true) {
   return useQuery({
-    queryKey: ['findings', session?.user.tenantId, session?.user.id, scope.warehouseId, status],
-    enabled: scope.canRead && Boolean(scope.warehouseId),
+    queryKey: scope.queryKey('findings', status),
+    enabled: enabled && scope.canRead && Boolean(scope.warehouseId),
     refetchInterval: 30_000,
     queryFn: async ({ signal }) => {
       const rows = await authenticatedJson<Finding[]>('/findings?status=' + status, { signal });
@@ -88,10 +101,9 @@ export function resolveFinding(id: string, note: string) {
   });
 }
 
-export function useReceipt(scope: ReturnType<typeof useOrderScope>, receiptId: string) {
-  const { session } = useSession();
+export function useReceipt(scope: ReturnType<typeof useWarehouseScope>, receiptId: string) {
   return useQuery({
-    queryKey: ['receipt', session?.user.tenantId, session?.user.id, scope.warehouseId, receiptId],
+    queryKey: scope.queryKey('receipt', receiptId),
     enabled: scope.canRead && Boolean(receiptId),
     queryFn: async ({ signal }) => {
       const receipt = await authenticatedJson<ReceiptDetail>('/receipts/' + encodeURIComponent(receiptId), { signal });
@@ -102,13 +114,12 @@ export function useReceipt(scope: ReturnType<typeof useOrderScope>, receiptId: s
 }
 
 export function useReceiptEvidence(
-  scope: ReturnType<typeof useOrderScope>,
+  scope: ReturnType<typeof useWarehouseScope>,
   receipt: ReceiptDetail | undefined,
 ) {
-  const { session } = useSession();
   const lineIds = receipt?.lines.map((line) => line.id).join(',') ?? '';
   return useQuery({
-    queryKey: ['receipt-files', session?.user.tenantId, session?.user.id, scope.warehouseId, receipt?.id, lineIds],
+    queryKey: scope.queryKey('receipt-files', receipt?.id, lineIds),
     enabled: scope.canRead && Boolean(receipt && scope.warehouseId),
     queryFn: async ({ signal }) => {
       const warehouseId = scope.warehouseId!;

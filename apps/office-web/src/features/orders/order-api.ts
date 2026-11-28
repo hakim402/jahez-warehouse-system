@@ -1,8 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
-import { useOutletContext } from 'react-router';
 import { ApiError } from '../../api/client';
-import { authenticatedJson, useSession } from '../../app/session';
-import type { ActiveWarehouse } from '../../app/use-active-warehouse';
+import { authenticatedJson } from '../../app/session';
+import { useWarehouseScope, type WarehouseScope } from '../../app/use-warehouse-scope';
 
 export const orderStatuses = ['draft', 'ready', 'partly_received', 'received', 'cancelled'] as const;
 export type OrderStatus = typeof orderStatuses[number];
@@ -53,16 +52,11 @@ export type NewOrderInput = DraftInput & {
 };
 
 export function useOrderScope() {
-  const { session } = useSession();
-  const active = useOutletContext<ActiveWarehouse>();
-  const warehouseId = active.warehouse?.id;
-  const scope = [session?.user.tenantId, session?.user.id, warehouseId ?? null] as const;
+  const scope = useWarehouseScope();
   return {
-    active,
-    warehouseId,
-    canRead: !active.configuredId || Boolean(warehouseId),
-    listKey: ['orders', ...scope] as const,
-    detailKey: (id: string) => ['order', ...scope, id] as const,
+    ...scope,
+    listKey: scope.queryKey('orders'),
+    detailKey: (id: string) => scope.queryKey('order', id),
   };
 }
 
@@ -74,9 +68,9 @@ export function useOrders(scope: ReturnType<typeof useOrderScope>, enabled = tru
   });
 }
 
-export function useOrder(scope: ReturnType<typeof useOrderScope>, id: string) {
+export function useOrder(scope: WarehouseScope, id: string) {
   return useQuery({
-    queryKey: scope.detailKey(id), enabled: scope.canRead && Boolean(id),
+    queryKey: scope.queryKey('order', id), enabled: scope.canRead && Boolean(id),
     queryFn: async ({ signal }) => {
       const order = await authenticatedJson<FullOrder>('/orders/' + encodeURIComponent(id), { signal });
       if (scope.warehouseId && order.warehouseId !== scope.warehouseId) throw new ApiError(404);

@@ -5,7 +5,7 @@ Use the reference for the app and screen being implemented, together with the [b
 | App | Design folder | Current references |
 | --- | --- | --- |
 | Worker Mobile | `documents/designs/worker-mobile/` | `01-sign-in.png`, `02-home.png`, `03-receiving-queue-v2.png` |
-| Office Web | `documents/designs/office-web/` | No reference files present at the time of this update |
+| Office Web | `documents/designs/office-web/` | `01-sign-in.png`–`16-invoice-review.png` (numbered screen references), `background.png`, `catalog-products.png`, `reference-dialog.png`, `reference-dropdown.png`, `reference-table-states.png` |
 
 Inspect the actual reference image before building the screen. Use the supplied design for layout and visual intent, then bind it to the permissions, fields, and workflows in the [Backend Integration Guide](../api/BACKEND-INTEGRATION.md). Preserve Arabic RTL, responsive phone/tablet behavior, and worker cost isolation.
 

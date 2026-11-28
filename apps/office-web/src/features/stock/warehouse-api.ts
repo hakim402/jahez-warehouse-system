@@ -1,15 +1,12 @@
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
-import { authenticatedJson, useSession } from '../../app/session';
-import type { Finding } from '../receiving/receiving-api';
-import { useOrderScope } from '../orders/order-api';
+import { authenticatedJson } from '../../app/session';
+import { useFindings, useReceivingQueue } from '../receiving/receiving-api';
+import { useWarehouseScope } from '../../app/use-warehouse-scope';
 
 export type { Finding } from '../receiving/receiving-api';
 
-export type QueueOrder = {
-  id: string; orderNo: string; status: 'ready' | 'partly_received'; expectedDate: string | null;
-  supplier: { name: string; nameCn: string | null }; customer: { name: string; shippingMark: string | null };
-  expectedCartons: number; remainingCartons: number;
-};
+export type { QueueOrder } from '../receiving/receiving-api';
+
 export type StockRow = {
   id?: string;
   warehouseId?: string;
@@ -37,31 +34,38 @@ export type Movement = StockRow & {
 };
 type MovementPage = { warehouseId: string; movements: Movement[]; nextCursor: string | null };
 
-export function useWarehouseData() {
-  const scope = useOrderScope();
-  const { session } = useSession();
+type Resource = 'queue' | 'findings' | 'balances' | 'age' | 'movements';
+
+export function useWarehouseData(resources: Resource[] = ['queue', 'findings', 'balances', 'movements']) {
+  const scope = useWarehouseScope();
   const id = scope.warehouseId;
-  const queryKey = ['warehouse-data', session?.user.tenantId, session?.user.id, id] as const;
-  const query = useQuery({
-    queryKey, enabled: Boolean(id), refetchInterval: 30_000,
+  const enabled = (resource: Resource) => Boolean(id) && resources.includes(resource);
+  const queue = useReceivingQueue(scope, enabled('queue'));
+  const findings = useFindings(scope, 'open', enabled('findings'));
+  const balances = useQuery({
+    queryKey: scope.queryKey('warehouse-data', 'balances'), enabled: enabled('balances'), refetchInterval: 30_000,
     queryFn: async ({ signal }) => {
-      const suffix = '?warehouseId=' + encodeURIComponent(id!);
-      const [queue, findings, balances, age] = await Promise.all([
-        authenticatedJson<QueueOrder[]>('/orders/awaiting' + suffix, { signal }),
-        authenticatedJson<Finding[]>('/findings?status=open', { signal }),
-        authenticatedJson<{ warehouseId: string; balances: StockRow[] }>('/stock' + suffix, { signal }),
-        authenticatedJson<{ warehouseId: string; age: StockRow[] }>('/stock/age' + suffix, { signal }),
-      ]);
-      return { queue, findings: findings.filter((item) => item.warehouseId === id), balances: balances.balances, age: age.age };
+      const response = await authenticatedJson<{ warehouseId: string; balances: StockRow[] }>(
+        '/stock?warehouseId=' + encodeURIComponent(id!), { signal });
+      return response.balances;
+    },
+  });
+  const age = useQuery({
+    queryKey: scope.queryKey('warehouse-data', 'age'), enabled: enabled('age'), refetchInterval: 30_000,
+    queryFn: async ({ signal }) => {
+      const response = await authenticatedJson<{ warehouseId: string; age: StockRow[] }>(
+        '/stock/age?warehouseId=' + encodeURIComponent(id!), { signal });
+      return response.age;
     },
   });
   const movements = useInfiniteQuery({
-    queryKey: [...queryKey, 'movements'], enabled: Boolean(id), initialPageParam: null as string | null,
+    queryKey: scope.queryKey('warehouse-data', 'movements'), enabled: enabled('movements'), initialPageParam: null as string | null,
     refetchInterval: 30_000,
     queryFn: ({ signal, pageParam }) => authenticatedJson<MovementPage>(
       '/stock/movements?warehouseId=' + encodeURIComponent(id!) + '&limit=50' +
       (pageParam ? '&cursor=' + encodeURIComponent(pageParam) : ''), { signal }),
-    getNextPageParam: (page) => page.nextCursor ?? undefined,
+    getNextPageParam: (page, _pages, _param, params) =>
+      page.nextCursor && !params.includes(page.nextCursor) ? page.nextCursor : undefined,
   });
-  return { scope, query, movements };
+  return { scope, queue, findings, balances, age, movements };
 }

@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { authenticatedJson, useSession } from '../../app/session';
 import type { Language } from '../../app/i18n';
@@ -26,30 +27,35 @@ export type Catalog = {
   parties: Party[];
 };
 
-export const productNameFields = { en: 'nameEn', ar: 'nameAr', 'zh-Hans': 'nameCn' } as const;
-
-export function productName(product: Product | undefined, language: Language) {
-  return product?.[productNameFields[language]] || product?.nameEn || product?.nameCn || product?.nameAr || '';
-}
+export { productName, productNameFields, type ProductNames } from '../../shared/product-name';
 
 export function partyName(party: Party | undefined, language: Language) {
   return (language === 'zh-Hans' ? party?.nameCn : undefined) || party?.name || '';
 }
 
+export function useProducts() {
+  const { session } = useSession();
+  return useQuery({
+    queryKey: ['catalog', session?.user.tenantId, session?.user.id, 'products'],
+    queryFn: ({ signal }) => authenticatedJson<Product[]>('/products', { signal }),
+  });
+}
+
 export function useCatalog() {
   const { session } = useSession();
   const queryKey = ['catalog', session?.user.tenantId, session?.user.id] as const;
-  const query = useQuery({
-    queryKey,
-    queryFn: async ({ signal }): Promise<Catalog> => {
-      const [products, parties] = await Promise.all([
-        authenticatedJson<Product[]>('/products', { signal }),
-        authenticatedJson<Party[]>('/parties', { signal }),
-      ]);
-      return { products, parties };
-    },
+  const products = useProducts();
+  const parties = useQuery({
+    queryKey: [...queryKey, 'parties'],
+    queryFn: ({ signal }) => authenticatedJson<Party[]>('/parties', { signal }),
   });
-  return { ...query, queryKey };
+  const data = useMemo<Catalog | undefined>(() => products.data && parties.data
+    ? { products: products.data, parties: parties.data } : undefined, [products.data, parties.data]);
+  return {
+    data, queryKey, isError: products.isError || parties.isError,
+    error: products.error || parties.error,
+    refetch: () => Promise.all([products.refetch(), parties.refetch()]),
+  };
 }
 
 type CatalogRecord = Omit<Product, 'id'> | Omit<Party, 'id'>;

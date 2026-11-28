@@ -1,11 +1,10 @@
 import { ArrowLeft, Check, Printer } from 'lucide-react';
-import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router';
 import { ApiError } from '../../../../api/client';
 import { useRecordFormat } from '../../../../shared/format-record';
 import { RecordState } from '../../../../shared/ui/RecordState';
-import { productName } from '../../../catalog/catalog-api';
+import { productName } from '../../../../shared/product-name';
 import { formatStockCount, sumStockCounts } from '../../../stock/stock-count';
 import { useDispatch, useDispatchScope, type DispatchLine } from '../../dispatch-api';
 import styles from './DispatchDetailPage.module.css';
@@ -23,12 +22,7 @@ export default function DispatchDetailPage() {
   const id = useParams().dispatchId ?? '';
   const scope = useDispatchScope();
   const query = useDispatch(scope, id);
-  const volumeFormatter = useMemo(() => new Intl.NumberFormat(format.language, {
-    minimumFractionDigits: 3, maximumFractionDigits: 3,
-  }), [format.language]);
-  const weightFormatter = useMemo(() => new Intl.NumberFormat(format.language, {
-    minimumFractionDigits: 1, maximumFractionDigits: 3,
-  }), [format.language]);
+
 
   if (!scope.canRead || !scope.warehouseId) {
     return <><DispatchBackLink /><section className="surface workspace-panel">
@@ -53,7 +47,7 @@ export default function DispatchDetailPage() {
     left.allocation.receiptNo.localeCompare(right.allocation.receiptNo));
 
   function lineProductName(line: DispatchLine) {
-    return productName({ id: line.productId ?? '', ...line.product, photoUrl: null }, format.language) || '—';
+    return productName(line.product, format.language) || '—';
   }
 
   return (
@@ -74,7 +68,7 @@ export default function DispatchDetailPage() {
         <div className={styles.main}>
           <section className={'surface ' + styles.detailsPanel} aria-labelledby="dispatch-details">
             <h2 id="dispatch-details">{t('dispatchDetails')}</h2>
-            <dl className={styles.detailsGrid}>
+            <dl className={'record-details ' + styles.detailsGrid}>
               <div>
                 <dt>{`${t('customer')} / ${t('shippingMark')}`}</dt>
                 <dd><bdi>{dispatch.customerName || '—'}</bdi>
@@ -116,8 +110,8 @@ export default function DispatchDetailPage() {
                     <td><bdi>{line.brand || '—'}</bdi></td>
                     <td><bdi dir="ltr" className={styles.numeric}>{formatStockCount(line.cartons, format.language)}</bdi></td>
                     <td><bdi dir="ltr" className={styles.numeric}>{formatStockCount(line.qty, format.language)}</bdi></td>
-                    <td><bdi dir="ltr" className={styles.numeric}>{line.cbm === null ? '—' : volumeFormatter.format(line.cbm)}</bdi></td>
-                    <td><bdi dir="ltr" className={styles.numeric}>{line.weightKg === null ? '—' : weightFormatter.format(line.weightKg)}</bdi></td>
+                    <td><bdi dir="ltr" className={styles.numeric}>{line.cbm === null ? '—' : format.volume(line.cbm)}</bdi></td>
+                    <td><bdi dir="ltr" className={styles.numeric}>{line.weightKg === null ? '—' : format.weight(line.weightKg)}</bdi></td>
                   </tr>)}</tbody>
                 </table>
               </div>
@@ -155,10 +149,10 @@ export default function DispatchDetailPage() {
             </bdi></dd></div>
             <div><dt>{t('units')}</dt><dd><bdi dir="ltr">{formatStockCount(totalUnits, format.language)}</bdi></dd></div>
             <div><dt>{t('volume')}</dt><dd><bdi dir="ltr">
-              {dispatch.totals.cbm === null ? '—' : volumeFormatter.format(dispatch.totals.cbm)}
+              {dispatch.totals.cbm === null ? '—' : format.volume(dispatch.totals.cbm)}
             </bdi></dd></div>
             <div><dt>{t('weightKg')}</dt><dd><bdi dir="ltr">
-              {dispatch.totals.weightKg === null ? '—' : weightFormatter.format(dispatch.totals.weightKg)}
+              {dispatch.totals.weightKg === null ? '—' : format.weight(dispatch.totals.weightKg)}
             </bdi></dd></div>
           </dl>
         </aside>

@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
-import { authenticatedBlob, authenticatedForm, authenticatedJson, useSession } from '../../app/session';
-import { useOrderScope } from '../orders/order-api';
+import { authenticatedBlob, authenticatedForm, authenticatedJson } from '../../app/session';
+import { useWarehouseScope } from '../../app/use-warehouse-scope';
 
 export type OfficeFile = {
   id: string;
@@ -61,10 +61,9 @@ export function fetchOfficeFile(fileId: string, signal?: AbortSignal) {
   return authenticatedBlob('/files/' + encodeURIComponent(fileId) + '/content', { signal });
 }
 
-export function usePrivateFile(scope: ReturnType<typeof useOrderScope>, fileId: string, enabled = true) {
-  const { session } = useSession();
+export function usePrivateFile(scope: ReturnType<typeof useWarehouseScope>, fileId: string, enabled = true) {
   return useQuery({
-    queryKey: ['file-content', session?.user.tenantId, session?.user.id, scope.warehouseId, fileId],
+    queryKey: scope.queryKey('file-content', fileId),
     enabled: enabled && scope.canRead && Boolean(fileId),
     queryFn: ({ signal }) => fetchOfficeFile(fileId, signal),
     staleTime: Number.POSITIVE_INFINITY,

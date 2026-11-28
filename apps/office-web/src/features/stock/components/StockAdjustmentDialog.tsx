@@ -9,7 +9,7 @@ import { LabeledField } from '../../../shared/ui/LabeledField';
 import { OfficeDialog } from '../../../shared/ui/OfficeDialog';
 import { uploadOfficeFile, type OfficeFile } from '../../files/files-api';
 import { productName, useCatalog } from '../../catalog/catalog-api';
-import type { useOrderScope } from '../../orders/order-api';
+import { useWarehouseScope } from '../../../app/use-warehouse-scope';
 import { compareStockCounts, formatStockCount, shareStockCount } from '../stock-count';
 import { recordStockAdjustment, useStockLots, type AdjustmentInput, type StockLot } from '../adjustments-api';
 import type { StockRow } from '../warehouse-api';
@@ -18,9 +18,10 @@ import styles from './StockAdjustmentDialog.module.css';
 const maxPhotoBytes = 15 * 1024 * 1024;
 const photoTypes = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif']);
 
-export function StockAdjustmentDialog({ stock, scope, onClose }: {
+export function StockAdjustmentDialog({ stock, scope, onClose, returnFocus }: {
+  returnFocus?: () => HTMLElement | null;
   stock: StockRow;
-  scope: ReturnType<typeof useOrderScope>;
+  scope: ReturnType<typeof useWarehouseScope>;
   onClose: () => void;
 }) {
   const { t } = useTranslation();
@@ -140,9 +141,9 @@ export function StockAdjustmentDialog({ stock, scope, onClose }: {
       posting = true;
       await recordStockAdjustment(input);
       await Promise.allSettled([
-        cache.invalidateQueries({ queryKey: ['warehouse-data'] }),
-        cache.invalidateQueries({ queryKey: ['stock-lots'] }),
-        cache.invalidateQueries({ queryKey: ['dashboard-history'] }),
+        cache.invalidateQueries({ queryKey: scope.queryKey('warehouse-data') }),
+        cache.invalidateQueries({ queryKey: scope.queryKey('stock-lots') }),
+        cache.invalidateQueries({ queryKey: scope.queryKey('dashboard-history') }),
       ]);
       onClose();
     } catch (error) {
@@ -173,7 +174,7 @@ export function StockAdjustmentDialog({ stock, scope, onClose }: {
     }
   }
 
-  return <OfficeDialog title={t('adjustStock')} onClose={onClose} busy={busy} closeDisabled={submissionUnknown} wide>
+  return <OfficeDialog returnFocus={returnFocus} title={t('adjustStock')} onClose={onClose} busy={busy} closeDisabled={submissionUnknown} wide>
     <form onSubmit={submit} noValidate>
       <fieldset className={'office-dialog-body ' + styles.fields} disabled={busy || submissionUnknown}>
         <div className={styles.stockSummary}>
